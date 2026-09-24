@@ -1,0 +1,6 @@
+{
+  "name": "Tủ Truyện Nhỏ",
+  "description": "Thư viện nhà kính công chúa lưu trữ và theo dõi truyện tranh phong cách Botanical Cottagecore.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
