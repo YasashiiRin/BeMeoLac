@@ -10,6 +10,7 @@ import { Button } from '../components/Button';
 import { SearchBar } from '../components/SearchBar';
 import { EmptyState } from '../components/EmptyState';
 import { ResponsiveDrawer } from '../components/ResponsiveDrawer';
+import { ShelfFormModal } from '../components/ShelfFormModal';
 import { Sidebar } from '../components/layout/Sidebar';
 import { VineProgressBar } from '../components/VineProgressBar';
 import { useToast } from '../context/ToastContext';
@@ -53,9 +54,6 @@ export const BookshelfPage: React.FC = () => {
 
   // Modal states
   const [isCreateShelfOpen, setIsCreateShelfOpen] = useState(false);
-  const [newShelfName, setNewShelfName] = useState('');
-  const [newShelfIcon, setNewShelfIcon] = useState('🌸');
-  const [newShelfDesc, setNewShelfDesc] = useState('');
 
   // Fetch shelves and summary
   const fetchShelves = async () => {
@@ -79,6 +77,16 @@ export const BookshelfPage: React.FC = () => {
   useEffect(() => {
     fetchShelves();
     fetchSummary();
+  }, []);
+
+  // Listen to shelf creation, update, or deletion across the app
+  useEffect(() => {
+    const handleShelvesUpdated = () => {
+      fetchShelves();
+      fetchSummary();
+    };
+    window.addEventListener('shelves-updated', handleShelvesUpdated);
+    return () => window.removeEventListener('shelves-updated', handleShelvesUpdated);
   }, []);
 
   // Fetch comics
@@ -167,28 +175,6 @@ export const BookshelfPage: React.FC = () => {
       showToast(`Đã ghi nhận đọc chương ${nextChapter} của "${comic.title}"! 🌿`, 'success');
     } catch (err) {
       showToast('Lỗi cập nhật tiến độ đọc', 'error');
-    }
-  };
-
-  const handleCreateShelf = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newShelfName.trim()) return;
-    try {
-      const created = await createShelf({
-        name: newShelfName.trim(),
-        icon: newShelfIcon,
-        description: newShelfDesc.trim(),
-      });
-      setShelves((prev) => [...prev, created]);
-      setSelectedShelfId(created.id);
-      setIsCreateShelfOpen(false);
-      setNewShelfName('');
-      setNewShelfDesc('');
-      showToast(`Kệ sách mới "${created.name}" đã được dựng lên! 🌿`, 'success');
-      fetchShelves();
-      fetchSummary();
-    } catch (err) {
-      showToast('Không thể tạo kệ mới', 'error');
     }
   };
 
@@ -786,78 +772,16 @@ export const BookshelfPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal / Bottom Sheet: Create New Shelf */}
-      <ResponsiveDrawer
+      {/* Modal / Bottom Sheet: Create New Shelf via reusable ShelfFormModal */}
+      <ShelfFormModal
         isOpen={isCreateShelfOpen}
         onClose={() => setIsCreateShelfOpen(false)}
-        title="Tạo Kệ Sách Mới ✿"
-        subtitle="Sắp xếp những cuốn truyện theo từng góc nhỏ thần tiên"
-        maxWidth="md"
-      >
-        <form onSubmit={handleCreateShelf} className="flex flex-col gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-[#5E4636] mb-1">
-              Biểu tượng kệ
-            </label>
-            <div className="flex items-center gap-2">
-              {['🌸', '🌿', '📖', '✨', '🎨', '📜', '🦋', '🍄', '☕'].map((ic) => (
-                <button
-                  key={ic}
-                  type="button"
-                  onClick={() => setNewShelfIcon(ic)}
-                  className={`w-9 h-9 rounded-xl text-lg flex items-center justify-center border-1.5 transition-all cursor-pointer ${
-                    newShelfIcon === ic
-                      ? 'bg-[#F2A7B5] border-[#A67B5B] shadow-sm scale-105'
-                      : 'bg-[#F6EBDD] border-[#D9B99B] hover:bg-[#FFF8F5]'
-                  }`}
-                >
-                  {ic}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-[#5E4636] mb-1">
-              Tên kệ sách <span className="text-[#BA1A1A]">*</span>
-            </label>
-            <input
-              type="text"
-              required
-              value={newShelfName}
-              onChange={(e) => setNewShelfName(e.target.value)}
-              placeholder="VD: Truyện tranh mùa đông..."
-              className="w-full px-3.5 py-2.5 bg-[#F6EBDD] rounded-xl border border-[#D9B99B] text-sm text-[#5E4636] focus:border-[#7FAF6B] focus:outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-[#5E4636] mb-1">
-              Mô tả kệ
-            </label>
-            <textarea
-              rows={3}
-              value={newShelfDesc}
-              onChange={(e) => setNewShelfDesc(e.target.value)}
-              placeholder="Vài dòng tâm tình về kệ sách này..."
-              className="w-full px-3.5 py-2.5 bg-[#F6EBDD] rounded-xl border border-[#D9B99B] text-sm text-[#5E4636] focus:border-[#7FAF6B] focus:outline-none resize-none"
-            />
-          </div>
-
-          <div className="pt-3 border-t border-[#D9B99B]/60 flex items-center justify-end gap-2.5">
-            <Button
-              type="button"
-              variant="text"
-              onClick={() => setIsCreateShelfOpen(false)}
-            >
-              Hủy
-            </Button>
-            <Button type="submit" variant="primary">
-              Tạo kệ sách
-            </Button>
-          </div>
-        </form>
-      </ResponsiveDrawer>
+        mode="create"
+        onSuccess={() => {
+          fetchShelves();
+          fetchSummary();
+        }}
+      />
     </div>
   );
 };

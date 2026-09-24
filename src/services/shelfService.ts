@@ -52,12 +52,50 @@ export const createShelf = async (data: { name: string; description?: string; ic
     cover_urls: [],
   };
   shelvesDatabase.push(newShelf);
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent('shelves-updated', {
+        detail: { action: 'create', shelf: newShelf, shelfId: newShelf.id },
+      })
+    );
+  }
   return newShelf;
+};
+
+export const updateShelf = async (
+  id: string,
+  data: { name?: string; description?: string; icon?: string; color?: string }
+): Promise<Shelf> => {
+  await simulateNetworkDelay(120);
+  const index = shelvesDatabase.findIndex((s) => s.id === id);
+  if (index === -1) {
+    throw new Error('Không tìm thấy kệ sách');
+  }
+  shelvesDatabase[index] = {
+    ...shelvesDatabase[index],
+    ...data,
+  };
+  const updated = { ...shelvesDatabase[index] };
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent('shelves-updated', {
+        detail: { action: 'update', shelf: updated, shelfId: id },
+      })
+    );
+  }
+  return updated;
 };
 
 export const deleteShelf = async (id: string): Promise<void> => {
   await simulateNetworkDelay(120);
   shelvesDatabase = shelvesDatabase.filter((s) => s.id !== id);
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent('shelves-updated', {
+        detail: { action: 'delete', shelfId: id },
+      })
+    );
+  }
 };
 
 export const reorder = async (shelfId: string, comicIds: string[]): Promise<void> => {
@@ -73,7 +111,11 @@ export const shelvesService = {
   list,
   getShelves: list,
   getShelfById,
+  create: createShelf,
   createShelf,
+  update: updateShelf,
+  updateShelf,
+  delete: deleteShelf,
   deleteShelf,
   reorder,
   getShelfComicOrder,

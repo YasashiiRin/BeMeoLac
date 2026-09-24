@@ -7,6 +7,7 @@ import { ComicCard } from '../components/ComicCard';
 import { EmptyState } from '../components/EmptyState';
 import { Button } from '../components/Button';
 import { ResponsiveDrawer } from '../components/ResponsiveDrawer';
+import { ShelfFormModal } from '../components/ShelfFormModal';
 import { useToast } from '../context/ToastContext';
 import {
   ArrowLeft,
@@ -56,6 +57,9 @@ export const ShelfDetailPage: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // Edit Shelf Modal
+  const [isEditShelfOpen, setIsEditShelfOpen] = useState(false);
+
   // Confirm Delete Shelf Modal
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -68,9 +72,6 @@ export const ShelfDetailPage: React.FC = () => {
 
   // Create new shelf modal (triggered from sidebar)
   const [isCreateShelfOpen, setIsCreateShelfOpen] = useState(false);
-  const [newShelfName, setNewShelfName] = useState('');
-  const [newShelfDesc, setNewShelfDesc] = useState('');
-  const [newShelfIcon, setNewShelfIcon] = useState('🌸');
 
   // Fetch shelf & comics data
   useEffect(() => {
@@ -125,6 +126,22 @@ export const ShelfDetailPage: React.FC = () => {
       isMounted = false;
     };
   }, [id, showToast]);
+
+  // Sync shelves updates across app
+  useEffect(() => {
+    const handleShelvesUpdated = (e: Event) => {
+      const customEvent = e as CustomEvent<{ action: string; shelf?: Shelf; shelfId?: string }>;
+      const { action, shelf: updatedShelf, shelfId } = customEvent.detail || {};
+      if (action === 'update' && updatedShelf && id === updatedShelf.id) {
+        setShelf(updatedShelf);
+      } else if (action === 'delete' && shelfId && id === shelfId) {
+        navigate('/');
+      }
+      shelvesService.list().then(setAllShelves).catch(console.error);
+    };
+    window.addEventListener('shelves-updated', handleShelvesUpdated);
+    return () => window.removeEventListener('shelves-updated', handleShelvesUpdated);
+  }, [id, navigate]);
 
   // Sync updates to comic cards when updated from modal or detail
   useEffect(() => {
@@ -277,9 +294,9 @@ export const ShelfDetailPage: React.FC = () => {
     setIsMenuOpen(false);
   };
 
-  // Edit shelf (placeholder toast as requested)
+  // Edit shelf
   const handleEditShelf = () => {
-    showToast('Tính năng sửa kệ sắp ra mắt trong bản cập nhật tới! ✿', 'info');
+    setIsEditShelfOpen(true);
     setIsMenuOpen(false);
   };
 
@@ -295,27 +312,6 @@ export const ShelfDetailPage: React.FC = () => {
     } catch (err) {
       showToast('Lỗi khi xóa kệ sách', 'error');
       setIsDeleting(false);
-    }
-  };
-
-  // Create new shelf submission (from sidebar)
-  const handleCreateShelfSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newShelfName.trim()) return;
-    try {
-      const newShelf = await shelvesService.createShelf({
-        name: newShelfName.trim(),
-        description: newShelfDesc.trim(),
-        icon: newShelfIcon || '🌸',
-      });
-      setAllShelves((prev) => [...prev, newShelf]);
-      setIsCreateShelfOpen(false);
-      setNewShelfName('');
-      setNewShelfDesc('');
-      showToast(`Đã tạo kệ "${newShelf.name}" thành công! 🌸`, 'success');
-      navigate(`/shelves/${newShelf.id}`);
-    } catch (err) {
-      showToast('Lỗi tạo kệ sách mới', 'error');
     }
   };
 
@@ -1267,78 +1263,35 @@ export const ShelfDetailPage: React.FC = () => {
       </ResponsiveDrawer>
 
       {/* ------------------------------------------------------------------- */}
-      {/* MODAL / BOTTOM DRAWER: CREATE NEW SHELF                             */}
+      {/* MODAL / BOTTOM SHEET: EDIT SHELF VIA REUSABLE ShelfFormModal       */}
       {/* ------------------------------------------------------------------- */}
-      <ResponsiveDrawer
+      <ShelfFormModal
+        isOpen={isEditShelfOpen}
+        onClose={() => setIsEditShelfOpen(false)}
+        mode="edit"
+        shelf={shelf}
+        onSuccess={(updated) => {
+          setShelf(updated);
+          setAllShelves((prev) =>
+            prev.map((s) => (s.id === updated.id ? { ...s, ...updated } : s))
+          );
+        }}
+        onDelete={() => {
+          navigate('/');
+        }}
+      />
+
+      {/* ------------------------------------------------------------------- */}
+      {/* MODAL / BOTTOM SHEET: CREATE NEW SHELF VIA REUSABLE ShelfFormModal  */}
+      {/* ------------------------------------------------------------------- */}
+      <ShelfFormModal
         isOpen={isCreateShelfOpen}
         onClose={() => setIsCreateShelfOpen(false)}
-        title="Dựng kệ sách mới 🌿"
-      >
-        <form onSubmit={handleCreateShelfSubmit} className="flex flex-col gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-[#5E4636] mb-1">
-              Biểu tượng kệ
-            </label>
-            <div className="flex gap-2">
-              {['🌸', '🌿', '☕', '✨', '📖', '🍯', '🌙', '🌷'].map((emoji) => (
-                <button
-                  key={emoji}
-                  type="button"
-                  onClick={() => setNewShelfIcon(emoji)}
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center text-base border-1.5 transition-all cursor-pointer ${
-                    newShelfIcon === emoji
-                      ? 'bg-[#F2A7B5] border-[#A67B5B] shadow-xs'
-                      : 'bg-[#FFF8F5] border-[#D9B99B] hover:bg-[#F6EBDD]'
-                  }`}
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-[#5E4636] mb-1">
-              Tên kệ sách *
-            </label>
-            <input
-              type="text"
-              required
-              value={newShelfName}
-              onChange={(e) => setNewShelfName(e.target.value)}
-              placeholder="VD: Truyện Chữa Lành, Cổ Tích Mùa Hạ..."
-              className="w-full px-3.5 py-2 text-xs md:text-sm rounded-xl bg-[#FFF8F5] border border-[#D9B99B] focus:outline-none focus:border-[#7FAF6B] text-[#5E4636]"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-[#5E4636] mb-1">
-              Mô tả ngắn
-            </label>
-            <textarea
-              rows={2}
-              value={newShelfDesc}
-              onChange={(e) => setNewShelfDesc(e.target.value)}
-              placeholder="Cảm xúc hoặc lời tựa nhẹ nhàng cho góc nhỏ này..."
-              className="w-full px-3.5 py-2 text-xs md:text-sm rounded-xl bg-[#FFF8F5] border border-[#D9B99B] focus:outline-none focus:border-[#7FAF6B] text-[#5E4636]"
-            />
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setIsCreateShelfOpen(false)}
-            >
-              Hủy
-            </Button>
-            <Button type="submit" variant="primary" size="sm">
-              Tạo kệ mới ✿
-            </Button>
-          </div>
-        </form>
-      </ResponsiveDrawer>
+        mode="create"
+        onSuccess={(newShelf) => {
+          setAllShelves((prev) => [...prev, newShelf]);
+        }}
+      />
 
       {/* ------------------------------------------------------------------- */}
       {/* CONFIRM DELETE SHELF MODAL                                          */}
