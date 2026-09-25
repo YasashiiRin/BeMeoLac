@@ -1,159 +1,530 @@
 @import "tailwindcss";
 
+/*
+ * Theme system
+ * ------------
+ * Each theme is a set of --c-* variables. Tailwind color tokens (bg-primary,
+ * text-text-muted, ...) point at them through `@theme inline`, so a
+ * [data-theme] attribute on <html> (or on any wrapper, e.g. a preview card)
+ * re-colors everything below it. Theme metadata lives in src/theme/themes.ts.
+ *
+ * Components must only use these tokens — never raw hex / white / black.
+ */
+
+/* ── Day: Rừng tiên oải hương (default) ───────────────────────────── */
+:root,
+[data-theme="day"] {
+  color-scheme: light;
+
+  --c-background: #F5F7F0;
+  --c-surface: #EAF0E3;
+  --c-surface-raised: #FBFCF8;
+  --c-surface-sunken: #E4EADC;
+  --c-border: #C9D4BC;
+  --c-border-strong: #A3B394;
+
+  --c-primary: #4F6B47;
+  --c-primary-soft: #7E9C74;
+  --c-primary-deep: #3B5235;
+  --c-primary-tint: #E1E8D8;
+  --c-primary-ink: #34492F;
+  --c-on-primary: #FFFFFF;
+
+  --c-accent: #7D68A8;
+  --c-accent-soft: #C4B3E0;
+  --c-accent-tint: #EFEAF8;
+  --c-accent-ink: #4E3F78;
+  --c-on-accent: #FFFFFF;
+
+  --c-leaf: #5E8F4E;
+  --c-leaf-tint: #DDEBD3;
+  --c-leaf-ink: #3D6531;
+
+  --c-gold: #D9BE7C;
+  --c-gold-tint: #F6EDD3;
+  --c-gold-ink: #6E5618;
+  --c-on-gold: #2F3A2E;
+
+  --c-danger: #B3261E;
+  --c-danger-tint: #FBE4E1;
+  --c-danger-ink: #8C1D18;
+  --c-on-danger: #FFFFFF;
+
+  --c-text: #2F3A2E;
+  --c-text-muted: #5C6B58;
+
+  --c-overlay: #1E261C;
+  --c-scrim: #161C15;
+  --c-on-scrim: #FFFFFF;
+
+  --c-gradient-from: #D9C8F0;
+  --c-gradient-to: #C9EDDC;
+  --c-on-gradient: #2F3A2E;
+
+  /* Shelf color choices (stored on shelves as data, rendered per theme) */
+  --c-shelf-rose: #F0B3C2;
+  --c-shelf-rose-tint: #FCE7EC;
+  --c-shelf-rose-ink: #7A3848;
+  --c-shelf-sage: #A8C49A;
+  --c-shelf-sage-tint: #E2EDDA;
+  --c-shelf-sage-ink: #34492F;
+  --c-shelf-lavender: #C4B3E0;
+  --c-shelf-lavender-tint: #EFEAF8;
+  --c-shelf-lavender-ink: #4E3F78;
+  --c-shelf-honey: #E8CB85;
+  --c-shelf-honey-tint: #F8EED2;
+  --c-shelf-honey-ink: #6E5618;
+  --c-shelf-mint: #A9D8BF;
+  --c-shelf-mint-tint: #E3F3EA;
+  --c-shelf-mint-ink: #245440;
+  --c-shelf-linen: #D8C3A5;
+  --c-shelf-linen-tint: #F3EBDF;
+  --c-shelf-linen-ink: #5A4632;
+
+  /* Shadows & glows */
+  --shadow-rgb: 79 107 71;
+  --glow-primary: 0 2px 10px rgb(79 107 71 / 0.18);
+  --glow-accent: 0 0 18px rgb(125 104 168 / 0.3);
+  --glow-gold: 0 0 10px rgb(217 190 124 / 0.45);
+
+  /* Ambient fairy effects (FairyEffects reads these; lists are comma-separated) */
+  --fx-sparkles: #9A82D8, #D4AE55, #FFFFFF, #B9A6F0;
+  --fx-sparkle-glow: #9A82D8;
+  --fx-glow-alpha: 0.7;
+  --fx-petals: #E4A9C6, #C9B3EC, #9CC48A;
+  --fx-petal-alpha: 0.75;
+  --fx-fireflies: none;
+  --fx-stars: none;
+  --fx-blend: source-over;
+  --fx-fairy-core: #FFFFFF;
+  --fx-fairy-glow: #8C74D9;
+  --fx-wing: #9A82D8;
+  --fx-halo-a: #B9A6F0;
+  --fx-halo-b: #A9D8BF;
+  --fx-halo-strength: 0.7;
+}
+
+/* ── Night: Khu vườn tiên đêm ─────────────────────────────────────── */
+[data-theme="night"] {
+  color-scheme: dark;
+
+  --c-background: #141B2D;
+  --c-surface: #1C2640;
+  --c-surface-raised: #243052;
+  --c-surface-sunken: #172036;
+  --c-border: #3A4768;
+  --c-border-strong: #505E85;
+
+  --c-primary: #B9A6F0;
+  --c-primary-soft: #5B4B94;
+  --c-primary-deep: #8C74D9;
+  --c-primary-tint: #2A2D55;
+  --c-primary-ink: #D4C4FF;
+  --c-on-primary: #141B2D;
+
+  --c-accent: #9FE3C4;
+  --c-accent-soft: #2F6B57;
+  --c-accent-tint: #1B3438;
+  --c-accent-ink: #BDEFD8;
+  --c-on-accent: #141B2D;
+
+  --c-leaf: #6FBF9A;
+  --c-leaf-tint: #1A3634;
+  --c-leaf-ink: #9FE3C4;
+
+  --c-gold: #F2D98A;
+  --c-gold-tint: #3A3527;
+  --c-gold-ink: #F2D98A;
+  --c-on-gold: #141B2D;
+
+  --c-danger: #FFB4AB;
+  --c-danger-tint: #45202B;
+  --c-danger-ink: #FFDAD6;
+  --c-on-danger: #410E0B;
+
+  --c-text: #EEF0FA;
+  --c-text-muted: #A9B0C8;
+
+  --c-overlay: #050912;
+  --c-scrim: #0A0F1E;
+  --c-on-scrim: #EEF0FA;
+
+  --c-gradient-from: #B9A6F0;
+  --c-gradient-to: #9FE3C4;
+  --c-on-gradient: #141B2D;
+
+  --c-shelf-rose: #E8A0B4;
+  --c-shelf-rose-tint: #3A2437;
+  --c-shelf-rose-ink: #F6C9D5;
+  --c-shelf-sage: #8DBF9E;
+  --c-shelf-sage-tint: #1E3330;
+  --c-shelf-sage-ink: #C4E6CD;
+  --c-shelf-lavender: #B9A6F0;
+  --c-shelf-lavender-tint: #2A2D55;
+  --c-shelf-lavender-ink: #D4C4FF;
+  --c-shelf-honey: #F2D98A;
+  --c-shelf-honey-tint: #3A3527;
+  --c-shelf-honey-ink: #F7E6B0;
+  --c-shelf-mint: #9FE3C4;
+  --c-shelf-mint-tint: #1B3438;
+  --c-shelf-mint-ink: #BDEFD8;
+  --c-shelf-linen: #CBB595;
+  --c-shelf-linen-tint: #33302F;
+  --c-shelf-linen-ink: #E8DCC8;
+
+  --shadow-rgb: 7 14 31;
+  --glow-primary: 0 4px 20px rgb(185 166 240 / 0.25);
+  --glow-accent: 0 0 12px rgb(159 227 196 / 0.35);
+  --glow-gold: 0 0 10px rgb(242 217 138 / 0.5);
+
+  --fx-sparkles: #B9A6F0, #F2D98A, #9FE3C4, #EEF0FA;
+  --fx-sparkle-glow: #B9A6F0;
+  --fx-glow-alpha: 0.45;
+  --fx-petals: none;
+  --fx-petal-alpha: 0;
+  --fx-fireflies: #9FE3C4, #F2D98A;
+  --fx-stars: #EEF0FA, #F2D98A;
+  --fx-blend: lighter;
+  --fx-fairy-core: #F4F1FF;
+  --fx-fairy-glow: #B9A6F0;
+  --fx-wing: #D4C4FF;
+  --fx-halo-a: #B9A6F0;
+  --fx-halo-b: #9FE3C4;
+  --fx-halo-strength: 1;
+}
+
 @theme {
   --font-serif: "Playfair Display", Georgia, Cambria, serif;
   --font-sans: "Nunito Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-
-  /* Palette A: Rừng tiên oải hương */
-  --color-background: #F5F7F0;
-  --color-surface: #EAF0E3;
-  --color-border: #C9D4BC;
-
-  --color-primary: #4F6B47;
-  --color-primary-soft: #7E9C74;
-  --color-primary-tint: #E1E8D8;
-
-  --color-accent: #7D68A8;
-  --color-accent-soft: #C4B3E0;
-
-  --color-gold: #D9BE7C;
-
-  --color-text: #2F3A2E;
-  --color-text-muted: #5C6B58;
-
-  /* Existing / Legacy token mappings to Palette A */
-  --color-cream: #F5F7F0;
-  --color-cream-light: #F5F7F0;
-  --color-parchment: #EAF0E3;
-  --color-parchment-light: #F5F7F0;
-  --color-parchment-dim: #E1E8D8;
-  
-  --color-walnut: #4F6B47;
-  --color-walnut-dark: #2F3A2E;
-  --color-walnut-soft: #7E9C74;
-  --color-oak: #C9D4BC;
-  --color-oak-light: #E1E8D8;
-  
-  --color-cocoa: #2F3A2E;
-  --color-cocoa-dark: #2F3A2E;
-  --color-cocoa-light: #5C6B58;
-  --color-cocoa-muted: #5C6B58;
-  
-  --color-honey: #D9BE7C;
-  --color-honey-deep: #D9BE7C;
-  --color-honey-light: #E1E8D8;
-  
-  /* Replace pink / peach / apricot tokens with accent lavender */
-  --color-blush: #7D68A8;
-  --color-blush-light: #C4B3E0;
-  --color-blush-soft: #C4B3E0;
-  --color-blush-deep: #7D68A8;
-  --color-apricot: #C4B3E0;
-  
-  --color-sage: #7E9C74;
-  --color-sage-light: #E1E8D8;
-  --color-sage-dark: #4F6B47;
-  
-  --color-leaf: #4F6B47;
-  --color-leaf-dark: #2F3A2E;
-  
-  --color-mint: #E1E8D8;
-  --color-mint-light: #EAF0E3;
 }
 
-/* Custom Botanical & Greenhouse utilities */
-.font-serif {
-  font-family: var(--font-serif);
+@theme inline {
+  --color-background: var(--c-background);
+  --color-surface: var(--c-surface);
+  --color-surface-raised: var(--c-surface-raised);
+  --color-surface-sunken: var(--c-surface-sunken);
+  --color-border: var(--c-border);
+  --color-border-strong: var(--c-border-strong);
+
+  --color-primary: var(--c-primary);
+  --color-primary-soft: var(--c-primary-soft);
+  --color-primary-deep: var(--c-primary-deep);
+  --color-primary-tint: var(--c-primary-tint);
+  --color-primary-ink: var(--c-primary-ink);
+  --color-on-primary: var(--c-on-primary);
+
+  --color-accent: var(--c-accent);
+  --color-accent-soft: var(--c-accent-soft);
+  --color-accent-tint: var(--c-accent-tint);
+  --color-accent-ink: var(--c-accent-ink);
+  --color-on-accent: var(--c-on-accent);
+
+  --color-leaf: var(--c-leaf);
+  --color-leaf-tint: var(--c-leaf-tint);
+  --color-leaf-ink: var(--c-leaf-ink);
+
+  --color-gold: var(--c-gold);
+  --color-gold-tint: var(--c-gold-tint);
+  --color-gold-ink: var(--c-gold-ink);
+  --color-on-gold: var(--c-on-gold);
+
+  --color-danger: var(--c-danger);
+  --color-danger-tint: var(--c-danger-tint);
+  --color-danger-ink: var(--c-danger-ink);
+  --color-on-danger: var(--c-on-danger);
+
+  --color-text: var(--c-text);
+  --color-text-muted: var(--c-text-muted);
+
+  --color-overlay: var(--c-overlay);
+  --color-scrim: var(--c-scrim);
+  --color-on-scrim: var(--c-on-scrim);
+
+  --color-gradient-from: var(--c-gradient-from);
+  --color-gradient-to: var(--c-gradient-to);
+  --color-on-gradient: var(--c-on-gradient);
+
+  --color-shelf-rose: var(--c-shelf-rose);
+  --color-shelf-rose-tint: var(--c-shelf-rose-tint);
+  --color-shelf-rose-ink: var(--c-shelf-rose-ink);
+  --color-shelf-sage: var(--c-shelf-sage);
+  --color-shelf-sage-tint: var(--c-shelf-sage-tint);
+  --color-shelf-sage-ink: var(--c-shelf-sage-ink);
+  --color-shelf-lavender: var(--c-shelf-lavender);
+  --color-shelf-lavender-tint: var(--c-shelf-lavender-tint);
+  --color-shelf-lavender-ink: var(--c-shelf-lavender-ink);
+  --color-shelf-honey: var(--c-shelf-honey);
+  --color-shelf-honey-tint: var(--c-shelf-honey-tint);
+  --color-shelf-honey-ink: var(--c-shelf-honey-ink);
+  --color-shelf-mint: var(--c-shelf-mint);
+  --color-shelf-mint-tint: var(--c-shelf-mint-tint);
+  --color-shelf-mint-ink: var(--c-shelf-mint-ink);
+  --color-shelf-linen: var(--c-shelf-linen);
+  --color-shelf-linen-tint: var(--c-shelf-linen-tint);
+  --color-shelf-linen-ink: var(--c-shelf-linen-ink);
 }
 
-.font-sans {
-  font-family: var(--font-sans);
+@layer base {
+  html {
+    background-color: var(--c-background);
+  }
+  body {
+    background-color: var(--c-background);
+    color: var(--c-text);
+  }
+  ::selection {
+    background-color: var(--c-primary-tint);
+    color: var(--c-primary-ink);
+  }
 }
 
-/* Greenhouse Arches */
-.arch-top {
+/* ── Theme switch fade (~400ms) ───────────────────────────────────── */
+/* Preferred path: View Transitions cross-fade the whole page. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 400ms;
+  animation-timing-function: ease-in-out;
+}
+
+/* Fallback path: animate colors while .theme-fading is on <html>. */
+.theme-fading,
+.theme-fading *,
+.theme-fading *::before,
+.theme-fading *::after {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow, outline-color,
+    text-decoration-color !important;
+  transition-duration: 400ms !important;
+  transition-timing-function: ease-in-out !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+  .theme-fading,
+  .theme-fading * {
+    transition: none !important;
+  }
+}
+
+/* ── Fairy effects layer (src/components/effects) ──────────────────── */
+.fx-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 40; /* above page + header, below modals (z-50+) */
+  pointer-events: none;
+  overflow: hidden;
+  contain: strict;
+}
+.fx-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.fx-fairy {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  pointer-events: auto;
+  cursor: pointer;
+  will-change: transform;
+  -webkit-tap-highlight-color: transparent;
+}
+.fx-fairy-inner {
+  position: absolute;
+  inset: 0;
+}
+.fx-fairy-halo {
+  position: absolute;
+  inset: -9px;
+  border-radius: 9999px;
+  opacity: var(--fx-halo-strength);
+}
+.fx-fairy-halo::before,
+.fx-fairy-halo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle, color-mix(in srgb, var(--fx-halo-a) 55%, transparent) 0%, transparent 68%);
+  animation: fx-halo 3.2s ease-in-out infinite;
+}
+.fx-fairy-halo::after {
+  background: radial-gradient(circle, color-mix(in srgb, var(--fx-halo-b) 50%, transparent) 0%, transparent 68%);
+  animation-delay: -1.6s;
+}
+.fx-fairy-wing {
+  position: absolute;
+  top: 50%;
+  width: 9px;
+  height: 12px;
+  margin-top: -11px;
+  border-radius: 70% 70% 45% 45% / 75% 75% 35% 35%;
+  background: color-mix(in srgb, var(--fx-wing) 42%, transparent);
+  border: 0.5px solid color-mix(in srgb, var(--fx-wing) 75%, transparent);
+  animation: fx-flap-l 0.2s ease-in-out infinite alternate;
+}
+.fx-fairy-wing.is-left {
+  right: 50%;
+  transform-origin: 100% 90%;
+}
+.fx-fairy-wing.is-right {
+  left: 50%;
+  transform-origin: 0% 90%;
+  animation-name: fx-flap-r;
+}
+.fx-fairy.is-resting .fx-fairy-wing {
+  animation-duration: 0.65s;
+}
+.fx-fairy-body {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 9999px;
+  background: var(--fx-fairy-core);
+  box-shadow: 0 0 5px 1px var(--fx-fairy-glow), 0 0 14px 4px color-mix(in srgb, var(--fx-fairy-glow) 45%, transparent);
+}
+.fx-fairy.is-star .fx-fairy-body {
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 0;
+  box-shadow: none;
+  clip-path: polygon(50% 0%, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0% 50%, 39% 39%);
+  filter: drop-shadow(0 0 3px var(--fx-fairy-glow));
+}
+.fx-fairy.is-star .fx-fairy-inner {
+  filter: drop-shadow(0 0 4px var(--fx-fairy-glow));
+}
+.fx-fairy.is-spinning .fx-fairy-inner {
+  animation: fx-spin 0.8s cubic-bezier(0.3, 0.7, 0.4, 1);
+}
+@keyframes fx-flap-l {
+  from { transform: rotate(-14deg) scaleX(1); }
+  to { transform: rotate(6deg) scaleX(0.35); }
+}
+@keyframes fx-flap-r {
+  from { transform: rotate(14deg) scaleX(1); }
+  to { transform: rotate(-6deg) scaleX(0.35); }
+}
+@keyframes fx-halo {
+  0%, 100% { transform: scale(0.75); opacity: 0.35; }
+  50% { transform: scale(1.15); opacity: 0.9; }
+}
+@keyframes fx-spin {
+  0% { transform: rotate(0deg) scale(1); }
+  45% { transform: rotate(420deg) scale(1.55); }
+  100% { transform: rotate(720deg) scale(1); }
+}
+
+/* ── Greenhouse arches ────────────────────────────────────────────── */
+@utility arch-top {
   border-top-left-radius: 9999px;
   border-top-right-radius: 9999px;
 }
 
-.arch-card {
+@utility arch-card {
   border-top-left-radius: 2.75rem;
   border-top-right-radius: 2.75rem;
   border-bottom-left-radius: 1.25rem;
   border-bottom-right-radius: 1.25rem;
 }
 
-.arch-card-sm {
+@utility arch-card-sm {
   border-top-left-radius: 2.25rem;
   border-top-right-radius: 2.25rem;
   border-bottom-left-radius: 1rem;
   border-bottom-right-radius: 1rem;
 }
 
-/* Fairy Magic Gradient: #D9C8F0 → #C9EDDC */
-.bg-fairy-gradient {
-  background: linear-gradient(135deg, #D9C8F0 0%, #C9EDDC 100%);
+/* ── Gradients ────────────────────────────────────────────────────── */
+/* Fairy magic gradient: day #D9C8F0 → #C9EDDC, night #B9A6F0 → #9FE3C4 */
+@utility bg-fairy-gradient {
+  background: linear-gradient(135deg, var(--c-gradient-from) 0%, var(--c-gradient-to) 100%);
 }
 
-.bg-sunbeam-gradient {
-  background: linear-gradient(135deg, #E1E8D8 0%, #EAF0E3 100%);
+@utility bg-sunbeam-gradient {
+  background: linear-gradient(135deg, var(--c-primary-tint) 0%, var(--c-surface) 100%);
 }
 
-.bg-moss-gradient {
-  background: linear-gradient(135deg, #E1E8D8 0%, #7E9C74 100%);
+@utility bg-moss-gradient {
+  background: linear-gradient(135deg, var(--c-primary-tint) 0%, var(--c-primary-soft) 100%);
 }
 
-/* Glassmorphism */
-.glass-conservatory {
-  background: rgba(245, 247, 240, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+/* ── Glassmorphism ────────────────────────────────────────────────── */
+@utility glass-conservatory {
+  background: color-mix(in srgb, var(--c-background) 85%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
-.glass-cloche {
-  background: rgba(234, 240, 227, 0.75);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+@utility glass-cloche {
+  background: color-mix(in srgb, var(--c-surface) 78%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
-/* Delicate Botanical Shadows & Borders */
-.shadow-botanical-sm {
-  box-shadow: 0 2px 8px -1px rgba(47, 58, 46, 0.06), 0 1px 3px 0 rgba(79, 107, 71, 0.08);
+/* ── Shadows & glows ──────────────────────────────────────────────── */
+@utility shadow-botanical-sm {
+  box-shadow: 0 2px 8px -1px rgb(var(--shadow-rgb) / 0.08), 0 1px 3px 0 rgb(var(--shadow-rgb) / 0.1);
 }
 
-.shadow-botanical {
-  box-shadow: 0 6px 18px -2px rgba(79, 107, 71, 0.1), 0 2px 6px -1px rgba(47, 58, 46, 0.05);
+@utility shadow-botanical {
+  box-shadow: 0 6px 18px -2px rgb(var(--shadow-rgb) / 0.14), 0 2px 6px -1px rgb(var(--shadow-rgb) / 0.08);
 }
 
-.shadow-botanical-lg {
-  box-shadow: 0 16px 32px -4px rgba(79, 107, 71, 0.14), 0 6px 12px -2px rgba(47, 58, 46, 0.06);
+@utility shadow-botanical-lg {
+  box-shadow: 0 16px 32px -4px rgb(var(--shadow-rgb) / 0.2), 0 6px 12px -2px rgb(var(--shadow-rgb) / 0.1);
 }
 
-.shadow-fairy-glow {
-  box-shadow: 0 0 20px rgba(125, 104, 168, 0.35);
+@utility shadow-fairy-glow {
+  box-shadow: var(--glow-accent);
 }
 
-/* Custom Scrollbar for horizontal shelves and lists */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+/* Soft glow for buttons, active tabs and live indicators */
+@utility glow-primary {
+  box-shadow: var(--glow-primary);
 }
-.no-scrollbar {
+
+@utility glow-accent {
+  box-shadow: var(--glow-accent);
+}
+
+@utility glow-gold {
+  box-shadow: var(--glow-gold);
+}
+
+/* ── Scrollbars ───────────────────────────────────────────────────── */
+@utility no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
-.botanical-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-.botanical-scrollbar::-webkit-scrollbar-track {
-  background: #EAF0E3;
-  border-radius: 9999px;
-}
-.botanical-scrollbar::-webkit-scrollbar-thumb {
-  background: #C9D4BC;
-  border-radius: 9999px;
-}
-.botanical-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #7E9C74;
+@utility botanical-scrollbar {
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: var(--c-surface);
+    border-radius: 9999px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--c-border);
+    border-radius: 9999px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--c-primary-soft);
+  }
 }

@@ -91,7 +91,7 @@ export const ComicCard: React.FC<ComicCardProps> = ({
         )}
 
         {/* Delicate Glass Inner Vignette */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-scrim/40 via-transparent to-scrim/20 pointer-events-none" />
 
         {/* Top Badges Row */}
         <div className="absolute top-2 left-2 right-2 flex items-center justify-between pointer-events-none z-10">
@@ -100,11 +100,11 @@ export const ComicCard: React.FC<ComicCardProps> = ({
 
           {/* Status Badge: NEW or COMPLETED */}
           {comic.has_new_chapter ? (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold bg-accent text-white border border-accent shadow-xs animate-pulse">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold bg-accent text-on-accent border border-accent shadow-xs animate-pulse">
               MỚI ✿
             </span>
           ) : isCompleted ? (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold bg-primary text-white border border-primary shadow-xs">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold bg-primary text-on-primary border border-primary shadow-xs">
               <span className="hidden sm:inline">HOÀN THÀNH</span>
               <span className="sm:hidden">XONG</span> 🌿
             </span>
@@ -118,13 +118,13 @@ export const ComicCard: React.FC<ComicCardProps> = ({
           aria-label={comic.is_favorite ? 'Bỏ yêu thích' : 'Yêu thích'}
           className={`absolute bottom-2 right-2 p-1.5 rounded-full backdrop-blur-md transition-all duration-200 z-10 cursor-pointer ${
             comic.is_favorite
-              ? 'bg-accent text-white shadow-md scale-105'
+              ? 'bg-accent text-on-accent shadow-md scale-105'
               : 'bg-surface/80 text-text-muted hover:bg-surface hover:text-text'
           }`}
         >
           <Bookmark
             size={14}
-            className={comic.is_favorite ? 'fill-white' : ''}
+            className={comic.is_favorite ? 'fill-on-accent' : ''}
           />
         </button>
       </div>

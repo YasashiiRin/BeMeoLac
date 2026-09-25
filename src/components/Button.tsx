@@ -36,7 +36,7 @@ export const Button: React.FC<ButtonProps> = ({
   const variantStyles = {
     // Primary forest green button
     primary:
-      'bg-primary text-white border-1.5 border-primary shadow-sm hover:bg-primary-soft hover:-translate-y-0.5 shadow-botanical-sm',
+      'bg-primary text-on-primary border-1.5 border-primary glow-primary hover:bg-primary-deep hover:-translate-y-0.5 shadow-botanical-sm',
     // Soft primary tint button
     secondary:
       'bg-primary-tint text-primary border-1.5 border-primary-soft hover:bg-surface hover:-translate-y-0.5 shadow-botanical-sm',
@@ -45,10 +45,10 @@ export const Button: React.FC<ButtonProps> = ({
       'bg-transparent text-text border-1.5 border-dashed border-border hover:bg-surface hover:border-primary',
     // Gold button (e.g. "+ Thêm truyện ✿")
     honey:
-      'bg-gold text-text border-1.5 border-border shadow-sm hover:bg-gold/90 hover:-translate-y-0.5 shadow-botanical-sm font-semibold',
+      'bg-gold text-on-gold border-1.5 border-border shadow-sm hover:bg-gold/90 hover:-translate-y-0.5 shadow-botanical-sm font-semibold',
     // Fairy magic gradient with soft glow
     enchanted:
-      'bg-fairy-gradient text-text border-1.5 border-accent-soft hover:opacity-95 hover:shadow-fairy-glow hover:-translate-y-0.5 font-semibold',
+      'bg-fairy-gradient text-on-gradient border-1.5 border-accent-soft hover:opacity-95 hover:shadow-fairy-glow hover:-translate-y-0.5 font-semibold',
     // Delicate outline
     outline:
       'bg-surface text-text border-1.5 border-border hover:border-primary hover:bg-background shadow-sm',

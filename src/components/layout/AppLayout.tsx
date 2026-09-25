@@ -4,6 +4,7 @@ import { Header } from './Header';
 import { MobileHeader } from './MobileHeader';
 import { MobileBottomNav } from './MobileBottomNav';
 import { ResponsiveDrawer } from '../ResponsiveDrawer';
+import { FairyEffects } from '../effects/FairyEffects';
 import { Button } from '../Button';
 import { useToast } from '../../context/ToastContext';
 import { comicsService, ComicSummary } from '../../services/comicService';
@@ -94,6 +95,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         </div>
       </footer>
 
+      {/* Ambient fairies & sparkles (click-through layer) */}
+      <FairyEffects />
+
       {/* Mobile Bottom Nav */}
       <MobileBottomNav onOpenAddModal={() => navigate('/add')} />
 
@@ -108,7 +112,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         <form onSubmit={handleQuickAddSubmit} className="flex flex-col gap-4">
           <div>
             <label className="block text-xs font-semibold text-text mb-1">
-              Tên truyện <span className="text-red-600">*</span>
+              Tên truyện <span className="text-danger">*</span>
             </label>
             <input
               type="text"

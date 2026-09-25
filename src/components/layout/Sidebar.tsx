@@ -68,7 +68,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onClick={() => onSelectShelf(shelf.id)}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs md:text-sm font-medium transition-all duration-200 cursor-pointer ${
                   isActive
-                    ? 'bg-fairy-gradient text-text border-1.5 border-accent-soft font-semibold shadow-botanical-sm'
+                    ? 'bg-fairy-gradient text-on-gradient border-1.5 border-accent-soft font-semibold glow-primary'
                     : 'text-text hover:bg-background hover:text-text border-1.5 border-transparent'
                 }`}
               >
@@ -79,7 +79,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <span
                   className={`text-xs px-2 py-0.5 rounded-full font-semibold tabular-nums shrink-0 ${
                     isActive
-                      ? 'bg-white/80 text-text shadow-xs'
+                      ? 'bg-surface-raised/80 text-text shadow-xs'
                       : 'bg-background text-text-muted'
                   }`}
                 >
@@ -113,7 +113,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               Trà chiều & Mục tiêu
             </h4>
           </div>
-          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-accent/20 text-accent border border-accent/40">
+          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-accent/20 text-accent-ink border border-accent/40">
             {completionPercentage}%
           </span>
         </div>

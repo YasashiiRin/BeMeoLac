@@ -9,6 +9,7 @@ import { Button } from '../components/Button';
 import { ResponsiveDrawer } from '../components/ResponsiveDrawer';
 import { ShelfFormModal } from '../components/ShelfFormModal';
 import { useToast } from '../context/ToastContext';
+import { useTheme } from '../context/ThemeContext';
 import {
   ArrowLeft,
   Plus,
@@ -38,6 +39,7 @@ export const ShelfDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { decoration } = useTheme();
 
   // Shelf data
   const [shelf, setShelf] = useState<Shelf | null>(null);
@@ -364,10 +366,10 @@ export const ShelfDetailPage: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
         <span className="text-4xl animate-bounce">🌸</span>
-        <h3 className="font-serif text-lg font-bold text-[#5E4636] mt-3">
+        <h3 className="font-serif text-lg font-bold text-text mt-3">
           Đang dọn ngăn kệ thảo mộc...
         </h3>
-        <p className="text-xs text-[#806350] mt-1 italic">
+        <p className="text-xs text-text-muted mt-1 italic">
           Bụi tiên đang đánh bóng từng gáy sách cổ
         </p>
       </div>
@@ -379,10 +381,10 @@ export const ShelfDetailPage: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <span className="text-5xl mb-3">🌿</span>
-        <h2 className="font-serif text-2xl font-bold text-[#5E4636] mb-2">
+        <h2 className="font-serif text-2xl font-bold text-text mb-2">
           Kệ sách không tồn tại
         </h2>
-        <p className="text-xs sm:text-sm text-[#806350] mb-6 max-w-sm">
+        <p className="text-xs sm:text-sm text-text-muted mb-6 max-w-sm">
           Có thể kệ sách đã được cất sang vương quốc khác hoặc đổi tên.
         </p>
         <Button variant="primary" onClick={() => navigate('/')}>
@@ -398,9 +400,9 @@ export const ShelfDetailPage: React.FC = () => {
       ? shelf.cover_urls
       : comics.map((c) => c.cover_url).filter(Boolean).slice(0, 3);
 
-  const primaryCover = collageCovers[1] || collageCovers[0] || '/src/assets/images/cottage_greenhouse_store_1790241469393.jpg';
-  const leftCover = collageCovers[0] || '/src/assets/images/secret_fairy_garden_1790241482673.jpg';
-  const rightCover = collageCovers[2] || collageCovers[0] || '/src/assets/images/traveler_in_sunlit_meadow_1790241493617.jpg';
+  const primaryCover = collageCovers[1] || collageCovers[0] || decoration('shelfCollageCenter');
+  const leftCover = collageCovers[0] || decoration('shelfCollageLeft');
+  const rightCover = collageCovers[2] || collageCovers[0] || decoration('shelfCollageRight');
 
   return (
     <div className="flex flex-col lg:flex-row items-start gap-6 lg:gap-8 max-w-[1440px] mx-auto w-full">
@@ -409,19 +411,19 @@ export const ShelfDetailPage: React.FC = () => {
       {/* ------------------------------------------------------------------- */}
       <aside className="hidden lg:flex lg:col-span-3 w-64 xl:w-72 shrink-0 flex-col gap-5">
         {/* Botanical Frame Card */}
-        <div className="bg-[#fff1ea] rounded-3xl p-5 shadow-sm border border-[#A67B5B]/30 relative overflow-hidden">
+        <div className="bg-surface rounded-3xl p-5 shadow-sm border border-border-strong/30 relative overflow-hidden">
           {/* Background decorative leaf tint */}
-          <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-[#4c6542]/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
 
           {/* Sidebar Header */}
-          <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#a8c49a]/40">
+          <div className="flex items-center justify-between pb-3 mb-3 border-b border-primary-soft/40">
             <div className="flex items-center gap-2">
               <span className="text-lg">🌿</span>
-              <h2 className="font-serif text-base font-bold text-[#29170a]">Kệ Của Nàng</h2>
+              <h2 className="font-serif text-base font-bold text-text">Kệ Của Nàng</h2>
             </div>
             <button
               onClick={() => setIsCreateShelfOpen(true)}
-              className="p-1 rounded-full hover:bg-[#ffd9df] text-[#894d59] transition-colors cursor-pointer"
+              className="p-1 rounded-full hover:bg-accent-tint text-accent-ink transition-colors cursor-pointer"
               title="Thêm ngăn kệ mới"
             >
               <Plus className="w-4 h-4" />
@@ -436,23 +438,23 @@ export const ShelfDetailPage: React.FC = () => {
                 return (
                   <div
                     key={s.id}
-                    className="flex items-center justify-between px-3.5 py-3 rounded-2xl bg-gradient-to-r from-[#ffd9df] via-[#ffe3d2] to-[#feb2c0] text-[#7b414e] shadow-md relative overflow-hidden transition-all transform scale-[1.02] cursor-pointer"
+                    className="flex items-center justify-between px-3.5 py-3 rounded-2xl bg-gradient-to-r from-accent-tint via-surface-sunken to-accent-soft text-accent-ink shadow-md relative overflow-hidden transition-all transform scale-[1.02] cursor-pointer"
                   >
-                    <span className="absolute top-1.5 right-2 w-1.5 h-1.5 rounded-full bg-[#ffdf97] animate-ping" />
+                    <span className="absolute top-1.5 right-2 w-1.5 h-1.5 rounded-full bg-gold-tint animate-ping" />
                     <div className="flex items-center gap-2.5 truncate">
-                      <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center shadow-xs shrink-0">
+                      <div className="w-7 h-7 rounded-full bg-surface-raised flex items-center justify-center shadow-xs shrink-0">
                         <span className="text-sm">{s.icon}</span>
                       </div>
                       <div className="flex flex-col truncate">
-                        <span className="font-serif text-sm font-bold text-[#7b414e] leading-tight truncate">
+                        <span className="font-serif text-sm font-bold text-accent-ink leading-tight truncate">
                           {s.name}
                         </span>
-                        <span className="text-[11px] text-[#6d3642] italic truncate">
+                        <span className="text-[11px] text-accent-ink italic truncate">
                           {s.description || 'Khu vườn an tĩnh'}
                         </span>
                       </div>
                     </div>
-                    <span className="px-2 py-0.5 rounded-full bg-white text-[#894d59] font-bold text-xs shadow-xs shrink-0">
+                    <span className="px-2 py-0.5 rounded-full bg-surface-raised text-accent-ink font-bold text-xs shadow-xs shrink-0">
                       {comics.length}
                     </span>
                   </div>
@@ -467,13 +469,13 @@ export const ShelfDetailPage: React.FC = () => {
                     if (s.id === 'all') navigate('/');
                     else navigate(`/shelves/${s.id}`);
                   }}
-                  className="flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-[#434840] hover:bg-[#ffeade] hover:text-[#29170a] transition-all group cursor-pointer text-left"
+                  className="flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-text-muted hover:bg-surface hover:text-text transition-all group cursor-pointer text-left"
                 >
                   <div className="flex items-center gap-2.5 truncate">
                     <span className="text-base shrink-0">{s.icon}</span>
                     <span className="text-sm font-medium truncate">{s.name}</span>
                   </div>
-                  <span className="px-2 py-0.5 rounded-full bg-[#ffdcc6] text-[#434840] text-xs font-semibold tabular-nums shrink-0">
+                  <span className="px-2 py-0.5 rounded-full bg-surface-sunken text-text-muted text-xs font-semibold tabular-nums shrink-0">
                     {s.comic_count}
                   </span>
                 </button>
@@ -483,26 +485,26 @@ export const ShelfDetailPage: React.FC = () => {
         </div>
 
         {/* Botanical Cloche Quick Info Widget: "Tiến trình chữa lành" */}
-        <div className="bg-[#fff1ea] rounded-3xl p-5 shadow-sm border border-[#A67B5B]/30 flex flex-col gap-3">
+        <div className="bg-surface rounded-3xl p-5 shadow-sm border border-border-strong/30 flex flex-col gap-3">
           <div className="flex items-center gap-2">
-            <Sun className="w-5 h-5 text-[#735b1f]" />
-            <span className="font-serif text-base font-bold text-[#29170a]">
+            <Sun className="w-5 h-5 text-gold-ink" />
+            <span className="font-serif text-base font-bold text-text">
               Tiến trình chữa lành
             </span>
           </div>
-          <p className="text-xs text-[#434840] leading-relaxed">
-            Nàng đã hoàn tất <strong className="text-[#29170a] font-bold">{completedCount}/{comics.length}</strong> chương mục bình yên trong tháng này.
+          <p className="text-xs text-text-muted leading-relaxed">
+            Nàng đã hoàn tất <strong className="text-text font-bold">{completedCount}/{comics.length}</strong> chương mục bình yên trong tháng này.
           </p>
           {/* Sunlit Progress Bar */}
-          <div className="w-full bg-[#ffdcc6] h-3 rounded-full overflow-hidden p-0.5">
+          <div className="w-full bg-surface-sunken h-3 rounded-full overflow-hidden p-0.5">
             <div
-              className="bg-gradient-to-r from-[#a8c49a] via-[#d7b973] to-[#feb2c0] h-full rounded-full transition-all duration-500"
+              className="bg-gradient-to-r from-primary-soft via-gold to-accent-soft h-full rounded-full transition-all duration-500"
               style={{ width: `${healPercent}%` }}
             />
           </div>
-          <div className="flex justify-between items-center text-xs text-[#434840]">
+          <div className="flex justify-between items-center text-xs text-text-muted">
             <span>{healPercent}% Hoàn thiện</span>
-            <span className="text-[#4c6542] font-bold">{remainingCount} truyện còn lại 🌿</span>
+            <span className="text-primary font-bold">{remainingCount} truyện còn lại 🌿</span>
           </div>
         </div>
       </aside>
@@ -517,13 +519,13 @@ export const ShelfDetailPage: React.FC = () => {
             type="button"
             onClick={() => navigate('/')}
             aria-label="Quay về tủ sách"
-            className="w-10 h-10 rounded-full bg-[#ffeade] flex items-center justify-center text-[#29170a] shadow-sm active:scale-95 transition-transform cursor-pointer border border-[#A67B5B]/20"
+            className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-text shadow-sm active:scale-95 transition-transform cursor-pointer border border-border-strong/20"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <div className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#fff1ea] border border-[#A67B5B]/30 shadow-sm">
+          <div className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-surface border border-border-strong/30 shadow-sm">
             <span className="text-sm">🌿</span>
-            <span className="font-serif text-[15px] font-bold text-[#4c6542] truncate max-w-[180px]">
+            <span className="font-serif text-[15px] font-bold text-primary truncate max-w-[180px]">
               {shelf.name}
             </span>
           </div>
@@ -532,25 +534,25 @@ export const ShelfDetailPage: React.FC = () => {
               type="button"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               aria-label="Tùy chọn kệ sách"
-              className="w-10 h-10 rounded-full bg-[#ffeade] flex items-center justify-center text-[#29170a] shadow-sm active:scale-95 transition-transform cursor-pointer border border-[#A67B5B]/20"
+              className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-text shadow-sm active:scale-95 transition-transform cursor-pointer border border-border-strong/20"
             >
               <MoreVertical className="w-5 h-5" />
             </button>
             {isMenuOpen && (
-              <div className="absolute right-0 mt-2 w-44 rounded-xl bg-white shadow-xl z-30 p-1.5 space-y-1 border border-[#A67B5B]/30">
+              <div className="absolute right-0 mt-2 w-44 rounded-xl bg-surface-raised shadow-xl z-30 p-1.5 space-y-1 border border-border-strong/30">
                 <button
                   type="button"
                   onClick={handleEditShelf}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-[#29170a] hover:bg-[#ffeade] transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-text hover:bg-surface transition-colors text-left"
                 >
-                  <Edit className="w-4 h-4 text-[#735b1f]" /> Sửa kệ
+                  <Edit className="w-4 h-4 text-gold-ink" /> Sửa kệ
                 </button>
                 <button
                   type="button"
                   onClick={handleShareShelf}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-[#29170a] hover:bg-[#ffeade] transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-text hover:bg-surface transition-colors text-left"
                 >
-                  <Share2 className="w-4 h-4 text-[#4c6542]" /> Chia sẻ kệ
+                  <Share2 className="w-4 h-4 text-primary" /> Chia sẻ kệ
                 </button>
                 <button
                   type="button"
@@ -558,7 +560,7 @@ export const ShelfDetailPage: React.FC = () => {
                     setIsMenuOpen(false);
                     setIsConfirmDeleteOpen(true);
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-[#ba1a1a] hover:bg-[#ffdad6] transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-danger hover:bg-danger-tint transition-colors text-left"
                 >
                   <Trash2 className="w-4 h-4" /> Xóa kệ sách
                 </button>
@@ -568,18 +570,18 @@ export const ShelfDetailPage: React.FC = () => {
         </div>
 
         {/* Desktop Breadcrumbs (ke-sach-desktop.html) */}
-        <div className="hidden lg:flex items-center gap-2 text-xs text-[#434840]">
+        <div className="hidden lg:flex items-center gap-2 text-xs text-text-muted">
           <span
             onClick={() => navigate('/')}
-            className="hover:text-[#4c6542] transition-colors cursor-pointer flex items-center gap-1"
+            className="hover:text-primary transition-colors cursor-pointer flex items-center gap-1"
           >
             <span>🏠</span>
             <span>Tủ Sách Tiên Nữ</span>
           </span>
           <span className="opacity-60">/</span>
-          <span className="text-[#7b414e] font-bold">Kệ Thảo Mộc</span>
+          <span className="text-accent-ink font-bold">Kệ Thảo Mộc</span>
           <span className="opacity-60">/</span>
-          <span className="font-serif font-bold text-sm text-[#29170a] italic">
+          <span className="font-serif font-bold text-sm text-text italic">
             {shelf.name} 🌿
           </span>
         </div>
@@ -588,67 +590,67 @@ export const ShelfDetailPage: React.FC = () => {
         {/* SHELF HEADER CARD: ONE LARGE CARD (ke-sach-desktop & mobile)       */}
         {/* ----------------------------------------------------------------- */}
         {/* Desktop View Header Card */}
-        <div className="hidden lg:block relative bg-[#fff1ea] rounded-3xl p-6 sm:p-8 shadow-md overflow-hidden border border-[#A67B5B]/30">
+        <div className="hidden lg:block relative bg-surface rounded-3xl p-6 sm:p-8 shadow-md overflow-hidden border border-border-strong/30">
           {/* Glass cloche shimmer & floral watermark background */}
-          <div className="absolute -top-12 -right-12 w-64 h-64 rounded-full bg-[#feb2c0]/30 blur-3xl pointer-events-none" />
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#894d59] via-[#735b1f] to-[#4c6542] opacity-60" />
+          <div className="absolute -top-12 -right-12 w-64 h-64 rounded-full bg-accent-soft/30 blur-3xl pointer-events-none" />
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-accent via-gold to-primary opacity-60" />
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8 items-center">
             {/* Left Header: 4-Story Collage Arched Frames (md:col-span-5) */}
             <div className="md:col-span-5 flex justify-center md:justify-start">
               <div className="relative w-64 h-60 sm:w-72 sm:h-64 flex items-center justify-center">
                 {/* Layer 1: Left Angled */}
-                <div className="absolute left-2 bottom-3 w-28 h-40 sm:w-32 sm:h-44 rounded-t-full rounded-b-xl shadow-md transform -rotate-12 hover:-rotate-6 transition-transform duration-300 overflow-hidden bg-[#ffdcc6] border border-[#A67B5B]/30">
+                <div className="absolute left-2 bottom-3 w-28 h-40 sm:w-32 sm:h-44 rounded-t-full rounded-b-xl shadow-md transform -rotate-12 hover:-rotate-6 transition-transform duration-300 overflow-hidden bg-surface-sunken border border-border-strong/30">
                   <img
                     src={leftCover}
                     alt="Bìa truyện 1"
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#412c1d]/60 via-transparent to-transparent" />
-                  <span className="absolute bottom-1.5 left-2 text-[10px] font-bold text-white shadow-xs">
+                  <div className="absolute inset-0 bg-gradient-to-t from-scrim/60 via-transparent to-transparent" />
+                  <span className="absolute bottom-1.5 left-2 text-[10px] font-bold text-on-scrim shadow-xs">
                     Tập 01
                   </span>
                 </div>
 
                 {/* Layer 2: Right Angled */}
-                <div className="absolute right-2 bottom-4 w-28 h-40 sm:w-32 sm:h-44 rounded-t-full rounded-b-xl shadow-md transform rotate-12 hover:rotate-6 transition-transform duration-300 overflow-hidden bg-[#ffdcc6] border border-[#A67B5B]/30">
+                <div className="absolute right-2 bottom-4 w-28 h-40 sm:w-32 sm:h-44 rounded-t-full rounded-b-xl shadow-md transform rotate-12 hover:rotate-6 transition-transform duration-300 overflow-hidden bg-surface-sunken border border-border-strong/30">
                   <img
                     src={rightCover}
                     alt="Bìa truyện 2"
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#412c1d]/60 via-transparent to-transparent" />
-                  <span className="absolute bottom-1.5 right-2 text-[10px] font-bold text-white shadow-xs">
+                  <div className="absolute inset-0 bg-gradient-to-t from-scrim/60 via-transparent to-transparent" />
+                  <span className="absolute bottom-1.5 right-2 text-[10px] font-bold text-on-scrim shadow-xs">
                     Mùa Hạ
                   </span>
                 </div>
 
                 {/* Layer 3: Central Highlight Cover */}
-                <div className="absolute z-10 bottom-0 w-32 h-48 sm:w-36 sm:h-52 rounded-t-full rounded-b-xl shadow-xl overflow-hidden bg-white ring-2 ring-white/80 transform hover:scale-105 transition-all duration-300 border border-[#A67B5B]/40">
+                <div className="absolute z-10 bottom-0 w-32 h-48 sm:w-36 sm:h-52 rounded-t-full rounded-b-xl shadow-xl overflow-hidden bg-surface-raised ring-2 ring-surface-raised/80 transform hover:scale-105 transition-all duration-300 border border-border-strong/40">
                   <img
                     src={primaryCover}
                     alt={shelf.name}
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#29170a]/70 via-transparent to-transparent" />
-                  <span className="absolute top-2 right-2 w-5 h-5 rounded-full bg-[#feb2c0] text-[#7b414e] flex items-center justify-center text-xs shadow-sm">
+                  <div className="absolute inset-0 bg-gradient-to-t from-scrim/70 via-transparent to-transparent" />
+                  <span className="absolute top-2 right-2 w-5 h-5 rounded-full bg-accent-soft text-accent-ink flex items-center justify-center text-xs shadow-sm">
                     ✿
                   </span>
                   <div className="absolute bottom-2 left-2 right-2 text-center">
-                    <span className="font-serif text-sm sm:text-base font-bold text-white drop-shadow-sm block leading-tight truncate">
+                    <span className="font-serif text-sm sm:text-base font-bold text-on-scrim drop-shadow-sm block leading-tight truncate">
                       {shelf.name}
                     </span>
-                    <span className="text-[10px] text-[#ffdf97] font-semibold">
+                    <span className="text-[10px] text-gold font-semibold">
                       {shelf.icon || 'Bộ Tuyển Tập'} #1
                     </span>
                   </div>
                 </div>
 
                 {/* Wax Seal Stamp & Dried Ivy Leaf Accent */}
-                <div className="absolute -top-1 left-8 z-20 w-8 h-8 rounded-full bg-[#894d59] text-white shadow-md flex items-center justify-center text-xs select-none">
+                <div className="absolute -top-1 left-8 z-20 w-8 h-8 rounded-full bg-accent text-on-accent shadow-md flex items-center justify-center text-xs select-none">
                   🌿
                 </div>
-                <div className="absolute -bottom-2 right-6 z-20 w-7 h-7 rounded-full bg-[#735b1f] text-white shadow-sm flex items-center justify-center text-[10px] select-none">
+                <div className="absolute -bottom-2 right-6 z-20 w-7 h-7 rounded-full bg-gold text-on-gold shadow-sm flex items-center justify-center text-[10px] select-none">
                   ✨
                 </div>
               </div>
@@ -657,43 +659,43 @@ export const ShelfDetailPage: React.FC = () => {
             {/* Right Header: Shelf Metadata & CTAs (md:col-span-7) */}
             <div className="md:col-span-7 flex flex-col gap-3">
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full bg-[#a8c49a] text-[#3a5230] font-bold text-xs tracking-wide">
+                <span className="px-2.5 py-0.5 rounded-full bg-primary-tint border border-primary-soft/60 text-primary-ink font-bold text-xs tracking-wide">
                   ✿ KỆ RIÊNG TƯ
                 </span>
-                <span className="text-xs text-[#434840] font-medium">
+                <span className="text-xs text-text-muted font-medium">
                   Ghi chép từ vương quốc mộng mơ
                 </span>
               </div>
 
               {/* Title & Botanical Icon */}
               <div className="flex items-baseline gap-3 flex-wrap">
-                <h1 className="font-serif text-3xl sm:text-4xl text-[#29170a] font-bold tracking-tight">
+                <h1 className="font-serif text-3xl sm:text-4xl text-text font-bold tracking-tight">
                   {shelf.name}
                 </h1>
-                <span className="font-serif text-2xl text-[#894d59] italic">
+                <span className="font-serif text-2xl text-accent-ink italic">
                   {shelf.icon || '✿'}
                 </span>
               </div>
 
               {/* Description */}
-              <p className="font-serif italic text-base sm:text-lg text-[#434840] leading-relaxed">
+              <p className="font-serif italic text-base sm:text-lg text-text-muted leading-relaxed">
                 “{shelf.description || 'Những bộ truyện nhẹ nhàng, êm dịu như tách trà hoa cúc nóng giữa chiều mưa, đọc trước khi ngủ để ru hồn vào giấc mộng thần tiên.'}”
               </p>
 
               {/* Statistics Meta Pill */}
-              <div className="flex items-center gap-3 text-[#434840] text-xs sm:text-sm flex-wrap pt-1">
+              <div className="flex items-center gap-3 text-text-muted text-xs sm:text-sm flex-wrap pt-1">
                 <span className="flex items-center gap-1">
-                  <BookOpen className="w-4 h-4 text-[#4c6542]" />
-                  <strong className="text-[#29170a] font-bold">{comics.length}</strong> truyện
+                  <BookOpen className="w-4 h-4 text-primary" />
+                  <strong className="text-text font-bold">{comics.length}</strong> truyện
                 </span>
-                <span className="text-[#c4c8bd]">•</span>
+                <span className="text-border-strong">•</span>
                 <span className="flex items-center gap-1">
-                  <CheckCircle2 className="w-4 h-4 text-[#894d59]" />
-                  <strong className="text-[#29170a] font-bold">{completedCount}</strong> đã đọc xong
+                  <CheckCircle2 className="w-4 h-4 text-accent-ink" />
+                  <strong className="text-text font-bold">{completedCount}</strong> đã đọc xong
                 </span>
-                <span className="text-[#c4c8bd]">•</span>
+                <span className="text-border-strong">•</span>
                 <span className="flex items-center gap-1">
-                  <Clock className="w-4 h-4 text-[#735b1f]" />
+                  <Clock className="w-4 h-4 text-gold-ink" />
                   Cập nhật 3 ngày trước
                 </span>
               </div>
@@ -704,9 +706,9 @@ export const ShelfDetailPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleOpenAddPicker}
-                  className="inline-flex items-center gap-2 bg-[#ffdf97] hover:bg-[#e2c37c] text-[#251a00] font-bold text-sm px-5 py-2.5 rounded-full shadow-md active:translate-y-0.5 transition-all group cursor-pointer border border-[#d7b973]"
+                  className="inline-flex items-center gap-2 bg-gold-tint hover:bg-gold text-gold-ink font-bold text-sm px-5 py-2.5 rounded-full shadow-md active:translate-y-0.5 transition-all group cursor-pointer border border-gold"
                 >
-                  <Plus className="w-4 h-4 text-[#251a00] group-hover:rotate-90 transition-transform" />
+                  <Plus className="w-4 h-4 text-gold-ink group-hover:rotate-90 transition-transform" />
                   <span>+ Thêm truyện vào kệ</span>
                 </button>
 
@@ -714,9 +716,9 @@ export const ShelfDetailPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleEditShelf}
-                  className="inline-flex items-center gap-1.5 bg-[#ffeade] hover:bg-[#ffe3d2] text-[#29170a] font-bold text-sm px-4 py-2.5 rounded-full transition-all cursor-pointer border border-[#A67B5B]/20"
+                  className="inline-flex items-center gap-1.5 bg-surface hover:bg-surface-sunken text-text font-bold text-sm px-4 py-2.5 rounded-full transition-all cursor-pointer border border-border-strong/20"
                 >
-                  <Edit className="w-4 h-4 text-[#5E4636]" />
+                  <Edit className="w-4 h-4 text-text" />
                   <span>Sửa kệ</span>
                 </button>
 
@@ -725,38 +727,38 @@ export const ShelfDetailPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    className="w-10 h-10 rounded-full bg-[#ffeade] hover:bg-[#ffe3d2] text-[#29170a] flex items-center justify-center transition-all shadow-xs cursor-pointer border border-[#A67B5B]/20"
+                    className="w-10 h-10 rounded-full bg-surface hover:bg-surface-sunken text-text flex items-center justify-center transition-all shadow-xs cursor-pointer border border-border-strong/20"
                     title="Tùy chọn khác"
                   >
                     <MoreVertical className="w-4 h-4" />
                   </button>
 
                   {isMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-white p-2 shadow-xl z-30 border border-[#A67B5B]/30 flex flex-col gap-1 animate-in fade-in zoom-in-95">
+                    <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-surface-raised p-2 shadow-xl z-30 border border-border-strong/30 flex flex-col gap-1 animate-in fade-in zoom-in-95">
                       <button
                         type="button"
                         onClick={handleShareShelf}
-                        className="flex items-center gap-2 px-3 py-2 rounded-xl text-[#29170a] text-xs font-semibold hover:bg-[#ffeade] transition-colors cursor-pointer text-left w-full"
+                        className="flex items-center gap-2 px-3 py-2 rounded-xl text-text text-xs font-semibold hover:bg-surface transition-colors cursor-pointer text-left w-full"
                       >
-                        <Share2 className="w-4 h-4 text-[#4c6542]" />
+                        <Share2 className="w-4 h-4 text-primary" />
                         <span>Chia sẻ kệ hoa</span>
                       </button>
                       <button
                         type="button"
                         onClick={handleEditShelf}
-                        className="flex items-center gap-2 px-3 py-2 rounded-xl text-[#29170a] text-xs font-semibold hover:bg-[#ffeade] transition-colors cursor-pointer text-left w-full"
+                        className="flex items-center gap-2 px-3 py-2 rounded-xl text-text text-xs font-semibold hover:bg-surface transition-colors cursor-pointer text-left w-full"
                       >
-                        <Edit className="w-4 h-4 text-[#735b1f]" />
+                        <Edit className="w-4 h-4 text-gold-ink" />
                         <span>Đổi tên kệ</span>
                       </button>
-                      <div className="my-1 border-t border-[#c4c8bd]/40" />
+                      <div className="my-1 border-t border-border/40" />
                       <button
                         type="button"
                         onClick={() => {
                           setIsMenuOpen(false);
                           setIsConfirmDeleteOpen(true);
                         }}
-                        className="flex items-center gap-2 px-3 py-2 rounded-xl text-[#ba1a1a] text-xs font-semibold hover:bg-[#ffdad6] transition-colors cursor-pointer text-left w-full"
+                        className="flex items-center gap-2 px-3 py-2 rounded-xl text-danger text-xs font-semibold hover:bg-danger-tint transition-colors cursor-pointer text-left w-full"
                       >
                         <Trash2 className="w-4 h-4" />
                         <span>Xóa kệ này</span>
@@ -774,11 +776,11 @@ export const ShelfDetailPage: React.FC = () => {
           {/* Arched Botanical Collage Frame */}
           <div className="relative w-48 h-56 flex items-center justify-center">
             {/* Background Cloche/Arch Glow */}
-            <div className="absolute inset-0 rounded-t-full rounded-b-2xl bg-gradient-to-b from-[#a8c49a]/40 via-[#ffdf97]/30 to-[#ffe3d2] shadow-inner" />
+            <div className="absolute inset-0 rounded-t-full rounded-b-2xl bg-gradient-to-b from-primary-soft/40 via-gold-tint/30 to-surface-sunken shadow-inner" />
             {/* Layered Book Covers Collage */}
             <div className="relative w-40 h-48 flex items-center justify-center">
               {/* Background Layer Book Left */}
-              <div className="absolute left-1 bottom-3 w-24 h-36 rounded-t-full rounded-b-lg overflow-hidden shadow-md -rotate-12 transform opacity-80 scale-90 bg-[#ffdcc6]">
+              <div className="absolute left-1 bottom-3 w-24 h-36 rounded-t-full rounded-b-lg overflow-hidden shadow-md -rotate-12 transform opacity-80 scale-90 bg-surface-sunken">
                 <img
                   src={leftCover}
                   alt="Bìa 1"
@@ -786,7 +788,7 @@ export const ShelfDetailPage: React.FC = () => {
                 />
               </div>
               {/* Background Layer Book Right */}
-              <div className="absolute right-1 bottom-3 w-24 h-36 rounded-t-full rounded-b-lg overflow-hidden shadow-md rotate-12 transform opacity-80 scale-90 bg-[#ffdcc6]">
+              <div className="absolute right-1 bottom-3 w-24 h-36 rounded-t-full rounded-b-lg overflow-hidden shadow-md rotate-12 transform opacity-80 scale-90 bg-surface-sunken">
                 <img
                   src={rightCover}
                   alt="Bìa 2"
@@ -794,45 +796,45 @@ export const ShelfDetailPage: React.FC = () => {
                 />
               </div>
               {/* Hero Center Arched Book Cover */}
-              <div className="relative z-10 w-28 h-42 rounded-t-full rounded-b-xl overflow-hidden shadow-xl ring-2 ring-white">
+              <div className="relative z-10 w-28 h-42 rounded-t-full rounded-b-xl overflow-hidden shadow-xl ring-2 ring-surface-raised">
                 <img
                   alt={shelf.name}
                   className="w-full h-full object-cover"
                   src={primaryCover}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#412c1d]/40 via-transparent to-transparent" />
-                <span className="absolute bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-white/90 text-[10px] font-bold text-[#29170a] shadow-xs whitespace-nowrap">
+                <div className="absolute inset-0 bg-gradient-to-t from-scrim/40 via-transparent to-transparent" />
+                <span className="absolute bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-surface-raised/90 text-[10px] font-bold text-text shadow-xs whitespace-nowrap">
                   Tập đặc biệt 🌸
                 </span>
               </div>
             </div>
             {/* Whimsical Botanical Leaf Ornament */}
-            <div className="absolute -top-2 right-1 text-[#a8c49a] animate-pulse select-none">
+            <div className="absolute -top-2 right-1 text-primary-soft animate-pulse select-none">
               <span className="text-2xl">🌿</span>
             </div>
-            <div className="absolute -bottom-2 -left-1 text-[#d7b973] select-none">
+            <div className="absolute -bottom-2 -left-1 text-gold select-none">
               <span className="text-xl">✨</span>
             </div>
           </div>
 
           {/* Shelf Meta & Titles */}
           <div className="space-y-1.5 max-w-xs">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#feb2c0]/40 text-[#7b414e] text-[10px] font-bold">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent-soft/40 text-accent-ink text-[10px] font-bold">
               <span>✿</span>
               <span>KỆ RIÊNG TƯ · Ghi chép từ vương quốc mộng mơ</span>
             </div>
-            <h1 className="font-serif text-2xl text-[#29170a] font-bold tracking-tight pt-1">
-              {shelf.name} <span className="text-[#4c6542]">{shelf.icon || '🌿'}</span>
+            <h1 className="font-serif text-2xl text-text font-bold tracking-tight pt-1">
+              {shelf.name} <span className="text-primary">{shelf.icon || '🌿'}</span>
             </h1>
-            <p className="text-xs text-[#434840] leading-relaxed px-2 italic">
+            <p className="text-xs text-text-muted leading-relaxed px-2 italic">
               “{shelf.description || 'Những bộ truyện nhẹ nhàng, êm dịu như tách trà hoa cúc nóng giữa chiều mưa, đọc trước khi ngủ để ru hồn vào giấc mộng thần tiên.'}”
             </p>
             {/* Stats Bar */}
-            <div className="pt-1 flex items-center justify-center gap-2 text-[11px] font-medium text-[#434840]/80">
+            <div className="pt-1 flex items-center justify-center gap-2 text-[11px] font-medium text-text-muted">
               <span>📖 {comics.length} truyện</span>
-              <span className="text-[#735b1f]">·</span>
+              <span className="text-gold-ink">·</span>
               <span>🌿 {completedCount} đã đọc xong</span>
-              <span className="text-[#735b1f]">·</span>
+              <span className="text-gold-ink">·</span>
               <span>🕒 Cập nhật 3 ngày trước</span>
             </div>
           </div>
@@ -843,9 +845,9 @@ export const ShelfDetailPage: React.FC = () => {
             <button
               type="button"
               onClick={handleOpenAddPicker}
-              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#d7b973] via-[#ffdf97] to-[#d7b973] text-[#251a00] font-bold text-sm shadow-md hover:shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer border border-[#d7b973]"
+              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-gold via-gold-tint to-gold text-gold-ink font-bold text-sm shadow-md hover:shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer border border-gold"
             >
-              <Sparkles className="w-4 h-4 text-[#251a00]" />
+              <Sparkles className="w-4 h-4 text-gold-ink" />
               <span>+ Thêm truyện vào kệ</span>
             </button>
 
@@ -854,17 +856,17 @@ export const ShelfDetailPage: React.FC = () => {
               <button
                 type="button"
                 onClick={handleEditShelf}
-                className="py-2 px-3 rounded-lg bg-[#ffeade] hover:bg-[#ffe3d2] text-[#29170a] font-bold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer border border-[#A67B5B]/20"
+                className="py-2 px-3 rounded-lg bg-surface hover:bg-surface-sunken text-text font-bold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer border border-border-strong/20"
               >
-                <Edit className="w-3.5 h-3.5 text-[#735b1f]" />
+                <Edit className="w-3.5 h-3.5 text-gold-ink" />
                 <span>Sửa kệ</span>
               </button>
               <button
                 type="button"
                 onClick={handleShareShelf}
-                className="py-2 px-3 rounded-lg bg-[#ffeade] hover:bg-[#ffe3d2] text-[#29170a] font-bold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer border border-[#A67B5B]/20"
+                className="py-2 px-3 rounded-lg bg-surface hover:bg-surface-sunken text-text font-bold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer border border-border-strong/20"
               >
-                <Share2 className="w-3.5 h-3.5 text-[#4c6542]" />
+                <Share2 className="w-3.5 h-3.5 text-primary" />
                 <span>Chia sẻ</span>
               </button>
             </div>
@@ -875,11 +877,11 @@ export const ShelfDetailPage: React.FC = () => {
         {/* SORT BAR: SAME LAYOUT & STYLE AS DESIGN                           */}
         {/* ----------------------------------------------------------------- */}
         {/* Desktop Sort Bar (ke-sach-desktop.html) */}
-        <div className="hidden lg:flex bg-[#fff1ea] rounded-2xl p-4 shadow-sm border border-[#A67B5B]/30 flex-row items-center justify-between gap-4">
+        <div className="hidden lg:flex bg-surface rounded-2xl p-4 shadow-sm border border-border-strong/30 flex-row items-center justify-between gap-4">
           {/* Reorder & Sort Options */}
           <div className="flex items-center gap-2.5 flex-wrap">
-            <span className="text-[#434840] text-xs font-semibold flex items-center gap-1">
-              <SlidersHorizontal className="w-4 h-4 text-[#434840]" />
+            <span className="text-text-muted text-xs font-semibold flex items-center gap-1">
+              <SlidersHorizontal className="w-4 h-4 text-text-muted" />
               Sắp xếp theo:
             </span>
 
@@ -889,8 +891,8 @@ export const ShelfDetailPage: React.FC = () => {
               onClick={() => setSortOption('custom')}
               className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-bold text-xs transition-all cursor-pointer ${
                 sortOption === 'custom'
-                  ? 'bg-[#ffd9df] text-[#370b18] shadow-xs border border-[#feb2c0]'
-                  : 'bg-[#ffeade] hover:bg-[#ffe3d2] text-[#434840]'
+                  ? 'bg-accent-tint text-accent-ink shadow-xs border border-accent-soft'
+                  : 'bg-surface hover:bg-surface-sunken text-text-muted'
               }`}
             >
               <ArrowUpDown className="w-3.5 h-3.5" />
@@ -903,8 +905,8 @@ export const ShelfDetailPage: React.FC = () => {
               onClick={() => setSortOption('newest')}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors cursor-pointer ${
                 sortOption === 'newest'
-                  ? 'bg-[#4c6542] text-white shadow-xs'
-                  : 'bg-[#ffeade] hover:bg-[#ffe3d2] text-[#434840]'
+                  ? 'bg-primary text-on-primary shadow-xs'
+                  : 'bg-surface hover:bg-surface-sunken text-text-muted'
               }`}
             >
               Mới thêm
@@ -915,8 +917,8 @@ export const ShelfDetailPage: React.FC = () => {
               onClick={() => setSortOption('alphabetical')}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors cursor-pointer ${
                 sortOption === 'alphabetical'
-                  ? 'bg-[#4c6542] text-white shadow-xs'
-                  : 'bg-[#ffeade] hover:bg-[#ffe3d2] text-[#434840]'
+                  ? 'bg-primary text-on-primary shadow-xs'
+                  : 'bg-surface hover:bg-surface-sunken text-text-muted'
               }`}
             >
               Tên A-Z
@@ -927,8 +929,8 @@ export const ShelfDetailPage: React.FC = () => {
               onClick={() => setSortOption('rating')}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1 ${
                 sortOption === 'rating'
-                  ? 'bg-[#4c6542] text-white shadow-xs'
-                  : 'bg-[#ffeade] hover:bg-[#ffe3d2] text-[#434840]'
+                  ? 'bg-primary text-on-primary shadow-xs'
+                  : 'bg-surface hover:bg-surface-sunken text-text-muted'
               }`}
             >
               <span>Đánh giá cao</span>
@@ -939,21 +941,21 @@ export const ShelfDetailPage: React.FC = () => {
           {/* View Mode & Interaction Guide Indicator */}
           <div className="flex items-center gap-3">
             {sortOption === 'custom' && (
-              <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-[#a8c49a]/40 text-[#3a5230] text-xs font-semibold">
+              <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-primary-soft/40 text-primary-ink text-xs font-semibold">
                 <GripVertical className="w-3.5 h-3.5" />
                 <span>Giữ <span className="font-mono font-bold">⠿</span> để kéo thả</span>
               </div>
             )}
 
             {/* Grid / List Switcher */}
-            <div className="flex items-center bg-[#ffeade] rounded-full p-1 shadow-inner border border-[#A67B5B]/20">
+            <div className="flex items-center bg-surface rounded-full p-1 shadow-inner border border-border-strong/20">
               <button
                 type="button"
                 onClick={() => setViewMode('grid')}
                 className={`p-1.5 rounded-full transition-all cursor-pointer ${
                   viewMode === 'grid'
-                    ? 'bg-white text-[#4c6542] shadow-xs'
-                    : 'text-[#434840] hover:text-[#29170a]'
+                    ? 'bg-surface-raised text-primary shadow-xs'
+                    : 'text-text-muted hover:text-text'
                 }`}
                 title="Xem dạng lưới vòm hoa"
               >
@@ -964,8 +966,8 @@ export const ShelfDetailPage: React.FC = () => {
                 onClick={() => setViewMode('list')}
                 className={`p-1.5 rounded-full transition-all cursor-pointer ${
                   viewMode === 'list'
-                    ? 'bg-white text-[#4c6542] shadow-xs'
-                    : 'text-[#434840] hover:text-[#29170a]'
+                    ? 'bg-surface-raised text-primary shadow-xs'
+                    : 'text-text-muted hover:text-text'
                 }`}
                 title="Xem dạng danh sách thư tịch"
               >
@@ -985,8 +987,8 @@ export const ShelfDetailPage: React.FC = () => {
                 onClick={() => setSortOption('custom')}
                 className={`px-3 py-1 rounded-full text-xs font-bold shadow-xs flex items-center gap-1 cursor-pointer whitespace-nowrap ${
                   sortOption === 'custom'
-                    ? 'bg-[#4c6542] text-white'
-                    : 'bg-[#ffeade] text-[#434840]'
+                    ? 'bg-primary text-on-primary'
+                    : 'bg-surface text-text-muted'
                 }`}
               >
                 <span>Tự sắp xếp</span>
@@ -997,8 +999,8 @@ export const ShelfDetailPage: React.FC = () => {
                 onClick={() => setSortOption('newest')}
                 className={`px-3 py-1 rounded-full text-xs font-bold transition-colors cursor-pointer whitespace-nowrap ${
                   sortOption === 'newest'
-                    ? 'bg-[#4c6542] text-white'
-                    : 'bg-[#ffeade] text-[#434840]'
+                    ? 'bg-primary text-on-primary'
+                    : 'bg-surface text-text-muted'
                 }`}
               >
                 Mới thêm
@@ -1008,20 +1010,20 @@ export const ShelfDetailPage: React.FC = () => {
                 onClick={() => setSortOption('rating')}
                 className={`px-3 py-1 rounded-full text-xs font-bold transition-colors flex items-center gap-0.5 cursor-pointer whitespace-nowrap ${
                   sortOption === 'rating'
-                    ? 'bg-[#4c6542] text-white'
-                    : 'bg-[#ffeade] text-[#434840]'
+                    ? 'bg-primary text-on-primary'
+                    : 'bg-surface text-text-muted'
                 }`}
               >
                 <span>Đánh giá</span>
-                <span className="text-[#735b1f]">★</span>
+                <span className="text-gold-ink">★</span>
               </button>
               <button
                 type="button"
                 onClick={() => setSortOption('alphabetical')}
                 className={`px-3 py-1 rounded-full text-xs font-bold transition-colors cursor-pointer whitespace-nowrap ${
                   sortOption === 'alphabetical'
-                    ? 'bg-[#4c6542] text-white'
-                    : 'bg-[#ffeade] text-[#434840]'
+                    ? 'bg-primary text-on-primary'
+                    : 'bg-surface text-text-muted'
                 }`}
               >
                 Tên A-Z
@@ -1029,14 +1031,14 @@ export const ShelfDetailPage: React.FC = () => {
             </div>
 
             {/* View Switcher */}
-            <div className="flex items-center bg-[#ffeade] rounded-lg p-0.5 ml-2 shrink-0 border border-[#A67B5B]/20">
+            <div className="flex items-center bg-surface rounded-lg p-0.5 ml-2 shrink-0 border border-border-strong/20">
               <button
                 type="button"
                 onClick={() => setViewMode('grid')}
                 className={`p-1 rounded-md transition-all ${
                   viewMode === 'grid'
-                    ? 'bg-white text-[#4c6542] shadow-xs'
-                    : 'text-[#434840]/70'
+                    ? 'bg-surface-raised text-primary shadow-xs'
+                    : 'text-text-muted'
                 }`}
               >
                 <LayoutGrid className="w-4 h-4" />
@@ -1046,8 +1048,8 @@ export const ShelfDetailPage: React.FC = () => {
                 onClick={() => setViewMode('list')}
                 className={`p-1 rounded-md transition-all ${
                   viewMode === 'list'
-                    ? 'bg-white text-[#4c6542] shadow-xs'
-                    : 'text-[#434840]/70'
+                    ? 'bg-surface-raised text-primary shadow-xs'
+                    : 'text-text-muted'
                 }`}
               >
                 <List className="w-4 h-4" />
@@ -1057,10 +1059,10 @@ export const ShelfDetailPage: React.FC = () => {
 
           {/* Reorder Helper Caption */}
           <div className="flex items-center justify-between px-1">
-            <span className="text-[11px] text-[#434840]/70 flex items-center gap-1">
+            <span className="text-[11px] text-text-muted flex items-center gap-1">
               <GripVertical className="w-3 h-3" /> Giữ ⠿ để kéo thả thứ tự truyện
             </span>
-            <span className="text-[11px] font-bold text-[#4c6542]">
+            <span className="text-[11px] font-bold text-primary">
               {comics.length} tác phẩm
             </span>
           </div>
@@ -1122,7 +1124,7 @@ export const ShelfDetailPage: React.FC = () => {
                     isDraggingThis ? 'opacity-40 scale-95' : ''
                   } ${
                     isOverThis && !isDraggingThis
-                      ? 'ring-2 ring-[#4c6542] ring-offset-2 scale-[1.02] rounded-3xl'
+                      ? 'ring-2 ring-primary ring-offset-2 scale-[1.02] rounded-3xl'
                       : ''
                   }`}
                 >
@@ -1130,14 +1132,14 @@ export const ShelfDetailPage: React.FC = () => {
                   {sortOption === 'custom' && (
                     <div className="absolute top-3 left-3 z-20 flex items-center gap-1">
                       <div
-                        className="w-8 h-8 rounded-full bg-white/90 backdrop-blur-md text-[#29170a] shadow-md flex items-center justify-center cursor-grab active:cursor-grabbing hover:bg-[#ffd9df] transition-colors border border-[#A67B5B]/20"
+                        className="w-8 h-8 rounded-full bg-surface-raised/90 backdrop-blur-md text-text shadow-md flex items-center justify-center cursor-grab active:cursor-grabbing hover:bg-accent-tint transition-colors border border-border-strong/20"
                         title="Kéo thả để sắp xếp vị trí"
                       >
                         <GripVertical className="w-4 h-4" />
                       </div>
 
                       {/* Manual Move Nudge Buttons (Touch/Mobile Friendly) */}
-                      <div className="hidden group-hover:flex items-center gap-0.5 bg-white/90 backdrop-blur-md rounded-full shadow-md border border-[#A67B5B]/20 p-0.5">
+                      <div className="hidden group-hover:flex items-center gap-0.5 bg-surface-raised/90 backdrop-blur-md rounded-full shadow-md border border-border-strong/20 p-0.5">
                         <button
                           type="button"
                           onClick={(e) => {
@@ -1145,7 +1147,7 @@ export const ShelfDetailPage: React.FC = () => {
                             handleManualMove(comic.id, 'left');
                           }}
                           disabled={index === 0}
-                          className="w-6 h-6 rounded-full hover:bg-[#ffeade] flex items-center justify-center text-[#29170a] disabled:opacity-30 cursor-pointer"
+                          className="w-6 h-6 rounded-full hover:bg-surface flex items-center justify-center text-text disabled:opacity-30 cursor-pointer"
                           title="Chuyển sang trước"
                         >
                           <ChevronLeft className="w-3.5 h-3.5" />
@@ -1157,7 +1159,7 @@ export const ShelfDetailPage: React.FC = () => {
                             handleManualMove(comic.id, 'right');
                           }}
                           disabled={index === sortedComics.length - 1}
-                          className="w-6 h-6 rounded-full hover:bg-[#ffeade] flex items-center justify-center text-[#29170a] disabled:opacity-30 cursor-pointer"
+                          className="w-6 h-6 rounded-full hover:bg-surface flex items-center justify-center text-text disabled:opacity-30 cursor-pointer"
                           title="Chuyển sang sau"
                         >
                           <ChevronRight className="w-3.5 h-3.5" />
@@ -1188,30 +1190,30 @@ export const ShelfDetailPage: React.FC = () => {
         title="Thêm truyện vào kệ sách 🌸"
       >
         <div className="flex flex-col gap-4">
-          <p className="text-xs text-[#806350]">
+          <p className="text-xs text-text-muted">
             Chọn truyện từ tủ sách để xếp vào kệ <strong>{shelf.name}</strong>:
           </p>
 
           {/* Search bar inside picker */}
           <div className="relative">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#806350]" />
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
             <input
               type="text"
               value={pickerSearch}
               onChange={(e) => setPickerSearch(e.target.value)}
               placeholder="Tìm theo tên truyện, tác giả, thể loại..."
-              className="w-full pl-10 pr-4 py-2 text-xs md:text-sm rounded-xl bg-[#FFF8F5] border border-[#D9B99B] focus:outline-none focus:border-[#7FAF6B] focus:ring-1 focus:ring-[#7FAF6B] text-[#5E4636]"
+              className="w-full pl-10 pr-4 py-2 text-xs md:text-sm rounded-xl bg-surface-raised border border-border focus:outline-none focus:border-leaf focus:ring-1 focus:ring-leaf text-text"
             />
           </div>
 
           {/* Comics list */}
           <div className="max-h-80 overflow-y-auto flex flex-col gap-2 pr-1">
             {isLoadingPicker ? (
-              <div className="py-8 text-center text-xs text-[#806350]">
+              <div className="py-8 text-center text-xs text-text-muted">
                 Đang tìm những cuốn truyện...
               </div>
             ) : filteredAvailableComics.length === 0 ? (
-              <div className="py-8 text-center text-xs text-[#806350]">
+              <div className="py-8 text-center text-xs text-text-muted">
                 {pickerSearch
                   ? 'Không tìm thấy truyện phù hợp.'
                   : 'Tất cả truyện đã có mặt trong kệ này rồi! 🌿'}
@@ -1220,19 +1222,19 @@ export const ShelfDetailPage: React.FC = () => {
               filteredAvailableComics.map((c) => (
                 <div
                   key={c.id}
-                  className="flex items-center justify-between p-2.5 rounded-2xl bg-[#FFF8F5] border border-[#D9B99B] hover:border-[#A67B5B] transition-all"
+                  className="flex items-center justify-between p-2.5 rounded-2xl bg-surface-raised border border-border hover:border-border-strong transition-all"
                 >
                   <div className="flex items-center gap-3">
                     <img
                       src={c.cover_url}
                       alt={c.title}
-                      className="w-10 h-14 object-cover rounded-lg border border-[#D9B99B]"
+                      className="w-10 h-14 object-cover rounded-lg border border-border"
                     />
                     <div>
-                      <h4 className="text-xs md:text-sm font-serif font-bold text-[#5E4636] line-clamp-1">
+                      <h4 className="text-xs md:text-sm font-serif font-bold text-text line-clamp-1">
                         {c.title}
                       </h4>
-                      <p className="text-[11px] text-[#806350] line-clamp-1">
+                      <p className="text-[11px] text-text-muted line-clamp-1">
                         {c.author} · {c.total_chapters} chương
                       </p>
                     </div>
@@ -1297,13 +1299,13 @@ export const ShelfDetailPage: React.FC = () => {
       {/* CONFIRM DELETE SHELF MODAL                                          */}
       {/* ------------------------------------------------------------------- */}
       {isConfirmDeleteOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-[#FFF8F5] border-2 border-[#A67B5B] rounded-3xl p-6 max-w-sm w-full shadow-botanical-lg flex flex-col gap-3">
-            <div className="flex items-center gap-2 text-[#BA1A1A]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-overlay/40 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-surface-raised border-2 border-border-strong rounded-3xl p-6 max-w-sm w-full shadow-botanical-lg flex flex-col gap-3">
+            <div className="flex items-center gap-2 text-danger">
               <Trash2 className="w-5 h-5" />
               <h3 className="font-serif text-lg font-bold">Xóa kệ sách này?</h3>
             </div>
-            <p className="text-xs text-[#806350] leading-relaxed">
+            <p className="text-xs text-text-muted leading-relaxed">
               Kệ <strong>"{shelf.name}"</strong> sẽ được gỡ bỏ khỏi tủ sách. Các
               truyện bên trong vẫn được lưu trữ nguyên vẹn trong mục Tất Cả
               Truyện.
@@ -1322,7 +1324,7 @@ export const ShelfDetailPage: React.FC = () => {
                 size="sm"
                 onClick={handleConfirmDeleteShelf}
                 disabled={isDeleting}
-                className="bg-[#BA1A1A] hover:bg-[#93000A] text-white border-transparent"
+                className="bg-danger hover:bg-danger-ink text-on-danger border-transparent"
               >
                 {isDeleting ? 'Đang xóa...' : 'Đồng ý xóa'}
               </Button>

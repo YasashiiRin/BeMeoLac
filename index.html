@@ -3,6 +3,27 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#F5F7F0" />
+    <!-- Apply the saved theme before anything paints (keys/values match src/theme/themes.ts). -->
+    <script>
+      (function () {
+        var theme = 'day';
+        try {
+          var saved = localStorage.getItem('tutruyen-theme');
+          if (saved === 'night' || saved === 'dark') theme = 'night';
+        } catch (e) {}
+        document.documentElement.setAttribute('data-theme', theme);
+        if (theme === 'night') {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#141B2D');
+        }
+      })();
+    </script>
+    <!-- Page background until index.css loads (mirrors --c-background). -->
+    <style>
+      html { background: #F5F7F0; color-scheme: light; }
+      html[data-theme='night'] { background: #141B2D; color-scheme: dark; }
+    </style>
     <title>Tủ Truyện Nhỏ - Thư Viện Nhà Kính Công Chúa</title>
     <meta name="description" content="Tủ Truyện Nhỏ - Thư viện nhà kính công chúa lưu trữ và theo dõi truyện tranh phong cách Botanical Cottagecore." />
     <meta property="og:title" content="Tủ Truyện Nhỏ - Thư Viện Nhà Kính Công Chúa" />
@@ -13,7 +34,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,300..900;1,6..12,300..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
   </head>
-  <body class="bg-[#FBF4E8] text-[#5E4636] font-sans antialiased selection:bg-[#CFE8D5] selection:text-[#3A5230]">
+  <body class="bg-background text-text font-sans antialiased">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

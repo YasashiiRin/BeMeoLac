@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { Bell, Plus, Flower2, Sparkles, BookHeart, Compass, Tag, BookOpen } from 'lucide-react';
 import { SearchBar } from '../SearchBar';
+import { ThemeToggle } from '../ThemeToggle';
 import { useAuth } from '../../context/AuthContext';
 import { comicsService } from '../../services/comicService';
 
@@ -79,7 +80,7 @@ export const Header: React.FC<HeaderProps> = ({
             className={({ isActive }) =>
               `flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 cursor-pointer ${
                 isActive && location.pathname === '/'
-                  ? 'bg-primary text-white shadow-sm'
+                  ? 'bg-primary text-on-primary glow-primary'
                   : 'text-text-muted hover:text-text hover:bg-background'
               }`
             }
@@ -93,7 +94,7 @@ export const Header: React.FC<HeaderProps> = ({
             className={({ isActive }) =>
               `flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 cursor-pointer ${
                 isActive
-                  ? 'bg-primary text-white shadow-sm'
+                  ? 'bg-primary text-on-primary glow-primary'
                   : 'text-text-muted hover:text-text hover:bg-background'
               }`
             }
@@ -106,7 +107,7 @@ export const Header: React.FC<HeaderProps> = ({
             className={({ isActive }) =>
               `flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 cursor-pointer ${
                 isActive
-                  ? 'bg-primary text-white shadow-sm'
+                  ? 'bg-primary text-on-primary glow-primary'
                   : 'text-text-muted hover:text-text hover:bg-background'
               }`
             }
@@ -119,7 +120,7 @@ export const Header: React.FC<HeaderProps> = ({
             className={({ isActive }) =>
               `flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 cursor-pointer ${
                 isActive
-                  ? 'bg-primary text-white shadow-sm'
+                  ? 'bg-primary text-on-primary glow-primary'
                   : 'text-text-muted hover:text-text hover:bg-background'
               }`
             }
@@ -137,18 +138,20 @@ export const Header: React.FC<HeaderProps> = ({
           />
         </div>
 
-        {/* Right Actions: Add Comic, Bell, Avatar */}
+        {/* Right Actions: Add Comic, Theme, Bell, Avatar */}
         <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
           {/* Add Comic Button (Gold) */}
           <button
             type="button"
             onClick={handleAddClick}
-            className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs md:text-sm font-semibold bg-gold text-text border-1.5 border-border shadow-botanical-sm hover:bg-gold/90 hover:-translate-y-0.5 transition-all cursor-pointer"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs md:text-sm font-semibold bg-gold text-on-gold border-1.5 border-border shadow-botanical-sm glow-gold hover:bg-gold/90 hover:-translate-y-0.5 transition-all cursor-pointer"
           >
-            <Plus className="w-4 h-4 text-text" />
+            <Plus className="w-4 h-4 text-on-gold" />
             <span>Thêm truyện</span>
             <span className="text-xs">✿</span>
           </button>
+
+          <ThemeToggle />
 
           {/* Notifications Bell */}
           <button
@@ -159,7 +162,7 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Bell className="w-4 h-4" />
             {effectiveUnreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 bg-accent text-white border border-accent rounded-full text-[9px] font-bold flex items-center justify-center shadow-xs">
+              <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 bg-accent text-on-accent border border-accent rounded-full text-[9px] font-bold flex items-center justify-center shadow-xs">
                 {effectiveUnreadCount}
               </span>
             )}

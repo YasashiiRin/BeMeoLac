@@ -21,20 +21,20 @@ export const ResetPasswordPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#FBF4E8] flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-[#FFF8F5] border-1.5 border-[#A67B5B] rounded-3xl p-6 sm:p-8 shadow-botanical-lg flex flex-col gap-6">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-surface-raised border-1.5 border-border-strong rounded-3xl p-6 sm:p-8 shadow-botanical-lg flex flex-col gap-6">
         <div className="text-center">
-          <h1 className="font-serif text-2xl font-bold text-[#5E4636]">
+          <h1 className="font-serif text-2xl font-bold text-text">
             Đặt Lại Mật Khẩu Mới ✿
           </h1>
-          <p className="text-xs text-[#806350] mt-1">
+          <p className="text-xs text-text-muted mt-1">
             Thiết lập mật khẩu an toàn mới cho tủ truyện nhỏ của bạn
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <label className="block text-xs font-semibold text-[#5E4636] mb-1">
+            <label className="block text-xs font-semibold text-text mb-1">
               Mật khẩu mới
             </label>
             <div className="relative">
@@ -44,14 +44,14 @@ export const ResetPasswordPage: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Tối thiểu 8 ký tự"
-                className="w-full pl-9 pr-3.5 py-2.5 bg-[#F6EBDD] rounded-xl border border-[#D9B99B] text-sm text-[#5E4636] focus:border-[#7FAF6B] focus:outline-none"
+                className="w-full pl-9 pr-3.5 py-2.5 bg-surface rounded-xl border border-border text-sm text-text focus:border-leaf focus:outline-none"
               />
-              <Lock className="w-4 h-4 text-[#A67B5B] absolute left-3 top-1/2 -translate-y-1/2" />
+              <Lock className="w-4 h-4 text-text-muted absolute left-3 top-1/2 -translate-y-1/2" />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#5E4636] mb-1">
+            <label className="block text-xs font-semibold text-text mb-1">
               Nhập lại mật khẩu mới
             </label>
             <div className="relative">
@@ -61,9 +61,9 @@ export const ResetPasswordPage: React.FC = () => {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Nhập lại mật khẩu"
-                className="w-full pl-9 pr-3.5 py-2.5 bg-[#F6EBDD] rounded-xl border border-[#D9B99B] text-sm text-[#5E4636] focus:border-[#7FAF6B] focus:outline-none"
+                className="w-full pl-9 pr-3.5 py-2.5 bg-surface rounded-xl border border-border text-sm text-text focus:border-leaf focus:outline-none"
               />
-              <Lock className="w-4 h-4 text-[#A67B5B] absolute left-3 top-1/2 -translate-y-1/2" />
+              <Lock className="w-4 h-4 text-text-muted absolute left-3 top-1/2 -translate-y-1/2" />
             </div>
           </div>
 

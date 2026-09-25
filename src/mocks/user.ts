@@ -9,7 +9,7 @@ export const mockCurrentUser: User = {
   role: 'user',
   created_at: '2024-01-15T08:00:00Z',
   settings: {
-    theme: 'light',
+    theme: 'day',
     font_size: 15,
     sparkle_enabled: true,
     notify_new_chapter: true,

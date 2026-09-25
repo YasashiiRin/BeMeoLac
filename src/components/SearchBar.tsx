@@ -34,7 +34,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
   return (
     <div className={`relative flex items-center w-full ${className}`}>
-      <div className="absolute left-3.5 text-[#A67B5B] pointer-events-none">
+      <div className="absolute left-3.5 text-text-muted pointer-events-none">
         <Search className="w-4 h-4" />
       </div>
 
@@ -44,7 +44,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full pl-10 pr-20 py-2 text-sm bg-[#F6EBDD] text-[#5E4636] placeholder-[#9E8574] rounded-full border-1.5 border-[#D9B99B] focus:border-[#7FAF6B] focus:bg-[#FFF8F5] focus:outline-none focus:ring-2 focus:ring-[#A8C49A]/30 transition-all duration-200 shadow-inner"
+        className="w-full pl-10 pr-20 py-2 text-sm bg-surface text-text placeholder-text-muted rounded-full border-1.5 border-border focus:border-leaf focus:bg-surface-raised focus:outline-none focus:ring-2 focus:ring-primary-soft/30 transition-all duration-200 shadow-inner"
       />
 
       <div className="absolute right-2.5 flex items-center gap-1.5">
@@ -52,13 +52,13 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           <button
             type="button"
             onClick={() => onChange('')}
-            className="p-1 text-[#A67B5B] hover:text-[#5E4636] rounded-full hover:bg-[#EFE1CF] transition-colors cursor-pointer"
+            className="p-1 text-text-muted hover:text-text rounded-full hover:bg-surface-sunken transition-colors cursor-pointer"
             aria-label="Xóa tìm kiếm"
           >
             <X className="w-3.5 h-3.5" />
           </button>
         ) : (
-          <span className="hidden md:inline-flex items-center px-1.5 py-0.5 text-[11px] font-medium text-[#806350] bg-[#EFE1CF] border border-[#D9B99B] rounded-md pointer-events-none">
+          <span className="hidden md:inline-flex items-center px-1.5 py-0.5 text-[11px] font-medium text-text-muted bg-surface-sunken border border-border rounded-md pointer-events-none">
             ⌘K
           </span>
         )}
@@ -67,7 +67,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           <button
             type="button"
             onClick={onFilterClick}
-            className="p-1.5 text-[#806350] hover:text-[#5E4636] bg-[#EFE1CF] hover:bg-[#D9B99B] rounded-full transition-colors cursor-pointer md:hidden"
+            className="p-1.5 text-text-muted hover:text-text bg-surface-sunken hover:bg-border rounded-full transition-colors cursor-pointer md:hidden"
             aria-label="Bộ lọc"
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />

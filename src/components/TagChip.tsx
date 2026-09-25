@@ -19,16 +19,16 @@ export const TagChip: React.FC<TagChipProps> = ({
   const baseClasses =
     'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 border-1.5 whitespace-nowrap shadow-botanical-sm';
 
-  const activeClasses = 'bg-[#CFE8D5] text-[#3A5230] border-[#7FAF6B] font-semibold';
+  const activeClasses = 'bg-leaf-tint text-primary-ink border-leaf font-semibold';
   const inactiveClasses =
-    'bg-[#FFF8F5] text-[#5E4636] border-[#D9B99B] hover:bg-[#F6EBDD] hover:border-[#A67B5B]';
+    'bg-surface-raised text-text border-border hover:bg-surface hover:border-border-strong';
 
   const content = (
     <>
       {icon && <span className="text-xs">{icon}</span>}
       <span>{label}</span>
       {count !== undefined && (
-        <span className="text-[11px] px-1.5 py-0.2 bg-[#F6EBDD] text-[#806350] rounded-full tabular-nums">
+        <span className="text-[11px] px-1.5 py-0.2 bg-surface text-text-muted rounded-full tabular-nums">
           {count}
         </span>
       )}

@@ -29,3 +29,9 @@ export const updateUserProfile = async (updates: Partial<User>): Promise<User> =
   };
   return { ...userDatabase };
 };
+
+export const userService = {
+  getCurrentUser,
+  updateSettings: updateUserSettings,
+  updateProfile: updateUserProfile,
+};

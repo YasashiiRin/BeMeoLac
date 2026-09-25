@@ -51,7 +51,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onOpenAddModal
           <button
             type="button"
             onClick={handleCenterAdd}
-            className="w-12 h-12 rounded-full bg-fairy-gradient border-2 border-primary shadow-fairy-glow flex items-center justify-center text-primary active:scale-95 transition-transform cursor-pointer"
+            className="w-12 h-12 rounded-full bg-fairy-gradient border-2 border-primary shadow-fairy-glow flex items-center justify-center text-on-gradient active:scale-95 transition-transform cursor-pointer"
             aria-label="Thêm truyện mới"
           >
             <Plus className="w-6 h-6 stroke-[2.5]" />

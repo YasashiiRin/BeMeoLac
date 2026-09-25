@@ -52,16 +52,16 @@ export const SearchPage: React.FC = () => {
     <div className="flex flex-col gap-6 max-w-6xl mx-auto">
       {/* Header */}
       <div>
-        <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#5E4636]">
+        <h1 className="font-serif text-2xl sm:text-3xl font-bold text-text">
           Tìm Kiếm & Khám Phá Truyện ✿
         </h1>
-        <p className="text-xs sm:text-sm text-[#806350] mt-1">
+        <p className="text-xs sm:text-sm text-text-muted mt-1">
           Dạo quanh thư viện hoa cỏ, tìm kiếm cuốn truyện đồng điệu với tâm hồn bạn hôm nay
         </p>
       </div>
 
       {/* Search Input Bar */}
-      <div className="bg-[#FFF8F5] p-3 rounded-2xl border border-[#D9B99B] shadow-botanical-sm">
+      <div className="bg-surface-raised p-3 rounded-2xl border border-border shadow-botanical-sm">
         <SearchBar
           value={query}
           onChange={setQuery}
@@ -71,7 +71,7 @@ export const SearchPage: React.FC = () => {
 
       {/* Popular Tags */}
       <div>
-        <span className="text-xs font-semibold text-[#5E4636] block mb-2">
+        <span className="text-xs font-semibold text-text block mb-2">
           🌸 Thẻ hoa được yêu thích:
         </span>
         <div className="flex items-center gap-2 flex-wrap">
@@ -94,9 +94,9 @@ export const SearchPage: React.FC = () => {
 
       {/* Results */}
       <div>
-        <div className="flex items-center justify-between mb-3 text-xs text-[#806350]">
+        <div className="flex items-center justify-between mb-3 text-xs text-text-muted">
           <span>
-            Tìm thấy <strong className="text-[#5E4636]">{results.length}</strong> cuốn truyện phù hợp
+            Tìm thấy <strong className="text-text">{results.length}</strong> cuốn truyện phù hợp
           </span>
         </div>
 
@@ -105,7 +105,7 @@ export const SearchPage: React.FC = () => {
             {[1, 2, 3, 4, 5].map((n) => (
               <div
                 key={n}
-                className="bg-[#F6EBDD]/60 arch-card p-3 border border-[#D9B99B] animate-pulse h-64"
+                className="bg-surface/60 arch-card p-3 border border-border animate-pulse h-64"
               />
             ))}
           </div>

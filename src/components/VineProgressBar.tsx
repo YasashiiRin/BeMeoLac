@@ -49,7 +49,7 @@ export const VineProgressBar: React.FC<VineProgressBarProps> = ({
           style={{ width: `${percentage}%` }}
         >
           {percentage > 10 && percentage < 98 && (
-            <span className="absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-white rounded-full shadow-xs opacity-75" />
+            <span className="absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-surface-raised rounded-full shadow-xs opacity-75" />
           )}
         </div>
       </div>

@@ -28,18 +28,18 @@ export const HeartRating: React.FC<HeartRatingProps> = ({
             key={star}
             type="button"
             onClick={() => onChange && onChange(star)}
-            className="text-[#D7B973] hover:text-[#735B1F] p-0.5 transition-transform hover:scale-115 cursor-pointer"
+            className="text-gold hover:text-gold-ink p-0.5 transition-transform hover:scale-115 cursor-pointer"
             aria-label={`Đánh giá ${star} sao`}
           >
             {mode === 'heart' ? (
               <Heart
                 size={iconSize}
-                className={star <= rating ? 'fill-[#F2A7B5] text-[#F2A7B5]' : 'text-[#D9B99B]'}
+                className={star <= rating ? 'fill-accent-soft text-accent-ink' : 'text-border-strong'}
               />
             ) : (
               <Star
                 size={iconSize}
-                className={star <= rating ? 'fill-[#F3D38A] text-[#D7B973]' : 'text-[#D9B99B]'}
+                className={star <= rating ? 'fill-gold text-gold' : 'text-border-strong'}
               />
             )}
           </button>
@@ -50,17 +50,17 @@ export const HeartRating: React.FC<HeartRatingProps> = ({
 
   // Display mode (e.g. "★ 4.9 (1.2k)")
   return (
-    <div className="inline-flex items-center gap-1 text-[#5E4636] font-medium">
+    <div className="inline-flex items-center gap-1 text-text font-medium">
       {mode === 'heart' ? (
-        <Heart size={iconSize} className="fill-[#F2A7B5] text-[#F2A7B5] shrink-0" />
+        <Heart size={iconSize} className="fill-accent-soft text-accent-ink shrink-0" />
       ) : (
-        <Star size={iconSize} className="fill-[#F3D38A] text-[#D7B973] shrink-0" />
+        <Star size={iconSize} className="fill-gold text-gold shrink-0" />
       )}
-      <span className="text-xs font-semibold tabular-nums text-[#3A2B20]">
+      <span className="text-xs font-semibold tabular-nums text-text">
         {rating.toFixed(1)}
       </span>
       {votes && (
-        <span className="text-[11px] text-[#9E8574] tabular-nums font-normal">
+        <span className="text-[11px] text-text-muted tabular-nums font-normal">
           ({votes})
         </span>
       )}

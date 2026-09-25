@@ -51,10 +51,10 @@ export const NotificationsPage: React.FC = () => {
     <div className="max-w-2xl mx-auto flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-serif text-2xl font-bold text-[#5E4636]">
+          <h1 className="font-serif text-2xl font-bold text-text">
             Thông Báo Nhà Kính ✿
           </h1>
-          <p className="text-xs text-[#806350]">
+          <p className="text-xs text-text-muted">
             Tin tức về chương truyện mới và các mốc thành tựu đọc sách
           </p>
         </div>
@@ -64,7 +64,7 @@ export const NotificationsPage: React.FC = () => {
             variant="outline"
             size="sm"
             onClick={handleMarkAll}
-            iconLeft={<CheckCheck size={14} className="text-[#7FAF6B]" />}
+            iconLeft={<CheckCheck size={14} className="text-leaf-ink" />}
           >
             Đọc tất cả
           </Button>
@@ -76,7 +76,7 @@ export const NotificationsPage: React.FC = () => {
           {[1, 2, 3].map((n) => (
             <div
               key={n}
-              className="p-4 bg-[#F6EBDD]/60 rounded-2xl border border-[#D9B99B] animate-pulse h-20"
+              className="p-4 bg-surface/60 rounded-2xl border border-border animate-pulse h-20"
             />
           ))}
         </div>
@@ -94,33 +94,33 @@ export const NotificationsPage: React.FC = () => {
               onClick={() => handleClickItem(n)}
               className={`p-4 rounded-2xl border-1.5 transition-all cursor-pointer flex items-start gap-3.5 ${
                 n.is_read
-                  ? 'bg-[#FFF8F5] border-[#D9B99B]/60 opacity-85'
-                  : 'bg-sunbeam-gradient border-[#A67B5B] shadow-botanical-sm'
+                  ? 'bg-surface-raised border-border/60'
+                  : 'bg-sunbeam-gradient border-border-strong shadow-botanical-sm'
               }`}
             >
-              <div className="w-10 h-10 rounded-xl bg-[#FFF8F5] border border-[#A67B5B] flex items-center justify-center text-lg shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-surface-raised border border-border-strong flex items-center justify-center text-lg shrink-0">
                 {n.type === 'new_chapter' ? '🌸' : n.type === 'achievement' ? '✨' : '⚠️'}
               </div>
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
-                  <h4 className="font-semibold text-sm text-[#5E4636] truncate">
+                  <h4 className="font-semibold text-sm text-text truncate">
                     {n.comic_title || 'Tin vui từ nhà kính'}
                   </h4>
-                  <span className="text-[11px] text-[#9E8574] tabular-nums shrink-0">
+                  <span className="text-[11px] text-text-muted tabular-nums shrink-0">
                     {new Date(n.created_at).toLocaleTimeString('vi-VN', {
                       hour: '2-digit',
                       minute: '2-digit',
                     })}
                   </span>
                 </div>
-                <p className="text-xs text-[#806350] mt-1 leading-relaxed">
+                <p className="text-xs text-text-muted mt-1 leading-relaxed">
                   {n.message}
                 </p>
               </div>
 
               {!n.is_read && (
-                <span className="w-2.5 h-2.5 rounded-full bg-[#F2A7B5] mt-1 shrink-0" />
+                <span className="w-2.5 h-2.5 rounded-full bg-accent-soft mt-1 shrink-0" />
               )}
             </div>
           ))}

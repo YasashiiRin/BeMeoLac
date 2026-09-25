@@ -4,7 +4,7 @@
  */
 
 export interface UserSettings {
-  theme: 'light' | 'dark';
+  theme: 'day' | 'night';
   font_size: number;
   sparkle_enabled: boolean;
   notify_new_chapter: boolean;

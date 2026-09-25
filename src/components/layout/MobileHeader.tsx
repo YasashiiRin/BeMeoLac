@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Flower2, Bell } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { comicsService } from '../../services/comicService';
+import { ThemeToggle } from '../ThemeToggle';
 
 interface MobileHeaderProps {
   title?: string;
@@ -55,8 +56,10 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
         </div>
       </div>
 
-      {/* Right: Notifications & Profile */}
+      {/* Right: Theme, Notifications & Profile */}
       <div className="flex items-center gap-2.5">
+        <ThemeToggle className="border shadow-none" />
+
         <button
           type="button"
           onClick={() => navigate('/notifications')}
@@ -65,7 +68,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
         >
           <Bell className="w-4 h-4" />
           {effectiveUnreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 bg-accent text-white border border-accent rounded-full text-[9px] font-bold flex items-center justify-center shadow-xs">
+            <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 bg-accent text-on-accent border border-accent rounded-full text-[9px] font-bold flex items-center justify-center shadow-xs">
               {effectiveUnreadCount}
             </span>
           )}

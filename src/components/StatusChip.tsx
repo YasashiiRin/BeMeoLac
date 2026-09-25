@@ -24,43 +24,43 @@ export const StatusChip: React.FC<StatusChipProps> = ({
         return {
           defaultLabel: 'Tất cả',
           icon: '✿',
-          activeBg: 'bg-[#F2A7B5] text-[#5E4636] border-[#A67B5B]',
-          inactiveBg: 'bg-[#FFF8F5] text-[#5E4636] border-[#D9B99B] hover:bg-[#F6EBDD]',
+          activeBg: 'bg-accent-soft text-text border-border-strong',
+          inactiveBg: 'bg-surface-raised text-text border-border hover:bg-surface',
         };
       case 'reading':
         return {
           defaultLabel: 'Đang đọc',
           icon: '📖',
-          activeBg: 'bg-[#CFE8D5] text-[#3A5230] border-[#7FAF6B]',
-          inactiveBg: 'bg-[#FFF8F5] text-[#5E4636] border-[#D9B99B] hover:bg-[#F6EBDD]',
+          activeBg: 'bg-leaf-tint text-primary-ink border-leaf',
+          inactiveBg: 'bg-surface-raised text-text border-border hover:bg-surface',
         };
       case 'completed':
         return {
           defaultLabel: 'Đã đọc xong',
           icon: '🌿',
-          activeBg: 'bg-[#A8C49A] text-[#1E3314] border-[#7FAF6B]',
-          inactiveBg: 'bg-[#FFF8F5] text-[#5E4636] border-[#D9B99B] hover:bg-[#F6EBDD]',
+          activeBg: 'bg-primary-tint text-primary-ink border-leaf',
+          inactiveBg: 'bg-surface-raised text-text border-border hover:bg-surface',
         };
       case 'plan_to_read':
         return {
           defaultLabel: 'Muốn đọc',
           icon: '🔖',
-          activeBg: 'bg-[#FDE8B5] text-[#5E490C] border-[#D7B973]',
-          inactiveBg: 'bg-[#FFF8F5] text-[#5E4636] border-[#D9B99B] hover:bg-[#F6EBDD]',
+          activeBg: 'bg-gold-tint text-gold-ink border-gold',
+          inactiveBg: 'bg-surface-raised text-text border-border hover:bg-surface',
         };
       case 'on_hold':
         return {
           defaultLabel: 'Tạm dừng',
           icon: '⏸',
-          activeBg: 'bg-[#ECDBCB] text-[#5E4636] border-[#A67B5B]',
-          inactiveBg: 'bg-[#FFF8F5] text-[#5E4636] border-[#D9B99B] hover:bg-[#F6EBDD]',
+          activeBg: 'bg-surface-sunken text-text border-border-strong',
+          inactiveBg: 'bg-surface-raised text-text border-border hover:bg-surface',
         };
       case 'dropped':
         return {
           defaultLabel: 'Bỏ dở',
           icon: '⛔',
-          activeBg: 'bg-[#FFDAD6] text-[#93000A] border-[#BA1A1A]/50',
-          inactiveBg: 'bg-[#FFF8F5] text-[#5E4636] border-[#D9B99B] hover:bg-[#F6EBDD]',
+          activeBg: 'bg-danger-tint text-danger-ink border-danger/50',
+          inactiveBg: 'bg-surface-raised text-text border-border hover:bg-surface',
         };
     }
   };
@@ -82,8 +82,8 @@ export const StatusChip: React.FC<StatusChipProps> = ({
         <span
           className={`text-xs px-1.5 py-0.5 rounded-full font-semibold tabular-nums ml-0.5 ${
             isActive
-              ? 'bg-white/70 text-[#5E4636]'
-              : 'bg-[#F6EBDD] text-[#806350]'
+              ? 'bg-surface-raised/70 text-text'
+              : 'bg-surface text-text-muted'
           }`}
         >
           {count}
