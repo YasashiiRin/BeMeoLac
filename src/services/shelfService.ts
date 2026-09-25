@@ -1,124 +1,46 @@
-import { Shelf } from '../types';
-import { mockShelves } from '../mocks/shelves';
-import { mockComics } from '../mocks/comics';
-import { simulateNetworkDelay } from './apiClient';
+import { Shelf, ShelfInput } from '../types';
+import * as mock from '../mocks/api/shelves';
+import { USE_MOCK, http, orNull } from './http';
+import { emitShelvesUpdated } from './events';
 
-let shelvesDatabase: Shelf[] = mockShelves.map((shelf) => {
-  // If cover_urls is empty, populate from comics belonging to this shelf
-  const shelfComics = mockComics.filter((c) =>
-    shelf.id === 'all' ? true : c.shelf_ids.includes(shelf.id)
-  );
-  const covers = shelfComics.map((c) => c.cover_url).filter(Boolean).slice(0, 4);
-  return {
-    ...shelf,
-    comic_count: shelf.id === 'all' ? mockComics.length : shelfComics.length,
-    cover_urls: covers.length > 0 ? covers : [
-      '/src/assets/images/cottage_greenhouse_store_1790241469393.jpg',
-      '/src/assets/images/secret_fairy_garden_1790241482673.jpg',
-      '/src/assets/images/traveler_in_sunlit_meadow_1790241493617.jpg',
-    ],
-  };
-});
+/* Shelves — docs/api-contract.md#shelves. Comic membership: comicService.addComicToShelf / removeComicFromShelf. */
 
-// In-memory record of custom drag-and-drop order for comics in shelves
-const shelfComicOrders: Record<string, string[]> = {};
+/** GET /api/shelves → Shelf[] (ordered by position; includes the virtual "all" shelf) */
+export const listShelves = (): Promise<Shelf[]> => (USE_MOCK ? mock.list() : http.get('/api/shelves'));
 
-export const list = async (): Promise<Shelf[]> => {
-  await simulateNetworkDelay(100);
-  return shelvesDatabase.map((shelf) => ({ ...shelf }));
+/** GET /api/shelves/{id} → Shelf; null when 404 shelf_not_found */
+export const getShelfById = (id: string): Promise<Shelf | null> =>
+  orNull(USE_MOCK ? mock.get(id) : http.get<Shelf>(`/api/shelves/${encodeURIComponent(id)}`));
+
+/** POST /api/shelves body ShelfInput → 201 Shelf */
+export const createShelf = async (data: ShelfInput): Promise<Shelf> => {
+  const shelf = await (USE_MOCK ? mock.create(data) : http.post<Shelf>('/api/shelves', data));
+  emitShelvesUpdated({ action: 'create', shelf, shelfId: shelf.id });
+  return shelf;
 };
 
-export const getShelves = async (): Promise<Shelf[]> => {
-  return list();
+/** PATCH /api/shelves/{id} body Partial<ShelfInput> → Shelf */
+export const updateShelf = async (id: string, data: Partial<ShelfInput>): Promise<Shelf> => {
+  const shelf = await (USE_MOCK ? mock.update(id, data) : http.patch<Shelf>(`/api/shelves/${encodeURIComponent(id)}`, data));
+  emitShelvesUpdated({ action: 'update', shelf, shelfId: id });
+  return shelf;
 };
 
-export const getShelfById = async (id: string): Promise<Shelf | null> => {
-  await simulateNetworkDelay(100);
-  const found = shelvesDatabase.find((s) => s.id === id);
-  if (!found) return null;
-  return { ...found };
-};
-
-export const createShelf = async (data: { name: string; description?: string; icon?: string; color?: string }): Promise<Shelf> => {
-  await simulateNetworkDelay(150);
-  const newShelf: Shelf = {
-    id: `shelf_${Date.now()}`,
-    name: data.name,
-    description: data.description || '',
-    icon: data.icon || '🌸',
-    color: data.color || '#F2A7B5',
-    position: shelvesDatabase.length + 1,
-    comic_count: 0,
-    cover_urls: [],
-  };
-  shelvesDatabase.push(newShelf);
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(
-      new CustomEvent('shelves-updated', {
-        detail: { action: 'create', shelf: newShelf, shelfId: newShelf.id },
-      })
-    );
-  }
-  return newShelf;
-};
-
-export const updateShelf = async (
-  id: string,
-  data: { name?: string; description?: string; icon?: string; color?: string }
-): Promise<Shelf> => {
-  await simulateNetworkDelay(120);
-  const index = shelvesDatabase.findIndex((s) => s.id === id);
-  if (index === -1) {
-    throw new Error('Không tìm thấy kệ sách');
-  }
-  shelvesDatabase[index] = {
-    ...shelvesDatabase[index],
-    ...data,
-  };
-  const updated = { ...shelvesDatabase[index] };
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(
-      new CustomEvent('shelves-updated', {
-        detail: { action: 'update', shelf: updated, shelfId: id },
-      })
-    );
-  }
-  return updated;
-};
-
+/** DELETE /api/shelves/{id} → 204 (comics stay in the library) */
 export const deleteShelf = async (id: string): Promise<void> => {
-  await simulateNetworkDelay(120);
-  shelvesDatabase = shelvesDatabase.filter((s) => s.id !== id);
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(
-      new CustomEvent('shelves-updated', {
-        detail: { action: 'delete', shelfId: id },
-      })
-    );
-  }
+  await (USE_MOCK ? mock.remove(id) : http.delete(`/api/shelves/${encodeURIComponent(id)}`));
+  emitShelvesUpdated({ action: 'delete', shelfId: id });
 };
 
-export const reorder = async (shelfId: string, comicIds: string[]): Promise<void> => {
-  await simulateNetworkDelay(100);
-  shelfComicOrders[shelfId] = [...comicIds];
-};
-
-export const getShelfComicOrder = (shelfId: string): string[] | undefined => {
-  return shelfComicOrders[shelfId];
-};
+/** PUT /api/shelves/{id}/order body { comic_ids: string[] } → 204. Read back with GET /api/comics?shelf={id}&sort=position */
+export const reorderShelf = (id: string, comicIds: string[]): Promise<void> =>
+  USE_MOCK ? mock.reorder(id, comicIds) : http.put(`/api/shelves/${encodeURIComponent(id)}/order`, { comic_ids: comicIds });
 
 export const shelvesService = {
-  list,
-  getShelves: list,
+  list: listShelves,
   getShelfById,
   create: createShelf,
-  createShelf,
   update: updateShelf,
-  updateShelf,
   delete: deleteShelf,
-  deleteShelf,
-  reorder,
-  getShelfComicOrder,
+  reorder: reorderShelf,
 };
-
-

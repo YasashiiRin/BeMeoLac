@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Comic, Shelf, ComicStatus, SortOption } from '../types';
-import { getComics, toggleFavorite, updateComicProgress, comicsService, ComicSummary } from '../services/comicService';
-import { getShelves, createShelf, shelvesService } from '../services/shelfService';
+import { Comic, Shelf, ComicStatus, ComicSummary, FacetOption, SortOption, TagCount } from '../types';
+import { getComics, toggleFavorite, updateComicProgress, comicsService } from '../services/comicService';
+import { shelvesService } from '../services/shelfService';
+import { tagsService } from '../services/tagsService';
+import { userService } from '../services/userService';
+import { COMIC_UPDATED, SHELVES_UPDATED } from '../services/events';
 import { ComicCard } from '../components/ComicCard';
 import { StatusChip } from '../components/StatusChip';
-import { TagChip } from '../components/TagChip';
 import { Button } from '../components/Button';
 import { SearchBar } from '../components/SearchBar';
 import { EmptyState } from '../components/EmptyState';
+import { ErrorState } from '../components/ErrorState';
 import { ResponsiveDrawer } from '../components/ResponsiveDrawer';
 import { ShelfFormModal } from '../components/ShelfFormModal';
 import { Sidebar } from '../components/layout/Sidebar';
@@ -39,6 +42,9 @@ export const BookshelfPage: React.FC = () => {
   const [summary, setSummary] = useState<ComicSummary | null>(null);
   const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [tagOptions, setTagOptions] = useState<TagCount[]>([]);
+  const [sourceOptions, setSourceOptions] = useState<FacetOption[]>([]);
 
   // Filter states
   const [selectedShelfId, setSelectedShelfId] = useState<string>('all');
@@ -74,9 +80,19 @@ export const BookshelfPage: React.FC = () => {
     }
   };
 
+  // Filter options come from the library itself
+  const fetchFilterOptions = () => {
+    tagsService.list().then(setTagOptions).catch((err) => console.error('Error fetching tags:', err));
+    comicsService
+      .getFacets()
+      .then((f) => setSourceOptions(f.sources))
+      .catch((err) => console.error('Error fetching sources:', err));
+  };
+
   useEffect(() => {
     fetchShelves();
     fetchSummary();
+    fetchFilterOptions();
   }, []);
 
   // Listen to shelf creation, update, or deletion across the app
@@ -85,23 +101,24 @@ export const BookshelfPage: React.FC = () => {
       fetchShelves();
       fetchSummary();
     };
-    window.addEventListener('shelves-updated', handleShelvesUpdated);
-    return () => window.removeEventListener('shelves-updated', handleShelvesUpdated);
+    window.addEventListener(SHELVES_UPDATED, handleShelvesUpdated);
+    return () => window.removeEventListener(SHELVES_UPDATED, handleShelvesUpdated);
   }, []);
 
   // Fetch comics
   const loadComics = async () => {
     setIsLoading(true);
+    setLoadError(null);
     try {
       const response = await getComics({
-        shelf_id: selectedShelfId,
+        shelf: selectedShelfId,
         status: selectedStatus,
-        genre: selectedGenre,
-        source: selectedSource,
+        tag: selectedGenre === 'all' ? undefined : selectedGenre,
+        source: selectedSource === 'all' ? undefined : selectedSource,
         sort: selectedSort,
         has_new_chapter: onlyHasNew ? true : undefined,
         is_favorite: onlyFavorite ? true : undefined,
-        search: searchQuery,
+        q: searchQuery,
         page: currentPage,
         page_size: 10,
       });
@@ -109,7 +126,7 @@ export const BookshelfPage: React.FC = () => {
       setTotalCount(response.total);
     } catch (err) {
       console.error('Error fetching comics:', err);
-      showToast('Không thể tải danh sách truyện', 'error');
+      setLoadError(err);
     } finally {
       setIsLoading(false);
     }
@@ -136,8 +153,8 @@ export const BookshelfPage: React.FC = () => {
         setComics((prev) => prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c)));
       }
     };
-    window.addEventListener('comic-updated', handleComicUpdated);
-    return () => window.removeEventListener('comic-updated', handleComicUpdated);
+    window.addEventListener(COMIC_UPDATED, handleComicUpdated);
+    return () => window.removeEventListener(COMIC_UPDATED, handleComicUpdated);
   }, []);
 
   // Handlers
@@ -178,16 +195,20 @@ export const BookshelfPage: React.FC = () => {
     }
   };
 
-  const handleExportList = () => {
-    const jsonStr = JSON.stringify(comics, null, 2);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `TuTruyenNho_DanhSach_${new Date().toISOString().slice(0, 10)}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-    showToast('Đã xuất toàn bộ danh sách truyện thành công! 📜', 'success');
+  // Whole library as JSON (same file as Tài khoản › Dữ liệu › Xuất dữ liệu)
+  const handleExportList = async () => {
+    try {
+      const { blob, filename } = await userService.exportData('json');
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showToast('Đã xuất toàn bộ danh sách truyện thành công! 📜', 'success');
+    } catch {
+      showToast('Chưa xuất được danh sách, nàng thử lại nhé', 'error');
+    }
   };
 
   // Status Counts
@@ -424,12 +445,11 @@ export const BookshelfPage: React.FC = () => {
                 className="appearance-none bg-surface text-text text-xs font-medium pl-3 pr-7 py-1.5 rounded-xl border border-border focus:border-leaf focus:outline-none cursor-pointer"
               >
                 <option value="all">Thể loại: Tất cả</option>
-                <option value="chữa lành">Thể loại: Chữa lành</option>
-                <option value="kỳ ảo">Thể loại: Kỳ ảo</option>
-                <option value="lãng mạn">Thể loại: Lãng mạn</option>
-                <option value="phiêu lưu">Thể loại: Phiêu lưu</option>
-                <option value="đời thường">Thể loại: Đời thường</option>
-                <option value="nhà kính">Thể loại: Nhà kính</option>
+                {tagOptions.map((t) => (
+                  <option key={t.name} value={t.name}>
+                    Thể loại: {t.name}
+                  </option>
+                ))}
               </select>
               <span className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-[10px] text-text-muted">
                 ▾
@@ -447,12 +467,11 @@ export const BookshelfPage: React.FC = () => {
                 className="appearance-none bg-surface text-text text-xs font-medium pl-3 pr-7 py-1.5 rounded-xl border border-border focus:border-leaf focus:outline-none cursor-pointer"
               >
                 <option value="all">Nguồn: Mọi nguồn</option>
-                <option value="Cuutruyen">Nguồn: Cuutruyen</option>
-                <option value="Kakao">Nguồn: Kakao</option>
-                <option value="BlogTruyen">Nguồn: BlogTruyen</option>
-                <option value="Bilibili">Nguồn: Bilibili</option>
-                <option value="Webtoon">Nguồn: Webtoon</option>
-                <option value="Hako">Nguồn: Hako</option>
+                {sourceOptions.map((src) => (
+                  <option key={src.value} value={src.value}>
+                    Nguồn: {src.label}
+                  </option>
+                ))}
               </select>
               <span className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-[10px] text-text-muted">
                 ▾
@@ -548,7 +567,9 @@ export const BookshelfPage: React.FC = () => {
         </div>
 
         {/* Comics Display Area */}
-        {isLoading ? (
+        {loadError && !isLoading ? (
+          <ErrorState error={loadError} onRetry={loadComics} />
+        ) : isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5 sm:gap-4.5">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
               <div
@@ -596,7 +617,7 @@ export const BookshelfPage: React.FC = () => {
             {comics.map((comic) => {
               const primarySource =
                 comic.sources.find((s) => s.id === comic.primary_source_id) ||
-                comic.sources[0] || { site_name: 'Cuutruyen' };
+                comic.sources[0] || { site_name: 'Chưa có nguồn' };
               const isCompleted =
                 comic.status === 'completed' ||
                 comic.current_chapter >= comic.total_chapters;

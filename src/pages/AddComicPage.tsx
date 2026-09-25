@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Comic, ComicStatus, Shelf, Source } from '../types';
 import { comicsService } from '../services/comicService';
+import { sourcesService } from '../services/sourcesService';
 import { shelvesService } from '../services/shelfService';
 import { useToast } from '../context/ToastContext';
 import {
@@ -28,8 +29,6 @@ import {
   Lightbulb,
 } from 'lucide-react';
 
-const DEFAULT_COVER =
-  'https://lh3.googleusercontent.com/aida-public/AB6AXuD69NfgFvW2znXgoxCJratVdrZQOvY21Pg0ZbYhIerK-jyRA3Vl9vl2gw0mkfxifvDcZDCS_EHcNj7olGmjgBuq87nPiiTgW_1jqfmP3m4jnNxJ2J_AVgar3RikSZixBYldMyj425cuYLe153rtjXyae2SoGrbxCfR7CxDKMvqDpthpMHDY8WOoOoBneojzxq-Qk0qoVtozx-uNnjAFOgYNR9HUzK2FH8s_pCtCcbupehhIKWpQ5w';
 
 export const AddComicPage: React.FC = () => {
   const navigate = useNavigate();
@@ -39,35 +38,29 @@ export const AddComicPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'link' | 'manual'>('link');
 
   // Link Tab State
-  const [sourceUrlInput, setSourceUrlInput] = useState(
-    'https://cuutruyen.net/manga/tiem-tap-hoa-phep-thuat-thao-moc'
-  );
+  const [sourceUrlInput, setSourceUrlInput] = useState('');
+  const [previewLoaded, setPreviewLoaded] = useState(false);
   const [isFetchingUrl, setIsFetchingUrl] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   // Form Fields
-  const [title, setTitle] = useState('Tiệm Tạp Hóa Phép Thuật Thảo Mộc');
-  const [author, setAuthor] = useState('Hatori M. (Minh họa: Lirien)');
-  const [coverUrl, setCoverUrl] = useState(DEFAULT_COVER);
-  const [totalChapters, setTotalChapters] = useState(120);
-  const [currentChapter, setCurrentChapter] = useState(45);
+  const [title, setTitle] = useState('');
+  const [author, setAuthor] = useState('');
+  const [coverUrl, setCoverUrl] = useState('');
+  const [totalChapters, setTotalChapters] = useState(1);
+  const [currentChapter, setCurrentChapter] = useState(0);
   const [selectedStatus, setSelectedStatus] = useState<ComicStatus>('plan_to_read');
-  const [tags, setTags] = useState<string[]>([
-    'Chữa lành',
-    'Phép thuật',
-    'Đời thường',
-    'Nhà kính cổ',
-  ]);
+  const [tags, setTags] = useState<string[]>([]);
   const [newTagInput, setNewTagInput] = useState('');
   const [isAddingTag, setIsAddingTag] = useState(false);
-  const [siteName, setSiteName] = useState('Cuutruyen');
-  const [description, setDescription] = useState(
-    'Kể về tiệm tạp hóa nhỏ nằm sâu trong nhà kính cổ xưa của thị trấn thần tiên...'
-  );
+  const [siteName, setSiteName] = useState('');
+  const [description, setDescription] = useState('');
 
   // Shelves multi-select
   const [shelves, setShelves] = useState<Shelf[]>([]);
   const [selectedShelfIds, setSelectedShelfIds] = useState<string[]>([]);
+  const [shelvesError, setShelvesError] = useState(false);
+  const [shelvesReload, setShelvesReload] = useState(0);
 
   // Duplicate Check State
   const [existingComic, setExistingComic] = useState<Comic | null>(null);
@@ -87,23 +80,17 @@ export const AddComicPage: React.FC = () => {
         const allShelves = await shelvesService.list();
         if (!isMounted) return;
         setShelves(allShelves.filter((s) => s.id !== 'all'));
-        // Default select first two shelves if available
-        if (allShelves.length > 1) {
-          const defaultSelected = allShelves
-            .filter((s) => s.id !== 'all')
-            .slice(0, 2)
-            .map((s) => s.id);
-          setSelectedShelfIds(defaultSelected);
-        }
+        setShelvesError(false);
       } catch (err) {
         console.error('Error loading shelves:', err);
+        if (isMounted) setShelvesError(true);
       }
     };
     loadShelves();
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [shelvesReload]);
 
   // Check duplicate comic by title
   useEffect(() => {
@@ -159,14 +146,16 @@ export const AddComicPage: React.FC = () => {
     setFetchError(null);
 
     try {
-      const preview = await comicsService.fetchFromUrl(sourceUrlInput);
+      const preview = await sourcesService.preview(sourceUrlInput);
       setTitle(preview.title);
       setAuthor(preview.author);
-      setCoverUrl(preview.cover_url || DEFAULT_COVER);
-      setTotalChapters(preview.total_chapters || 100);
-      setTags(preview.tags.length ? preview.tags : ['Chữa lành']);
+      setCoverUrl(preview.cover_url);
+      setTotalChapters(Math.max(1, preview.total_chapters || 1));
+      setCurrentChapter(0);
+      setTags(preview.tags);
       setSiteName(preview.site_name || 'Nguồn mới');
       setTitleError(null);
+      setPreviewLoaded(true);
       showToast('Đã thu thập dữ liệu thảo mộc từ liên kết! ✨', 'success');
     } catch (err: any) {
       setFetchError(
@@ -276,7 +265,7 @@ export const AddComicPage: React.FC = () => {
         description:
           description.trim() ||
           'Một cuốn truyện tranh thần tiên vừa được xếp vào góc nhà kính.',
-        cover_url: coverUrl.trim() || DEFAULT_COVER,
+        cover_url: coverUrl.trim(),
         status: selectedStatus,
         current_chapter: Math.min(totalChapters, Math.max(0, currentChapter)),
         total_chapters: Math.max(1, totalChapters),
@@ -459,24 +448,25 @@ export const AddComicPage: React.FC = () => {
                     <p className="text-xs text-text-muted italic flex items-center gap-1.5 pl-3">
                       <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
                       <span>
-                        Tự động phân tích tên truyện, hình bìa, tác giả, tag và số chương từ hơn 20 nguồn truyện.
+                        Tự động đọc tên truyện, hình bìa, tác giả, thẻ và số chương từ trang truyện nàng dán vào.
                       </span>
                     </p>
                   )}
                 </div>
 
                 {/* Preview Card (Arched Botanical Folio) */}
+                {previewLoaded ? (
                 <div className="p-4 sm:p-5 rounded-3xl bg-surface border-[1.5px] border-border shadow-xs relative overflow-hidden">
                   <div className="absolute -right-8 -top-8 w-28 h-28 rounded-full bg-primary-soft/20 pointer-events-none" />
                   <div className="flex flex-col sm:flex-row gap-5 items-start">
                     {/* Cover Column */}
                     <div className="w-full sm:w-36 shrink-0 flex flex-col items-center">
                       <div className="relative w-32 sm:w-36 h-48 rounded-t-full rounded-b-2xl overflow-hidden shadow-md border-2 border-border-strong bg-surface-sunken group">
-                        <img
-                          src={coverUrl}
-                          alt={title}
-                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                        />
+                        {coverUrl ? (
+                          <img src={coverUrl} alt={title} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                        ) : (
+                          <span className="w-full h-full flex items-center justify-center text-3xl bg-surface-sunken" aria-hidden="true">🌿</span>
+                        )}
                         <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-primary/85 backdrop-blur-xs text-on-primary text-[10px] font-bold tracking-wide shadow-xs flex items-center gap-1">
                           <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
                           <span>{siteName}</span>
@@ -627,6 +617,13 @@ export const AddComicPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
+                ) : (
+                  <div className="p-6 rounded-3xl border-[1.5px] border-dashed border-border bg-surface/60 text-center flex flex-col items-center gap-2">
+                  <span className="text-3xl" aria-hidden="true">🌱</span>
+                  <p className="text-sm font-semibold text-text">Dán liên kết truyện rồi chọn “Lấy thông tin ✦”</p>
+                  <p className="text-xs text-text-muted">Tên truyện, bìa, tác giả và số chương sẽ hiện ở đây để nàng chỉnh lại trước khi lưu.</p>
+                </div>
+                )}
 
                 {/* Soft Warning Notification (Duplicate Detected) */}
                 {existingComic && (
@@ -634,7 +631,7 @@ export const AddComicPage: React.FC = () => {
                     <Lightbulb className="w-5 h-5 text-gold-ink shrink-0 mt-0.5" />
                     <div className="flex-1">
                       <p className="text-xs text-text font-medium leading-relaxed">
-                        Tựa truyện này đã có trong Tủ Sách của bạn với 1 nguồn khác. Bạn có muốn lưu liên kết này thành nguồn phụ bổ sung không?
+                        Tựa truyện này đã có trong Tủ Sách của bạn với {existingComic.sources.length} nguồn đọc. Bạn có muốn lưu liên kết này thành nguồn phụ bổ sung không?
                       </p>
                       <div className="mt-2 flex items-center gap-2">
                         <button
@@ -664,7 +661,7 @@ export const AddComicPage: React.FC = () => {
                   onClick={() => fileInputRef.current?.click()}
                   className="border-2 border-dashed border-border rounded-3xl p-6 text-center bg-background hover:bg-surface/40 transition-colors cursor-pointer group"
                 >
-                  {coverUrl && coverUrl !== DEFAULT_COVER ? (
+                  {coverUrl ? (
                     <div className="flex items-center justify-center gap-4">
                       <img
                         src={coverUrl}
@@ -765,7 +762,7 @@ export const AddComicPage: React.FC = () => {
                       <Lightbulb className="w-5 h-5 text-gold-ink shrink-0 mt-0.5" />
                       <div className="flex-1">
                         <p className="text-xs text-text font-medium leading-relaxed">
-                          Tựa truyện này đã có trong Tủ Sách của bạn với 1 nguồn khác. Bạn có muốn lưu liên kết này thành nguồn phụ bổ sung không?
+                          Tựa truyện này đã có trong Tủ Sách của bạn với {existingComic.sources.length} nguồn đọc. Bạn có muốn lưu liên kết này thành nguồn phụ bổ sung không?
                         </p>
                         <div className="mt-2 flex items-center gap-2">
                           <button
@@ -859,6 +856,15 @@ export const AddComicPage: React.FC = () => {
                 </span>
               </div>
               <div className="flex flex-wrap gap-2">
+                {shelvesError && (
+                  <button
+                    type="button"
+                    onClick={() => setShelvesReload((k) => k + 1)}
+                    className="w-full px-3 py-2 rounded-xl border border-dashed border-danger/50 bg-danger-tint text-xs font-semibold text-danger-ink cursor-pointer"
+                  >
+                    Chưa tải được kệ sách · Thử lại
+                  </button>
+                )}
                 {shelves.map((shelf) => {
                   const isSelected = selectedShelfIds.includes(shelf.id);
                   return (
@@ -1044,7 +1050,7 @@ export const AddComicPage: React.FC = () => {
                     <p className="text-[11px] text-text-muted px-1 flex items-start gap-1.5">
                       <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
                       <span>
-                        Tự động phân tích tên truyện, bìa minh họa, danh sách chương, tác giả và thể loại từ hơn 20 nguồn truyện phổ biến.
+                        Tự động đọc tên truyện, bìa minh họa, số chương, tác giả và thể loại từ trang truyện nàng dán vào.
                       </span>
                     </p>
                   )}
@@ -1052,6 +1058,7 @@ export const AddComicPage: React.FC = () => {
               </div>
 
               {/* Preview Card (Specimen Arch Cloche) */}
+              {previewLoaded ? (
               <div className="flex flex-col bg-surface rounded-3xl p-4 shadow-xs relative overflow-hidden border border-border-strong/20">
                 <div className="flex items-center justify-between pb-2 mb-2 bg-surface/60 -mx-4 -mt-4 px-4 pt-2.5 border-b border-border-strong/20">
                   <div className="flex items-center gap-1.5">
@@ -1068,11 +1075,11 @@ export const AddComicPage: React.FC = () => {
                 {/* Arched Cloche Book Cover */}
                 <div className="flex flex-col items-center mt-1">
                   <div className="relative w-36 h-52 rounded-t-[4rem] rounded-b-2xl overflow-hidden shadow-md bg-surface-sunken flex items-center justify-center border-2 border-border-strong/30">
-                    <img
-                      src={coverUrl}
-                      alt={title}
-                      className="w-full h-full object-cover"
-                    />
+                    {coverUrl ? (
+                      <img src={coverUrl} alt={title} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="w-full h-full flex items-center justify-center text-3xl bg-surface-sunken" aria-hidden="true">🌿</span>
+                    )}
                     <div className="absolute top-2 right-2 bg-accent/90 backdrop-blur-xs text-on-accent px-2 py-0.5 rounded-full text-[10px] font-bold shadow-xs">
                       {siteName}
                     </div>
@@ -1205,6 +1212,13 @@ export const AddComicPage: React.FC = () => {
                   </div>
                 </div>
               </div>
+              ) : (
+                <div className="p-6 rounded-3xl border-[1.5px] border-dashed border-border bg-surface/60 text-center flex flex-col items-center gap-2">
+                  <span className="text-3xl" aria-hidden="true">🌱</span>
+                  <p className="text-sm font-semibold text-text">Dán liên kết truyện rồi chọn “Lấy thông tin ✦”</p>
+                  <p className="text-xs text-text-muted">Tên truyện, bìa, tác giả và số chương sẽ hiện ở đây để nàng chỉnh lại trước khi lưu.</p>
+                </div>
+              )}
 
               {/* Duplicate Notice */}
               {existingComic && (
@@ -1215,7 +1229,7 @@ export const AddComicPage: React.FC = () => {
                       Đã tồn tại trong thư quán
                     </h3>
                     <p className="text-xs text-text-muted">
-                      Tựa truyện này đã có trong tủ sách với một nguồn khác. Bạn có muốn gom đường dẫn này thành <strong className="text-text">Nguồn phụ dự phòng</strong>?
+                      Tựa truyện này đã có trong tủ sách với {existingComic.sources.length} nguồn đọc. Bạn có muốn gom đường dẫn này thành <strong className="text-text">Nguồn phụ dự phòng</strong>?
                     </p>
                     <div className="flex items-center gap-2 mt-1">
                       <button
@@ -1244,7 +1258,7 @@ export const AddComicPage: React.FC = () => {
                 onClick={() => fileInputRef.current?.click()}
                 className="border-2 border-dashed border-border rounded-2xl p-4 text-center bg-surface-raised"
               >
-                {coverUrl && coverUrl !== DEFAULT_COVER ? (
+                {coverUrl ? (
                   <div className="flex items-center justify-center gap-3">
                     <img
                       src={coverUrl}
@@ -1434,6 +1448,15 @@ export const AddComicPage: React.FC = () => {
                 </span>
               </div>
               <div className="flex flex-wrap gap-1.5">
+                {shelvesError && (
+                  <button
+                    type="button"
+                    onClick={() => setShelvesReload((k) => k + 1)}
+                    className="w-full px-3 py-2 rounded-xl border border-dashed border-danger/50 bg-danger-tint text-xs font-semibold text-danger-ink cursor-pointer"
+                  >
+                    Chưa tải được kệ sách · Thử lại
+                  </button>
+                )}
                 {shelves.map((shelf) => {
                   const isSelected = selectedShelfIds.includes(shelf.id);
                   return (

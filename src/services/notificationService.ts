@@ -1,23 +1,39 @@
-import { Notification } from '../types';
-import { mockNotifications } from '../mocks/notifications';
-import { simulateNetworkDelay } from './apiClient';
+import { Notification, NotificationFilter, Paginated } from '../types';
+import * as mock from '../mocks/api/notifications';
+import { USE_MOCK, http } from './http';
+import { emitNotificationsChanged } from './events';
 
-let notificationsDatabase: Notification[] = [...mockNotifications];
+/* Notifications — docs/api-contract.md#notifications. Changes emit NOTIFICATIONS_CHANGED (services/events.ts). */
 
-export const getNotifications = async (): Promise<Notification[]> => {
-  await simulateNetworkDelay(120);
-  return [...notificationsDatabase];
+const typeParam = (filter: NotificationFilter) => (filter === 'all' ? undefined : filter);
+const changed = async (p: Promise<void>) => {
+  await p;
+  emitNotificationsChanged();
 };
 
-export const markAsRead = async (id: string): Promise<void> => {
-  await simulateNetworkDelay(80);
-  const notif = notificationsDatabase.find((n) => n.id === id);
-  if (notif) {
-    notif.is_read = true;
-  }
-};
+/** GET /api/notifications?type=new_chapter|broken_link&page=&page_size= → Paginated<Notification> (newest first) */
+export const listNotifications = (filter: NotificationFilter = 'all', page = 1, pageSize = 50): Promise<Paginated<Notification>> =>
+  USE_MOCK ? mock.list(filter, page, pageSize) : http.get('/api/notifications', { type: typeParam(filter), page, page_size: pageSize });
 
-export const markAllAsRead = async (): Promise<void> => {
-  await simulateNetworkDelay(100);
-  notificationsDatabase = notificationsDatabase.map((n) => ({ ...n, is_read: true }));
+/** GET /api/notifications/unread-count?type= → { count } */
+export const unreadCount = async (filter: NotificationFilter = 'all'): Promise<number> =>
+  USE_MOCK ? mock.unreadCount(filter) : (await http.get<{ count: number }>('/api/notifications/unread-count', { type: typeParam(filter) })).count;
+
+/** POST /api/notifications/{id}/read → 204 */
+export const markRead = (id: string): Promise<void> =>
+  changed(USE_MOCK ? mock.markRead(id) : http.post(`/api/notifications/${encodeURIComponent(id)}/read`));
+
+/** POST /api/notifications/read-all → 204 */
+export const markAllRead = (): Promise<void> => changed(USE_MOCK ? mock.markAllRead() : http.post('/api/notifications/read-all'));
+
+/** DELETE /api/notifications/{id} → 204 */
+export const deleteNotification = (id: string): Promise<void> =>
+  changed(USE_MOCK ? mock.remove(id) : http.delete(`/api/notifications/${encodeURIComponent(id)}`));
+
+export const notificationsService = {
+  list: listNotifications,
+  unreadCount,
+  markRead,
+  markAllRead,
+  delete: deleteNotification,
 };

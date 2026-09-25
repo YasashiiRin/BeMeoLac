@@ -1,5 +1,4 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import skyBackground from '../../assets/images/login-celestial-night.jpg';
 import './celestial.css';
@@ -246,9 +245,6 @@ export const CelestialLogin: React.FC<CelestialLoginProps> = ({
                 </span>
                 Ghi nhớ đăng nhập
               </label>
-              <Link to="/forgot-password" className="celestial-link celestial-focus rounded-sm">
-                Quên mật khẩu?
-              </Link>
             </div>
 
             <button type="submit" disabled={isLoading} aria-busy={isLoading} className="celestial-button celestial-focus mt-1">
@@ -269,12 +265,6 @@ export const CelestialLogin: React.FC<CelestialLoginProps> = ({
               </button>
             </div>
 
-            <p className="text-center text-[13px] text-celestial-muted">
-              Chưa có tài khoản?{' '}
-              <Link to="/register" className="celestial-link is-gold celestial-focus rounded-sm">
-                Đăng ký
-              </Link>
-            </p>
           </form>
         </div>
         {frameFront}

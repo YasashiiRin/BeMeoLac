@@ -1,41 +1,22 @@
-import { User } from '../types';
-import { mockAccount, mockCurrentUser } from '../mocks/user';
-import { simulateNetworkDelay } from './apiClient';
-import { getCurrentUser } from './userService';
+import { LoginResult } from '../types';
+import * as mock from '../mocks/api/users';
+import { USE_MOCK, getRefreshToken, request } from './http';
 
-export type AuthErrorCode = 'invalid_credentials';
-
-export class AuthError extends Error {
-  code: AuthErrorCode;
-  constructor(code: AuthErrorCode, message: string) {
-    super(message);
-    this.name = 'AuthError';
-    this.code = code;
-  }
-}
-
-export interface LoginResult {
-  token: string;
-  user: User;
-}
+/* Auth — docs/api-contract.md#auth. Tokens are stored by http.setSession. */
 
 /**
- * Log in with a username or email + password.
- * Mock mode: only the default account in src/mocks/user.ts is accepted.
+ * POST /api/auth/login body { username, password } → LoginResult
+ * (username may also be the email); 401 invalid_credentials
  */
-export const login = async (identifier: string, password: string): Promise<LoginResult> => {
-  await simulateNetworkDelay(450);
-  const id = identifier.trim().toLowerCase();
-  const matchesUser = id === mockAccount.username || id === mockCurrentUser.email.toLowerCase();
-  if (!matchesUser || password !== mockAccount.password) {
-    throw new AuthError('invalid_credentials', 'Tên đăng nhập hoặc mật khẩu chưa đúng');
-  }
-  const user = await getCurrentUser();
-  return { token: `mock-token-${mockAccount.userId}-${Date.now()}`, user };
+export const login = (identifier: string, password: string): Promise<LoginResult> =>
+  USE_MOCK ? mock.login(identifier, password) : request('POST', '/api/auth/login', { body: { username: identifier, password }, auth: false });
+
+/** POST /api/auth/logout body { refresh_token } → 204 (revokes this device's session) */
+export const logout = async (): Promise<void> => {
+  if (USE_MOCK) return;
+  await request('POST', '/api/auth/logout', { body: { refresh_token: getRefreshToken() } });
 };
 
-export const logout = async (): Promise<void> => {
-  // Real API: revoke the token server-side. Nothing to do in mock mode.
-};
+// POST /api/auth/refresh body { refresh_token } → { access_token, refresh_token } — called by http.ts on 401.
 
 export const authService = { login, logout };

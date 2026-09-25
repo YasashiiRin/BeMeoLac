@@ -114,8 +114,6 @@ export interface Paginated<T> {
 }
 
 export type SortOption = 'updated_at' | 'title' | 'rating' | 'progress';
-export type FilterGenre = 'all' | 'healing' | 'fantasy' | 'romance' | 'adventure' | 'comedy' | 'drama' | 'mystery';
-export type FilterSource = 'all' | 'Cuutruyen' | 'BlogTruyen' | 'Bilibili' | 'Kakao' | 'Webtoon' | 'Hako';
 
 /** Advanced search (/search). Every field is optional; arrays mean "any of". */
 export type SearchSort = 'relevance' | 'updated_at' | 'title' | 'rating' | 'progress';
@@ -175,4 +173,73 @@ export interface Stats {
   top_sources: { site_name: string; favicon_url: string; count: number }[];
   goal: ReadingGoal; // always the current year
   recently_completed: Comic[];
+}
+
+/* ── API contract types (docs/api-contract.md) ─────────────────────── */
+
+/** Error body for every non-2xx response. */
+export interface ApiErrorBody {
+  detail: string;
+  code?: string;
+}
+
+/** GET /api/comics query. Arrays are repeated keys (?status=a&status=b). */
+export interface ComicListParams {
+  q?: string;
+  status?: ComicStatus | 'all';
+  tag?: string;
+  source?: string;
+  shelf?: string;
+  has_new_chapter?: boolean;
+  is_favorite?: boolean;
+  /** "position" = the shelf's saved order (needs shelf) */
+  sort?: SortOption | 'position';
+  page?: number;
+  page_size?: number;
+}
+
+export interface ComicSummary {
+  total: number;
+  by_status: Record<ComicStatus, number>;
+  new_chapters: number; // comics with an unread new chapter
+}
+
+export type ComicCreate = Omit<Comic, 'id' | 'created_at' | 'updated_at'>;
+export type ComicUpdate = Partial<Omit<Comic, 'id' | 'created_at' | 'updated_at'>>;
+
+/** What POST /api/sources/preview reads from a comic page URL. */
+export interface ComicPreview {
+  title: string;
+  author: string;
+  cover_url: string;
+  total_chapters: number;
+  tags: string[];
+  site_name: string;
+  favicon_url: string;
+}
+
+export interface ShelfInput {
+  name: string;
+  description?: string;
+  icon?: string;
+  color?: string;
+}
+
+export interface LoginResult {
+  access_token: string;
+  refresh_token: string;
+  token_type: 'bearer';
+  user: User;
+}
+
+export type NotificationFilter = 'all' | Extract<NotificationType, 'new_chapter' | 'broken_link'>;
+
+export interface ImportResult {
+  added: number;
+  skipped: number;
+}
+
+export interface TagCount {
+  name: string;
+  count: number;
 }

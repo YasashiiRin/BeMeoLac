@@ -1,499 +1,126 @@
-import { Comic, Paginated, ComicStatus, SortOption, Source, ComicSearchParams, SearchFacets, FacetOption } from '../types';
-import { fold } from '../utils/text';
-import { getShelves } from './shelfService';
-import { mockComics } from '../mocks/comics';
-import { simulateNetworkDelay } from './apiClient';
+import {
+  Comic,
+  ComicCreate,
+  ComicListParams,
+  ComicSearchParams,
+  ComicSummary,
+  ComicUpdate,
+  Paginated,
+  SearchFacets,
+  Source,
+} from '../types';
+import * as mock from '../mocks/api/comics';
+import { USE_MOCK, http, orNull } from './http';
+import { emitComicUpdated } from './events';
 
-// In-memory working copy of comics for mutations in mock mode
-let comicsDatabase: Comic[] = [...mockComics];
+/* Comics — docs/api-contract.md#comics */
 
-export interface GetComicsParams {
-  status?: ComicStatus | 'all';
-  shelf_id?: string;
-  genre?: string;
-  source?: string;
-  search?: string;
-  sort?: SortOption;
-  has_new_chapter?: boolean;
-  is_favorite?: boolean;
-  page?: number;
-  page_size?: number;
-}
-
-export const getComics = async (params: GetComicsParams = {}): Promise<Paginated<Comic>> => {
-  await simulateNetworkDelay(180);
-
-  let filtered = [...comicsDatabase];
-
-  // Filter by shelf
-  if (params.shelf_id && params.shelf_id !== 'all') {
-    filtered = filtered.filter((c) => c.shelf_ids.includes(params.shelf_id!));
-  }
-
-  // Filter by status
-  if (params.status && params.status !== 'all') {
-    filtered = filtered.filter((c) => c.status === params.status);
-  }
-
-  // Filter by source
-  if (params.source && params.source !== 'all') {
-    filtered = filtered.filter((c) =>
-      c.sources.some((s) => s.site_name.toLowerCase() === params.source?.toLowerCase())
-    );
-  }
-
-  // Filter by tag / genre
-  if (params.genre && params.genre !== 'all') {
-    filtered = filtered.filter((c) =>
-      c.tags.some((t) => t.toLowerCase().includes(params.genre!.toLowerCase()))
-    );
-  }
-
-  // Filter by new chapter flag
-  if (params.has_new_chapter) {
-    filtered = filtered.filter((c) => c.has_new_chapter);
-  }
-
-  // Filter by favorite
-  if (params.is_favorite) {
-    filtered = filtered.filter((c) => c.is_favorite);
-  }
-
-  // Filter by search term
-  if (params.search && params.search.trim()) {
-    const q = params.search.trim().toLowerCase();
-    filtered = filtered.filter(
-      (c) =>
-        c.title.toLowerCase().includes(q) ||
-        c.author.toLowerCase().includes(q) ||
-        c.tags.some((t) => t.toLowerCase().includes(q))
-    );
-  }
-
-  // Sorting
-  const sort = params.sort || 'updated_at';
-  filtered.sort((a, b) => {
-    if (sort === 'updated_at') {
-      return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
-    }
-    if (sort === 'title') {
-      return a.title.localeCompare(b.title, 'vi');
-    }
-    if (sort === 'rating') {
-      return b.rating - a.rating;
-    }
-    if (sort === 'progress') {
-      const progA = a.total_chapters > 0 ? a.current_chapter / a.total_chapters : 0;
-      const progB = b.total_chapters > 0 ? b.current_chapter / b.total_chapters : 0;
-      return progB - progA;
-    }
-    return 0;
-  });
-
-  const page = params.page || 1;
-  const pageSize = params.page_size || 10;
-  const total = filtered.length;
-  const startIndex = (page - 1) * pageSize;
-  const paginatedItems = filtered.slice(startIndex, startIndex + pageSize);
-
-  return {
-    items: paginatedItems,
-    total,
-    page,
-    page_size: pageSize,
-  };
+const withEvent = async (p: Promise<Comic>): Promise<Comic> => {
+  const comic = await p;
+  emitComicUpdated(comic);
+  return comic;
 };
 
-export const getComicById = async (id: string): Promise<Comic | null> => {
-  await simulateNetworkDelay(120);
-  const found = comicsDatabase.find((c) => c.id === id);
-  return found || null;
-};
-
-export const toggleFavorite = async (id: string): Promise<Comic> => {
-  await simulateNetworkDelay(100);
-  const index = comicsDatabase.findIndex((c) => c.id === id);
-  if (index === -1) throw new Error('Comic not found');
-
-  const updated: Comic = {
-    ...comicsDatabase[index],
-    is_favorite: !comicsDatabase[index].is_favorite,
-    updated_at: new Date().toISOString(),
-  };
-  comicsDatabase[index] = updated;
-  return updated;
-};
-
-export const updateComic = async (id: string, data: Partial<Comic>): Promise<Comic> => {
-  await simulateNetworkDelay(100);
-  const index = comicsDatabase.findIndex((c) => c.id === id);
-  if (index === -1) throw new Error('Comic not found');
-
-  const existing = comicsDatabase[index];
-  const updated: Comic = {
-    ...existing,
-    ...data,
-    updated_at: new Date().toISOString(),
-  };
-  comicsDatabase[index] = updated;
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('comic-updated', { detail: updated }));
-  }
-  return updated;
-};
-
-export const updateComicProgress = async (id: string, chapter: number): Promise<Comic> => {
-  await simulateNetworkDelay(100);
-  const index = comicsDatabase.findIndex((c) => c.id === id);
-  if (index === -1) throw new Error('Comic not found');
-
-  const comic = comicsDatabase[index];
-  const newChapter = Math.min(Math.max(0, chapter), comic.total_chapters);
-  const newStatus = newChapter >= comic.total_chapters ? 'completed' : 'reading';
-
-  const updated: Comic = {
-    ...comic,
-    current_chapter: newChapter,
-    status: newStatus,
-    last_read_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
-  comicsDatabase[index] = updated;
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('comic-updated', { detail: updated }));
-  }
-  return updated;
-};
-
-export const addComic = async (newComicData: Omit<Comic, 'id' | 'created_at' | 'updated_at'>): Promise<Comic> => {
-  await simulateNetworkDelay(200);
-  const newComic: Comic = {
-    ...newComicData,
-    id: `comic_${Date.now()}`,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
-  comicsDatabase.unshift(newComic);
-  return newComic;
-};
-
-export interface ComicPreview {
-  title: string;
-  author: string;
-  cover_url: string;
-  total_chapters: number;
-  tags: string[];
-  site_name: string;
-  favicon_url: string;
-}
-
-export const fetchFromUrl = async (url: string): Promise<ComicPreview> => {
-  await simulateNetworkDelay(350);
-  const trimmed = url.trim();
-  if (!trimmed || !trimmed.startsWith('http')) {
-    throw new Error('Đường dẫn không hợp lệ. Vui lòng nhập link bắt đầu bằng http:// hoặc https://');
-  }
-
-  // Derive site name
-  let siteName = 'Khác';
-  if (trimmed.includes('cuutruyen')) siteName = 'Cuutruyen';
-  else if (trimmed.includes('blogtruyen')) siteName = 'BlogTruyen';
-  else if (trimmed.includes('kakao')) siteName = 'Kakao Webtoon';
-  else if (trimmed.includes('webtoons') || trimmed.includes('webtoon')) siteName = 'Webtoon';
-  else if (trimmed.includes('bilibili')) siteName = 'Bilibili';
-  else if (trimmed.includes('mangadex')) siteName = 'MangaDex';
-  else if (trimmed.includes('hako')) siteName = 'Hako';
-  else {
-    try {
-      const parsed = new URL(trimmed);
-      siteName = parsed.hostname.replace(/^www\./, '');
-    } catch {
-      siteName = 'Nguồn mới';
-    }
-  }
-
-  // Check known match for exact Stitch design showcase
-  if (trimmed.toLowerCase().includes('tiem-tap-hoa') || trimmed.toLowerCase().includes('thao-moc')) {
-    return {
-      title: 'Tiệm Tạp Hóa Phép Thuật Thảo Mộc',
-      author: 'Hatori M. (Minh họa: Lirien)',
-      cover_url:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuD69NfgFvW2znXgoxCJratVdrZQOvY21Pg0ZbYhIerK-jyRA3Vl9vl2gw0mkfxifvDcZDCS_EHcNj7olGmjgBuq87nPiiTgW_1jqfmP3m4jnNxJ2J_AVgar3RikSZixBYldMyj425cuYLe153rtjXyae2SoGrbxCfR7CxDKMvqDpthpMHDY8WOoOoBneojzxq-Qk0qoVtozx-uNnjAFOgYNR9HUzK2FH8s_pCtCcbupehhIKWpQ5w',
-      total_chapters: 120,
-      tags: ['Chữa lành', 'Phép thuật', 'Đời thường', 'Nhà kính cổ'],
-      site_name: siteName,
-      favicon_url: '',
-    };
-  }
-
-  // Parse a title from slug if possible
-  try {
-    const parsed = new URL(trimmed);
-    const pathParts = parsed.pathname.split('/').filter(Boolean);
-    const slug = pathParts[pathParts.length - 1] || 'Truyen-Moi';
-    const words = slug.replace(/[-_]+/g, ' ').replace(/\.[a-z0-9]+$/i, '').trim();
-    const formattedTitle = words
-      .split(' ')
-      .filter(Boolean)
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-      .join(' ');
-
-    return {
-      title: formattedTitle || 'Tác Phẩm Thảo Mộc Mới',
-      author: 'Đang cập nhật',
-      cover_url:
-        'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=500&auto=format&fit=crop&q=80',
-      total_chapters: 85,
-      tags: ['Chữa lành', 'Phép thuật', 'Nhà kính'],
-      site_name: siteName,
-      favicon_url: '',
-    };
-  } catch {
-    throw new Error('Không thể phân tích dữ liệu từ liên kết này. Vui lòng kiểm tra lại đường dẫn!');
-  }
-};
-
-export const findExistingByTitle = async (title: string): Promise<Comic | null> => {
-  await simulateNetworkDelay(50);
-  const t = title.trim().toLowerCase();
-  if (!t) return null;
-  return comicsDatabase.find((c) => c.title.trim().toLowerCase() === t) || null;
-};
-
-export const addSourceToComic = async (
-  comicId: string,
-  source: Source
-): Promise<Comic> => {
-  await simulateNetworkDelay(100);
-  const index = comicsDatabase.findIndex((c) => c.id === comicId);
-  if (index === -1) throw new Error('Comic not found');
-  const existing = comicsDatabase[index];
-  const updatedSources = [...existing.sources, source];
-  const updated: Comic = {
-    ...existing,
-    sources: updatedSources,
-    updated_at: new Date().toISOString(),
-  };
-  comicsDatabase[index] = updated;
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('comic-updated', { detail: updated }));
-  }
-  return updated;
-};
-
-export const create = async (
-  newComicData: Omit<Comic, 'id' | 'created_at' | 'updated_at'>
-): Promise<Comic> => {
-  const result = await addComic(newComicData);
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('comic-updated', { detail: result }));
-  }
-  return result;
-};
-
-export const deleteComic = async (id: string): Promise<void> => {
-  await simulateNetworkDelay(150);
-  comicsDatabase = comicsDatabase.filter((c) => c.id !== id);
-};
-
-export const addComicToShelf = async (shelfId: string, comicId: string): Promise<Comic> => {
-  await simulateNetworkDelay(100);
-  const index = comicsDatabase.findIndex((c) => c.id === comicId);
-  if (index === -1) throw new Error('Comic not found');
-  const comic = comicsDatabase[index];
-  if (!comic.shelf_ids.includes(shelfId)) {
-    comicsDatabase[index] = {
-      ...comic,
-      shelf_ids: [...comic.shelf_ids, shelfId],
-      updated_at: new Date().toISOString(),
-    };
-  }
-  return comicsDatabase[index];
-};
-
-export const removeComicFromShelf = async (shelfId: string, comicId: string): Promise<Comic> => {
-  await simulateNetworkDelay(100);
-  const index = comicsDatabase.findIndex((c) => c.id === comicId);
-  if (index === -1) throw new Error('Comic not found');
-  const comic = comicsDatabase[index];
-  comicsDatabase[index] = {
-    ...comic,
-    shelf_ids: comic.shelf_ids.filter((sid) => sid !== shelfId),
-    updated_at: new Date().toISOString(),
-  };
-  return comicsDatabase[index];
-};
-
-export interface ComicSummary {
-  total: number;
-  by_status: {
-    reading: number;
-    completed: number;
-    plan_to_read: number;
-    on_hold: number;
-    dropped: number;
-  };
-  new_chapters: number;
-}
-
-export const getSummary = async (): Promise<ComicSummary> => {
-  await simulateNetworkDelay(80);
-  const reading = comicsDatabase.filter((c) => c.status === 'reading').length;
-  const completed = comicsDatabase.filter((c) => c.status === 'completed').length;
-  const plan_to_read = comicsDatabase.filter((c) => c.status === 'plan_to_read').length;
-  const on_hold = comicsDatabase.filter((c) => c.status === 'on_hold').length;
-  const dropped = comicsDatabase.filter((c) => c.status === 'dropped').length;
-  const new_chapters = comicsDatabase.filter((c) => c.has_new_chapter).length;
-
-  return {
-    total: comicsDatabase.length,
-    by_status: {
-      reading,
-      completed,
-      plan_to_read,
-      on_hold,
-      dropped,
-    },
-    new_chapters,
-  };
-};
-
-/* ── Advanced search (/search) ─────────────────────────────────────── */
-
-const STATUS_LABELS: Record<ComicStatus, string> = {
-  reading: 'Đang đọc',
-  completed: 'Đã đọc xong',
-  plan_to_read: 'Muốn đọc',
-  on_hold: 'Tạm dừng',
-  dropped: 'Bỏ dở',
-};
-
-const progressOf = (c: Comic) => (c.total_chapters > 0 ? Math.min(100, (c.current_chapter / c.total_chapters) * 100) : 0);
-
-/** 0 when the comic doesn't match the text; higher = better match. */
-function relevance(c: Comic, q: string): number {
-  if (!q) return 1;
-  let score = 0;
-  const title = fold(c.title);
-  if (title.includes(q)) score += title.startsWith(q) ? 6 : 4;
-  if (fold(c.author).includes(q)) score += 3;
-  if (c.tags.some((t) => fold(t).includes(q))) score += 2;
-  if (fold(c.note || '').includes(q)) score += 1;
-  return score;
-}
+/** GET /api/comics?q=&status=&tag=&source=&shelf=&has_new_chapter=&is_favorite=&sort=&page=&page_size= → Paginated<Comic> */
+export const getComics = (params: ComicListParams = {}): Promise<Paginated<Comic>> =>
+  USE_MOCK
+    ? mock.list(params)
+    : http.get('/api/comics', {
+        ...params,
+        status: params.status === 'all' ? undefined : params.status,
+        shelf: params.shelf === 'all' ? undefined : params.shelf,
+      });
 
 /**
- * Search title, author, tags and notes (accent-insensitive) with filters.
- * Array filters mean "any of"; results are paginated.
+ * Advanced search, same endpoint with repeatable filters:
+ * GET /api/comics?q=&status=&tag=&source=&shelf=&min_rating=&progress_min=&progress_max=&has_new_chapter=&has_broken_link=&sort=&page=&page_size=
+ * → Paginated<Comic>
  */
-export const searchComics = async (params: ComicSearchParams = {}): Promise<Paginated<Comic>> => {
-  await simulateNetworkDelay(160);
-  const q = fold((params.q || '').trim());
-  const pmin = params.progress_min ?? 0;
-  const pmax = params.progress_max ?? 100;
+export const searchComics = (params: ComicSearchParams = {}): Promise<Paginated<Comic>> =>
+  USE_MOCK
+    ? mock.search(params)
+    : http.get('/api/comics', {
+        q: params.q,
+        status: params.statuses,
+        tag: params.genres,
+        source: params.sources,
+        shelf: params.shelves,
+        min_rating: params.min_rating,
+        progress_min: params.progress_min,
+        progress_max: params.progress_max,
+        has_new_chapter: params.has_new_chapter,
+        has_broken_link: params.has_broken_link,
+        sort: params.sort,
+        page: params.page,
+        page_size: params.page_size,
+      });
 
-  const scored = comicsDatabase
-    .map((c) => ({ c, score: relevance(c, q) }))
-    .filter(({ c, score }) => {
-      if (score === 0) return false;
-      if (params.statuses?.length && !params.statuses.includes(c.status)) return false;
-      if (params.genres?.length && !c.tags.some((t) => params.genres!.includes(t))) return false;
-      if (params.sources?.length && !c.sources.some((s) => params.sources!.includes(s.site_name))) return false;
-      if (params.shelves?.length && !c.shelf_ids.some((id) => params.shelves!.includes(id))) return false;
-      if (params.min_rating && c.rating < params.min_rating) return false;
-      const p = progressOf(c);
-      if (p < pmin || p > pmax) return false;
-      if (params.has_new_chapter && !c.has_new_chapter) return false;
-      if (params.has_broken_link && !c.sources.some((s) => !s.is_alive)) return false;
-      return true;
-    });
+/** GET /api/comics/facets → SearchFacets (filter options with counts over the whole library) */
+export const getSearchFacets = (): Promise<SearchFacets> => (USE_MOCK ? mock.facets() : http.get('/api/comics/facets'));
 
-  const sort = params.sort || (q ? 'relevance' : 'updated_at');
-  scored.sort((a, b) => {
-    switch (sort) {
-      case 'relevance':
-        return b.score - a.score || b.c.updated_at.localeCompare(a.c.updated_at);
-      case 'title':
-        return a.c.title.localeCompare(b.c.title, 'vi');
-      case 'rating':
-        return b.c.rating - a.c.rating;
-      case 'progress':
-        return progressOf(b.c) - progressOf(a.c);
-      default:
-        return b.c.updated_at.localeCompare(a.c.updated_at);
-    }
-  });
+/** GET /api/comics/summary → ComicSummary */
+export const getSummary = (): Promise<ComicSummary> => (USE_MOCK ? mock.summary() : http.get('/api/comics/summary'));
 
-  const page = Math.max(1, params.page || 1);
-  const pageSize = params.page_size || 12;
-  return {
-    items: scored.slice((page - 1) * pageSize, page * pageSize).map((x) => x.c),
-    total: scored.length,
-    page,
-    page_size: pageSize,
-  };
-};
+/** GET /api/comics/{id} → Comic; null when 404 comic_not_found */
+export const getComicById = (id: string): Promise<Comic | null> =>
+  orNull(USE_MOCK ? mock.get(id) : http.get<Comic>(`/api/comics/${encodeURIComponent(id)}`));
 
-/** Filter options with counts over the whole library. */
-export const getSearchFacets = async (): Promise<SearchFacets> => {
-  await simulateNetworkDelay(120);
-  const count = <T,>(values: T[]) => values.reduce((m, v) => m.set(v, (m.get(v) || 0) + 1), new Map<T, number>());
+/** GET /api/comics/lookup?title= → { comic: Comic | null } (exact title, case-insensitive) */
+export const findExistingByTitle = async (title: string): Promise<Comic | null> =>
+  USE_MOCK ? mock.findByTitle(title) : (await http.get<{ comic: Comic | null }>('/api/comics/lookup', { title })).comic;
 
-  const statusCounts = count(comicsDatabase.map((c) => c.status));
-  const statuses: FacetOption[] = (Object.keys(STATUS_LABELS) as ComicStatus[]).map((st) => ({
-    value: st,
-    label: STATUS_LABELS[st],
-    count: statusCounts.get(st) || 0,
-  }));
+/** POST /api/comics body ComicCreate → 201 Comic */
+export const createComic = (data: ComicCreate): Promise<Comic> =>
+  withEvent(USE_MOCK ? mock.create(data) : http.post<Comic>('/api/comics', data));
 
-  const genreCounts = count(comicsDatabase.flatMap((c) => c.tags));
-  const genres: FacetOption[] = [...genreCounts.entries()]
-    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'vi'))
-    .map(([value, n]) => ({ value, label: value, count: n }));
+/** PATCH /api/comics/{id} body ComicUpdate → Comic (sources are replaced when given) */
+export const updateComic = (id: string, data: ComicUpdate): Promise<Comic> =>
+  withEvent(USE_MOCK ? mock.update(id, data) : http.patch<Comic>(`/api/comics/${encodeURIComponent(id)}`, data));
 
-  const sourceInfo = new Map<string, string>();
-  comicsDatabase.forEach((c) => c.sources.forEach((s) => sourceInfo.set(s.site_name, s.favicon_url)));
-  const sourceCounts = count(comicsDatabase.flatMap((c) => [...new Set(c.sources.map((s) => s.site_name))]));
-  const sources: FacetOption[] = [...sourceCounts.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .map(([value, n]) => ({ value, label: value, icon: sourceInfo.get(value), count: n }));
+/** DELETE /api/comics/{id} → 204 */
+export const deleteComic = (id: string): Promise<void> =>
+  USE_MOCK ? mock.remove(id) : http.delete(`/api/comics/${encodeURIComponent(id)}`);
 
-  const shelfCounts = count(comicsDatabase.flatMap((c) => c.shelf_ids));
-  const shelves: FacetOption[] = (await getShelves())
-    .filter((sh) => sh.id !== 'all')
-    .map((sh) => ({ value: sh.id, label: sh.name, icon: sh.icon, count: shelfCounts.get(sh.id) || 0 }));
+/** POST /api/comics/{id}/favorite/toggle → Comic */
+export const toggleFavorite = (id: string): Promise<Comic> =>
+  USE_MOCK ? mock.toggleFavorite(id) : http.post<Comic>(`/api/comics/${encodeURIComponent(id)}/favorite/toggle`);
 
-  return { total: comicsDatabase.length, statuses, genres, sources, shelves };
-};
+/**
+ * PUT /api/comics/{id}/progress body { current_chapter } → Comic
+ * (server clamps to 0..total_chapters, sets status "completed" at the end, updates last_read_at, logs the reading)
+ */
+export const updateComicProgress = (id: string, chapter: number): Promise<Comic> =>
+  withEvent(
+    USE_MOCK ? mock.setProgress(id, chapter) : http.put<Comic>(`/api/comics/${encodeURIComponent(id)}/progress`, { current_chapter: chapter })
+  );
 
-/** Adds comics from a backup; ids already in the library are skipped. */
-export const importComics = async (comics: Comic[]): Promise<{ added: number; skipped: number }> => {
-  const known = new Set(comicsDatabase.map((c) => c.id));
-  const fresh = comics.filter((c) => !known.has(c.id));
-  comicsDatabase = [...fresh, ...comicsDatabase];
-  return { added: fresh.length, skipped: comics.length - fresh.length };
-};
+/** POST /api/comics/{id}/sources body Source → 201 Comic */
+export const addSourceToComic = (comicId: string, source: Source): Promise<Comic> =>
+  withEvent(USE_MOCK ? mock.addSource(comicId, source) : http.post<Comic>(`/api/comics/${encodeURIComponent(comicId)}/sources`, source));
+
+/** POST /api/shelves/{shelf_id}/comics body { comic_id } → Comic */
+export const addComicToShelf = (shelfId: string, comicId: string): Promise<Comic> =>
+  USE_MOCK ? mock.addToShelf(shelfId, comicId) : http.post<Comic>(`/api/shelves/${encodeURIComponent(shelfId)}/comics`, { comic_id: comicId });
+
+/** DELETE /api/shelves/{shelf_id}/comics/{comic_id} → Comic */
+export const removeComicFromShelf = (shelfId: string, comicId: string): Promise<Comic> =>
+  USE_MOCK
+    ? mock.removeFromShelf(shelfId, comicId)
+    : http.delete<Comic>(`/api/shelves/${encodeURIComponent(shelfId)}/comics/${encodeURIComponent(comicId)}`);
 
 export const comicsService = {
-  getComics,
-  getComicById,
+  list: getComics,
+  search: searchComics,
+  getFacets: getSearchFacets,
   getSummary,
-  toggleFavorite,
-  update: updateComic,
-  updateProgress: updateComicProgress,
-  updateComicProgress,
-  updateComic,
-  addComic,
-  create,
-  fetchFromUrl,
+  getComicById,
   findExistingByTitle,
+  create: createComic,
+  update: updateComic,
+  delete: deleteComic,
+  toggleFavorite,
+  updateProgress: updateComicProgress,
   addSourceToComic,
-  deleteComic,
   addComicToShelf,
   removeComicFromShelf,
-  searchComics,
-  getSearchFacets,
-  importComics,
 };
-
-

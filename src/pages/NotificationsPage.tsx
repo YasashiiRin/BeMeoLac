@@ -1,130 +1,96 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, CheckCheck } from 'lucide-react';
 import { Notification } from '../types';
-import { getNotifications, markAsRead, markAllAsRead } from '../services/notificationService';
-import { Button } from '../components/Button';
 import { EmptyState } from '../components/EmptyState';
 import { useToast } from '../context/ToastContext';
-import { Bell, CheckCheck, Sparkles, BookOpen, ExternalLink } from 'lucide-react';
+import { NotificationFilter } from '../types';
+import { FilterChips } from '../features/notifications/FilterChips';
+import { NotificationRow } from '../features/notifications/NotificationRow';
+import { notificationTarget } from '../features/notifications/openTarget';
+import { useNotifications } from '../features/notifications/useNotifications';
 
 export const NotificationsPage: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [filter, setFilter] = useState<NotificationFilter>('all');
+  const [swipedId, setSwipedId] = useState<string | null>(null);
+  const { items, unread, error, reload, markRead, markAllRead, remove } = useNotifications(filter);
 
-  const fetchNotifs = async () => {
-    setIsLoading(true);
-    try {
-      const data = await getNotifications();
-      setNotifications(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
+  const goBack = () => (window.history.state?.idx > 0 ? navigate(-1) : navigate('/'));
+
+  const openRow = (n: Notification) => {
+    if (!n.is_read) markRead(n.id);
+    navigate(notificationTarget(n));
   };
 
-  useEffect(() => {
-    fetchNotifs();
-  }, []);
-
-  const handleMarkAll = async () => {
-    await markAllAsRead();
-    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-    showToast('Đã đánh dấu tất cả thông báo là đã đọc! 🌸', 'info');
+  const readAll = async () => {
+    await markAllRead();
+    showToast('Đã đánh dấu đọc hết thông báo 🌸', 'success');
   };
 
-  const handleClickItem = async (notif: Notification) => {
-    if (!notif.is_read) {
-      await markAsRead(notif.id);
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === notif.id ? { ...n, is_read: true } : n))
-      );
-    }
-    if (notif.comic_id) {
-      navigate(`/comics/${notif.comic_id}`);
-    }
+  const deleteRow = async (n: Notification) => {
+    setSwipedId(null);
+    await remove(n.id);
+    showToast('Đã xóa thông báo 🍃', 'success');
   };
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-serif text-2xl font-bold text-text">
-            Thông Báo Nhà Kính ✿
-          </h1>
-          <p className="text-xs text-text-muted">
-            Tin tức về chương truyện mới và các mốc thành tựu đọc sách
-          </p>
-        </div>
-
-        {notifications.some((n) => !n.is_read) && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleMarkAll}
-            iconLeft={<CheckCheck size={14} className="text-leaf-ink" />}
+    <div className="max-w-2xl mx-auto flex flex-col gap-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <button
+            type="button"
+            onClick={goBack}
+            aria-label="Quay lại"
+            className="w-10 h-10 shrink-0 rounded-full bg-surface border border-border text-text flex items-center justify-center hover:border-primary transition-colors cursor-pointer"
           >
-            Đọc tất cả
-          </Button>
-        )}
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <h1 className="font-serif italic text-2xl sm:text-3xl font-semibold text-text truncate">
+            Thông báo <span className="not-italic text-lg text-accent" aria-hidden="true">✿</span>
+          </h1>
+        </div>
+        <button
+          type="button"
+          onClick={readAll}
+          disabled={unread.all === 0}
+          className="shrink-0 inline-flex items-center gap-1.5 h-10 px-3.5 rounded-full text-sm font-semibold text-primary-ink hover:bg-primary-tint transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-default disabled:hover:bg-transparent"
+        >
+          <CheckCheck className="w-4 h-4" aria-hidden="true" />
+          Đọc hết
+        </button>
       </div>
 
-      {isLoading ? (
-        <div className="flex flex-col gap-3">
-          {[1, 2, 3].map((n) => (
-            <div
-              key={n}
-              className="p-4 bg-surface/60 rounded-2xl border border-border animate-pulse h-20"
-            />
+      <FilterChips value={filter} onChange={setFilter} unread={unread} />
+
+      {error && items === null ? (
+        <EmptyState icon="🍂" title="Chưa tải được thông báo" description="Nàng thử lại sau một chút nhé." actionText="Thử lại" onAction={reload} />
+      ) : items === null ? (
+        <div className="flex flex-col gap-2.5" aria-hidden="true">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="h-24 rounded-2xl bg-surface border border-border animate-pulse" />
           ))}
         </div>
-      ) : notifications.length === 0 ? (
-        <EmptyState
-          icon="🔔"
-          title="Không có thông báo mới"
-          description="Khi có chương truyện mới ra mắt hoặc thành tựu đơm hoa, tin nhắn sẽ hiển thị ở đây."
-        />
+      ) : items.length === 0 ? (
+        <EmptyState icon="🕊️" title="Yên bình giữa rừng hoa" description="Chưa có thông báo nào, khu vườn đang yên bình." />
       ) : (
-        <div className="flex flex-col gap-3">
-          {notifications.map((n) => (
-            <div
-              key={n.id}
-              onClick={() => handleClickItem(n)}
-              className={`p-4 rounded-2xl border-1.5 transition-all cursor-pointer flex items-start gap-3.5 ${
-                n.is_read
-                  ? 'bg-surface-raised border-border/60'
-                  : 'bg-sunbeam-gradient border-border-strong shadow-botanical-sm'
-              }`}
-            >
-              <div className="w-10 h-10 rounded-xl bg-surface-raised border border-border-strong flex items-center justify-center text-lg shrink-0">
-                {n.type === 'new_chapter' ? '🌸' : n.type === 'achievement' ? '✨' : '⚠️'}
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <h4 className="font-semibold text-sm text-text truncate">
-                    {n.comic_title || 'Tin vui từ nhà kính'}
-                  </h4>
-                  <span className="text-[11px] text-text-muted tabular-nums shrink-0">
-                    {new Date(n.created_at).toLocaleTimeString('vi-VN', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </span>
-                </div>
-                <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                  {n.message}
-                </p>
-              </div>
-
-              {!n.is_read && (
-                <span className="w-2.5 h-2.5 rounded-full bg-accent-soft mt-1 shrink-0" />
-              )}
-            </div>
-          ))}
-        </div>
+        <>
+          <ul className="flex flex-col gap-2.5" aria-label="Danh sách thông báo">
+            {items.map((n) => (
+              <NotificationRow
+                key={n.id}
+                notification={n}
+                onOpen={openRow}
+                onFixSource={(x) => !x.is_read && markRead(x.id)}
+                onDelete={deleteRow}
+                swiped={swipedId === n.id}
+                onSwipedChange={(o) => setSwipedId(o ? n.id : null)}
+              />
+            ))}
+          </ul>
+          <p className="md:hidden text-center text-[11px] text-text-muted">Vuốt sang trái trên một thông báo để xóa 🍃</p>
+        </>
       )}
     </div>
   );

@@ -6,6 +6,7 @@ import { searchComics, getSearchFacets } from '../services/comicService';
 import { ComicCard } from '../components/ComicCard';
 import { SearchBar } from '../components/SearchBar';
 import { EmptyState } from '../components/EmptyState';
+import { ErrorState } from '../components/ErrorState';
 import { BottomSheet } from '../components/BottomSheet';
 import { SearchFiltersPanel } from '../features/search/SearchFilters';
 import {
@@ -110,24 +111,31 @@ export const SearchPage: React.FC = () => {
   };
 
   /* ── data ── */
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [retryKey, setRetryKey] = useState(0);
+
   useEffect(() => {
     getSearchFacets().then(setFacets).catch(console.error);
-  }, []);
+  }, [retryKey]);
 
   const requestId = useRef(0);
   useEffect(() => {
     const id = ++requestId.current;
     setIsLoading(true);
+    setLoadError(null);
     searchComics(toSearchParams(filters, PAGE_SIZE))
       .then((res) => {
         if (id === requestId.current) setResult(res);
       })
-      .catch(console.error)
+      .catch((err) => {
+        console.error(err);
+        if (id === requestId.current) setLoadError(err);
+      })
       .finally(() => {
         if (id === requestId.current) setIsLoading(false);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paramsKey]);
+  }, [paramsKey, retryKey]);
 
   /* ── derived ── */
   const activeCount = countActiveFilters(filters);
@@ -318,7 +326,9 @@ export const SearchPage: React.FC = () => {
             )}
           </div>
 
-          {showInitialSkeleton ? (
+          {loadError && !isLoading ? (
+            <ErrorState error={loadError} onRetry={() => setRetryKey((k) => k + 1)} />
+          ) : showInitialSkeleton ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
               {Array.from({ length: 6 }, (_, i) => (
                 <div key={i} className="arch-card bg-surface/60 border border-border animate-pulse h-72" />

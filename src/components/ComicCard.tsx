@@ -25,12 +25,12 @@ export const ComicCard: React.FC<ComicCardProps> = ({
 }) => {
   const navigate = useNavigate();
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageError, setImageError] = useState(false);
+  const [imageError, setImageError] = useState(!comic.cover_url);
 
   // Primary source or first source
   const primarySource =
     comic.sources.find((s) => s.id === comic.primary_source_id) ||
-    comic.sources[0] || { site_name: 'Cuutruyen' };
+    comic.sources[0] || { site_name: 'Chưa có nguồn' };
 
   const isCompleted = comic.status === 'completed' || comic.current_chapter >= comic.total_chapters;
   const progressPercent =

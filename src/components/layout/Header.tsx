@@ -5,7 +5,7 @@ import { SearchBar } from '../SearchBar';
 import { lastSearchHref, rememberLastSearch } from '../../features/search/searchState';
 import { ThemeToggle } from '../ThemeToggle';
 import { AvatarMenu } from './AvatarMenu';
-import { comicsService } from '../../services/comicService';
+import { NotificationsDropdown } from '../../features/notifications/NotificationsDropdown';
 
 const NAV_ITEMS = [
   { to: '/', label: 'Tủ Sách', icon: '✿' },
@@ -64,27 +64,11 @@ const HeaderSearch: React.FC = () => {
 };
 
 interface HeaderProps {
-  unreadCount?: number;
   onOpenAddModal?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({
-  unreadCount,
-  onOpenAddModal,
-}) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenAddModal }) => {
   const navigate = useNavigate();
-  const [autoUnreadCount, setAutoUnreadCount] = useState<number>(0);
-
-  useEffect(() => {
-    if (unreadCount === undefined) {
-      comicsService
-        .getSummary()
-        .then((s) => setAutoUnreadCount(s.new_chapters))
-        .catch(console.error);
-    }
-  }, [unreadCount]);
-
-  const effectiveUnreadCount = unreadCount !== undefined ? unreadCount : autoUnreadCount;
 
   const handleAddClick = () => {
     if (onOpenAddModal) {
@@ -163,20 +147,8 @@ export const Header: React.FC<HeaderProps> = ({
 
           <ThemeToggle />
 
-          {/* Notifications Bell */}
-          <button
-            type="button"
-            onClick={() => navigate('/notifications')}
-            className="relative p-2 text-text-muted hover:text-text bg-background hover:bg-surface border-1.5 border-border rounded-full transition-all cursor-pointer shadow-botanical-sm"
-            aria-label="Thông báo"
-          >
-            <Bell className="w-4 h-4" />
-            {effectiveUnreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 bg-accent text-on-accent border border-accent rounded-full text-[9px] font-bold flex items-center justify-center shadow-xs">
-                {effectiveUnreadCount}
-              </span>
-            )}
-          </button>
+          {/* Notifications: bell + dropdown panel */}
+          <NotificationsDropdown />
 
           {/* Avatar + account menu (Tài khoản, Đăng xuất) */}
           <AvatarMenu />

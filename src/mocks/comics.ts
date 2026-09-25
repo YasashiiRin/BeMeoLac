@@ -1,4 +1,8 @@
 import { Comic, Source } from '../types';
+import cottageGreenhouse from '../assets/images/cottage_greenhouse_store_1790241469393.jpg';
+import secretFairyGarden from '../assets/images/secret_fairy_garden_1790241482673.jpg';
+import sunlitTraveler from '../assets/images/traveler_in_sunlit_meadow_1790241493617.jpg';
+import cozyCat from '../assets/images/cozy_cat_reading_window_1790241504841.jpg';
 
 export const mockSources: Record<string, Source> = {
   cuutruyen: {
@@ -89,7 +93,7 @@ export const mockComics: Comic[] = [
     title: 'Tiệm Tạp Hóa Thời Gian',
     author: 'Hatori M.',
     description: 'Tại một con hẻm cổ kính phủ đầy rêu phong, có một tiệm tạp hóa kỳ lạ chỉ mở cửa vào những ngày nắng nhẹ. Mỗi món đồ cũ đều ẩn chứa ký ức ấm áp của một linh hồn.',
-    cover_url: '/src/assets/images/cottage_greenhouse_store_1790241469393.jpg',
+    cover_url: cottageGreenhouse,
     status: 'reading',
     current_chapter: 45,
     total_chapters: 120,
@@ -110,7 +114,7 @@ export const mockComics: Comic[] = [
     title: 'Khu Vườn Phù Thủy Bí Mật',
     author: 'Solaria',
     description: 'Một phù thủy nhỏ thừa kế khu nhà kính bỏ hoang trăm năm ở rìa vương quốc elven. Từng loài thảo mộc cô ươm mầm đều có tiếng thì thầm mang phép màu chữa lành.',
-    cover_url: '/src/assets/images/secret_fairy_garden_1790241482673.jpg',
+    cover_url: secretFairyGarden,
     status: 'completed',
     current_chapter: 88,
     total_chapters: 88,
@@ -131,7 +135,7 @@ export const mockComics: Comic[] = [
     title: 'Lữ Khách Phương Xa',
     author: 'K. Takahashi',
     description: 'Hành trình cô độc nhưng không hề buồn bã của một học giả thảo mộc đi dọc các thung lũng cổ xưa, ghi chép tên những loài hoa dại sắp bị lãng quên.',
-    cover_url: '/src/assets/images/traveler_in_sunlit_meadow_1790241493617.jpg',
+    cover_url: sunlitTraveler,
     status: 'reading',
     current_chapter: 112,
     total_chapters: 150,
@@ -173,7 +177,7 @@ export const mockComics: Comic[] = [
     title: 'Nhật Ký Của Mèo Quán Sách',
     author: 'Chiyo Y.',
     description: 'Góc nhìn hóm hỉnh nhưng đong đầy tình cảm của một chú mèo mướp lông vàng sống trong hiệu sách cũ, quan sát từng vị khách đến tìm kiếm những câu trả lời cho cuộc đời.',
-    cover_url: '/src/assets/images/cozy_cat_reading_window_1790241504841.jpg',
+    cover_url: cozyCat,
     status: 'reading',
     current_chapter: 19,
     total_chapters: 30,

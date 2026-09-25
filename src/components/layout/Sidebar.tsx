@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Shelf } from '../../types';
-import { ComicSummary, comicsService } from '../../services/comicService';
+import { ComicSummary } from '../../types';
+import { comicsService } from '../../services/comicService';
 import { Plus, MoreHorizontal, Sparkles, Coffee } from 'lucide-react';
 import { VineProgressBar } from '../VineProgressBar';
 

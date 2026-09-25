@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Comic, ComicStatus, Source, Shelf } from '../types';
 import { comicsService } from '../services/comicService';
+import { timeAgo } from '../utils/timeAgo';
+import { ErrorState } from '../components/ErrorState';
 import { shelvesService } from '../services/shelfService';
 import { useToast } from '../context/ToastContext';
 import {
@@ -31,6 +33,7 @@ import {
 
 export const ComicDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
   const navigate = useNavigate();
   const { showToast } = useToast();
 
@@ -38,12 +41,14 @@ export const ComicDetailPage: React.FC = () => {
   const [comic, setComic] = useState<Comic | null>(null);
   const [shelves, setShelves] = useState<Shelf[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   // Note State & Auto-save
   const [noteText, setNoteText] = useState('');
   const [isEditingNote, setIsEditingNote] = useState(false);
   const [noteSaveStatus, setNoteSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
-  const noteDebounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const noteDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Status Dropdown
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
@@ -83,6 +88,7 @@ export const ComicDetailPage: React.FC = () => {
     const loadData = async () => {
       if (!id) return;
       setIsLoading(true);
+      setLoadError(null);
       try {
         const [foundComic, allShelves] = await Promise.all([
           comicsService.getComicById(id),
@@ -101,7 +107,7 @@ export const ComicDetailPage: React.FC = () => {
         setShelves(allShelves);
       } catch (err) {
         console.error('Error fetching comic details:', err);
-        showToast('Không thể tải chi tiết truyện', 'error');
+        if (isMounted) setLoadError(err);
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -111,7 +117,21 @@ export const ComicDetailPage: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [id, showToast]);
+  }, [id, showToast, reloadKey]);
+
+  // "#sources" (e.g. "Sửa nguồn" in a notification): scroll to the visible sources block
+  useEffect(() => {
+    if (!comic || location.hash !== '#sources') return;
+    const t = window.setTimeout(() => {
+      const el = [...document.querySelectorAll<HTMLElement>('[data-section="sources"]')].find((x) => x.offsetParent);
+      if (!el) return;
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      el.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' });
+      el.classList.add('ring-2', 'ring-danger/60', 'ring-offset-4', 'ring-offset-surface-raised');
+      window.setTimeout(() => el.classList.remove('ring-2', 'ring-danger/60', 'ring-offset-4', 'ring-offset-surface-raised'), 2200);
+    }, 150);
+    return () => window.clearTimeout(t);
+  }, [comic, location.hash]);
 
   // Click outside listener for dropdowns
   useEffect(() => {
@@ -363,7 +383,7 @@ export const ComicDetailPage: React.FC = () => {
     if (!comic) return;
     setIsDeleting(true);
     try {
-      await comicsService.deleteComic(comic.id);
+      await comicsService.delete(comic.id);
       showToast(`Đã xóa truyện "${comic.title}" khỏi tủ sách 🌿`, 'info');
       setIsConfirmDeleteOpen(false);
       navigate('/');
@@ -457,6 +477,10 @@ export const ComicDetailPage: React.FC = () => {
         </p>
       </div>
     );
+  }
+
+  if (loadError) {
+    return <ErrorState error={loadError} onRetry={() => setReloadKey((k) => k + 1)} className="my-10" />;
   }
 
   if (!comic) {
@@ -828,15 +852,15 @@ export const ComicDetailPage: React.FC = () => {
                   </div>
 
                   <div className="flex items-center justify-between text-[11px] text-text-muted">
-                    <span>Cập nhật lần cuối: 2 ngày trước</span>
+                    <span>Cập nhật {timeAgo(comic.updated_at).toLowerCase()}</span>
                     <span className="text-primary font-semibold">
-                      Đã đọc 15 chương trong tuần này ✿
+                      Đọc lần cuối {timeAgo(comic.last_read_at).toLowerCase()} ✿
                     </span>
                   </div>
                 </div>
 
                 {/* Reading Sources Matrix (Nguồn đọc liên kết) */}
-                <div className="space-y-2.5">
+                <div id="sources" data-section="sources" className="space-y-2.5 scroll-mt-4 rounded-2xl transition-shadow duration-700">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="font-serif text-sm font-bold text-text">
@@ -1370,14 +1394,14 @@ export const ComicDetailPage: React.FC = () => {
             <div className="pt-1 flex items-center justify-between text-[11px] text-text-muted">
               <span className="flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5 text-gold-ink" />
-                <span>Cập nhật 2 ngày trước</span>
+                <span>Cập nhật {timeAgo(comic.updated_at).toLowerCase()}</span>
               </span>
-              <span className="text-accent-ink font-medium">Đã đọc 15 ch. tuần này ✿</span>
+              <span className="text-accent-ink font-medium">Đọc {timeAgo(comic.last_read_at).toLowerCase()} ✿</span>
             </div>
           </div>
 
           {/* 4. Linked Sources Matrix */}
-          <div className="w-full">
+          <div data-section="sources" className="w-full scroll-mt-20 rounded-2xl transition-shadow duration-700">
             <div className="flex items-center justify-between mb-2.5 px-0.5">
               <div className="flex items-center gap-1.5">
                 <Globe className="w-4 h-4 text-primary" />
@@ -1509,7 +1533,7 @@ export const ComicDetailPage: React.FC = () => {
                 )}
 
                 <div className="flex items-center justify-between pt-1 text-[10px] text-text-muted">
-                  <span>14:20 - Gần nhất</span>
+                  <span>Cập nhật {timeAgo(comic.updated_at).toLowerCase()}</span>
                   <span className="text-gold-ink font-semibold">
                     Ghi chú tại Chương {comic.current_chapter} ☕
                   </span>

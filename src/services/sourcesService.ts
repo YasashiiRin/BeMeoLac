@@ -1,23 +1,14 @@
-import { SourceCheckResult } from '../types';
-import { getComics } from './comicService';
-import { simulateNetworkDelay } from './apiClient';
+import { ComicPreview, SourceCheckResult } from '../types';
+import * as mock from '../mocks/api/sources';
+import { USE_MOCK, http } from './http';
 
-/**
- * Source links. Real API: POST /sources/check re-fetches every link.
- * Mock mode reports the sources marked is_alive: false in src/mocks/comics.ts.
- */
-export const checkAll = async (): Promise<SourceCheckResult> => {
-  const { items } = await getComics({ page_size: 10_000 });
-  await simulateNetworkDelay(900);
-  const broken = items.flatMap((c) =>
-    c.sources.filter((s) => !s.is_alive).map((s) => ({ comic_id: c.id, comic_title: c.title, site_name: s.site_name }))
-  );
-  return {
-    checked: items.reduce((n, c) => n + c.sources.length, 0),
-    comics: items.length,
-    broken,
-    checked_at: new Date().toISOString(),
-  };
-};
+/* Sources — docs/api-contract.md#sources */
 
-export const sourcesService = { checkAll };
+/** POST /api/sources/preview body { url } → ComicPreview (reads title, cover, author, tags, chapters from a comic page) */
+export const previewFromUrl = (url: string): Promise<ComicPreview> =>
+  USE_MOCK ? mock.preview(url) : http.post('/api/sources/preview', { url });
+
+/** POST /api/sources/check → SourceCheckResult (re-checks every source link of the library) */
+export const checkAll = (): Promise<SourceCheckResult> => (USE_MOCK ? mock.checkAll() : http.post('/api/sources/check'));
+
+export const sourcesService = { preview: previewFromUrl, checkAll };

@@ -3,7 +3,8 @@ import { Eye, EyeOff, KeyRound, Laptop, LogOut, Smartphone, Tablet } from 'lucid
 import { Button } from '../../components/Button';
 import { Modal } from '../../components/Modal';
 import { useToast } from '../../context/ToastContext';
-import { UserServiceError, userService } from '../../services/userService';
+import { userService } from '../../services/userService';
+import { isApiError } from '../../services/http';
 import { DeviceSession } from '../../types';
 import { Panel, SectionHeader, inputClass } from './parts';
 import { sectionById } from './sections';
@@ -116,7 +117,7 @@ export const SecuritySection: React.FC = () => {
       setTouched({ current: false, next: false, confirm: false });
       showToast('Đã đổi mật khẩu, ổ khóa dây leo đã được thay mới 🔐', 'success');
     } catch (err) {
-      if (err instanceof UserServiceError && err.code === 'wrong_password') setServerError('Mật khẩu hiện tại chưa đúng');
+      if (isApiError(err, 'wrong_password')) setServerError('Mật khẩu hiện tại chưa đúng');
       else showToast('Chưa đổi được mật khẩu, nàng thử lại nhé', 'error');
     } finally {
       setSaving(false);

@@ -17,6 +17,7 @@ interface Palette {
   glowAlpha: number;
   petals: string[];
   petalAlpha: number;
+  petalVein: string;
   fireflies: string[];
   stars: string[];
   blend: GlobalCompositeOperation;
@@ -180,7 +181,7 @@ function glowSprite(color: string): HTMLCanvasElement {
   return c;
 }
 
-function petalSprite(color: string, leaf: boolean): HTMLCanvasElement {
+function petalSprite(color: string, leaf: boolean, vein: string): HTMLCanvasElement {
   const c = makeCanvas(32);
   const g = c.getContext('2d')!;
   g.translate(16, 16);
@@ -196,7 +197,7 @@ function petalSprite(color: string, leaf: boolean): HTMLCanvasElement {
   }
   g.fillStyle = color;
   g.fill();
-  g.strokeStyle = withAlpha('#000000', 0.08);
+  g.strokeStyle = withAlpha(vein, 0.08);
   g.lineWidth = 0.8;
   g.beginPath();
   g.moveTo(0, -11);
@@ -235,6 +236,7 @@ function readPalette(): Palette {
     glowAlpha: parseFloat(cs.getPropertyValue('--fx-glow-alpha')) || 0.45,
     petalAlpha: parseFloat(cs.getPropertyValue('--fx-petal-alpha')) || 0,
     petals: list('--fx-petals'),
+    petalVein: cs.getPropertyValue('--c-overlay').trim() || 'transparent',
     fireflies: list('--fx-fireflies'),
     stars: list('--fx-stars'),
     blend: (blend === 'lighter' ? 'lighter' : 'source-over') as GlobalCompositeOperation,
@@ -364,7 +366,7 @@ export class FairyEngine {
     this.sparkleSprites = p.sparkles.map((c) => starSprite(c, p.sparkleGlow, p.glowAlpha));
     this.fireflySprites = p.fireflies.map((c) => glowSprite(c));
     this.starSprites = p.stars.map((c) => starSprite(c, c));
-    this.petalSprites = p.petals.map((c, i) => petalSprite(c, i === p.petals.length - 1));
+    this.petalSprites = p.petals.map((c, i) => petalSprite(c, i === p.petals.length - 1, p.petalVein));
   }
 
   /** Bring entity counts in line with viewport + theme. */

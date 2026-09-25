@@ -4,7 +4,8 @@ import { BookOpen, CalendarHeart, ChevronRight, Flower2, HeartCrack, LogOut, Pen
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
-import { comicsService, ComicSummary } from '../services/comicService';
+import { ComicSummary } from '../types';
+import { comicsService } from '../services/comicService';
 import { userService } from '../services/userService';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
@@ -49,9 +50,12 @@ export const AccountPage: React.FC = () => {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    comicsService.getSummary().then(setSummary).catch(() => setSummary(null));
-  }, []);
+  const [summaryError, setSummaryError] = useState(false);
+  const loadSummary = () => {
+    setSummaryError(false);
+    comicsService.getSummary().then(setSummary).catch(() => setSummaryError(true));
+  };
+  useEffect(loadSummary, []);
 
   if (slug && !section) return <Navigate to="/account" replace />;
 
@@ -119,7 +123,16 @@ export const AccountPage: React.FC = () => {
               <p className="font-serif text-xl sm:text-2xl font-semibold text-text">{user?.display_name}</p>
               <p className="text-sm text-text-muted">@{user?.username}</p>
               {user?.bio && <p className="mt-1.5 font-serif italic text-sm sm:text-base text-accent-ink line-clamp-2">“{user.bio}”</p>}
-              <ul className="mt-3 grid grid-cols-3 md:flex md:flex-wrap gap-2" aria-label="Thống kê nhỏ">
+              {summaryError && (
+                <button
+                  type="button"
+                  onClick={loadSummary}
+                  className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-raised border border-border text-xs font-semibold text-text hover:border-primary cursor-pointer"
+                >
+                  Chưa tải được số liệu tủ truyện · Thử lại
+                </button>
+              )}
+              <ul className={`mt-3 grid grid-cols-3 md:flex md:flex-wrap gap-2 ${summaryError ? 'hidden' : ''}`} aria-label="Thống kê nhỏ">
                 {[
                   { icon: BookOpen, value: summary ? String(summary.total) : '…', label: 'truyện trong tủ' },
                   { icon: Flower2, value: summary ? String(summary.by_status.completed) : '…', label: 'đã đọc xong' },

@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { CheckCircle2, Download, FileJson, FileSpreadsheet, Link2Off, SearchCheck, Upload } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import { UserServiceError, userService } from '../../services/userService';
+import { userService } from '../../services/userService';
+import { isApiError } from '../../services/http';
 import { sourcesService } from '../../services/sourcesService';
 import { ExportFormat, SourceCheckResult } from '../../types';
 import { Panel, SectionHeader } from './parts';
@@ -74,7 +75,7 @@ export const DataSection: React.FC = () => {
         'success'
       );
     } catch (err) {
-      showToast(err instanceof UserServiceError ? err.message : 'Chưa nhập được dữ liệu, nàng thử lại nhé', 'error');
+      showToast(isApiError(err, 'invalid_file') ? err.message : 'Chưa nhập được dữ liệu, nàng thử lại nhé', 'error');
     } finally {
       setImporting(false);
     }

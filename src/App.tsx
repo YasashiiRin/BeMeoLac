@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -20,9 +20,7 @@ import {
 
 // Auth pages
 import { LoginPage } from './pages/auth/LoginPage';
-import { RegisterPage } from './pages/auth/RegisterPage';
-import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
-import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
+import { NotFoundPage } from './pages/NotFoundPage';
 
 export default function App() {
   return (
@@ -43,9 +41,6 @@ export default function App() {
                   </PublicOnlyRoute>
                 }
               />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
 
               {/* Main App Routes: login required (shared responsive layout) */}
               <Route element={<ProtectedRoute />}>
@@ -115,17 +110,22 @@ export default function App() {
                 <Route
                   path="/account/*"
                   element={
-                    <ProtectedRoute>
-                      <AppLayout title="Tài Khoản" subtitle="Cài Đặt">
-                        <AccountPage />
-                      </AppLayout>
-                    </ProtectedRoute>
+                    <AppLayout title="Tài Khoản" subtitle="Cài Đặt">
+                      <AccountPage />
+                    </AppLayout>
+                  }
+                />
+
+                {/* Unknown URL (after login, so a shared link still lands here) */}
+                <Route
+                  path="*"
+                  element={
+                    <AppLayout title="Lạc Lối" subtitle="Không Tìm Thấy">
+                      <NotFoundPage />
+                    </AppLayout>
                   }
                 />
               </Route>
-
-              {/* Fallback */}
-              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
             </div>
             </div>

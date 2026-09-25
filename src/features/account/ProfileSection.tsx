@@ -18,7 +18,8 @@ export const ProfileSection: React.FC = () => {
   const { showToast } = useToast();
   const [name, setName] = useState(user?.display_name ?? '');
   const [bio, setBio] = useState(user?.bio ?? '');
-  const [avatar, setAvatar] = useState<string | null>(null); // new picture, not saved yet
+  const [avatar, setAvatar] = useState<string | null>(null); // preview of the new picture, not saved yet
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -59,6 +60,7 @@ export const ProfileSection: React.FC = () => {
     const reader = new FileReader();
     reader.onload = () => {
       setAvatar(String(reader.result));
+      setAvatarFile(file);
       setAvatarError(null);
     };
     reader.onerror = () => setAvatarError('Chưa đọc được ảnh này, nàng thử ảnh khác nhé');
@@ -71,13 +73,11 @@ export const ProfileSection: React.FC = () => {
     if (nameError || bioError || !dirty) return;
     setSaving(true);
     try {
-      const updated = await userService.updateProfile({
-        display_name: name.trim(),
-        bio: bio.trim(),
-        ...(avatar ? { avatar_url: avatar } : {}),
-      });
+      let updated = await userService.updateProfile({ display_name: name.trim(), bio: bio.trim() });
+      if (avatarFile) updated = await userService.uploadAvatar(avatarFile);
       updateUser(updated);
       setAvatar(null);
+      setAvatarFile(null);
       setTouched(false);
       showToast('Đã lưu hồ sơ của nàng 🌸', 'success');
     } catch {
@@ -112,7 +112,7 @@ export const ProfileSection: React.FC = () => {
             <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={pickAvatar} className="sr-only" tabIndex={-1} aria-hidden="true" />
           </div>
           {avatar ? (
-            <button type="button" onClick={() => setAvatar(null)} className="inline-flex items-center gap-1 text-xs font-semibold text-text-muted hover:text-text cursor-pointer">
+            <button type="button" onClick={() => { setAvatar(null); setAvatarFile(null); }} className="inline-flex items-center gap-1 text-xs font-semibold text-text-muted hover:text-text cursor-pointer">
               <RotateCcw className="w-3.5 h-3.5" /> Giữ ảnh cũ
             </button>
           ) : (

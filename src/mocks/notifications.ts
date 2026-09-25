@@ -1,44 +1,51 @@
-import { Notification } from '../types';
+import { Comic, Notification, NotificationType } from '../types';
+import { mockComics } from './comics';
+
+/*
+ * Mock notifications, built from the mock comics so titles, covers and
+ * chapter numbers match the bookshelf. Times are relative to when the app
+ * loads, so "5 phút trước" reads naturally in the demo.
+ */
+
+const MIN = 60_000;
+const HOUR = 60 * MIN;
+const DAY = 24 * HOUR;
+
+const comic = (id: string): Comic => {
+  const c = mockComics.find((x) => x.id === id);
+  if (!c) throw new Error(`mock comic ${id} missing`);
+  return c;
+};
+
+const make = (
+  id: string,
+  type: NotificationType,
+  ago: number,
+  is_read: boolean,
+  message: (c: Comic | null) => string,
+  comicId?: string
+): Notification => {
+  const c = comicId ? comic(comicId) : null;
+  return {
+    id,
+    comic_id: c?.id ?? '',
+    comic_title: c?.title ?? '',
+    comic_cover_url: c?.cover_url ?? '',
+    type,
+    message: message(c),
+    is_read,
+    created_at: new Date(Date.now() - ago).toISOString(),
+  };
+};
+
+const brokenSite = (c: Comic | null) => c?.sources.find((s) => !s.is_alive)?.site_name ?? 'nguồn đọc';
 
 export const mockNotifications: Notification[] = [
-  {
-    id: 'notif_001',
-    comic_id: 'comic_001',
-    comic_title: 'Tiệm Tạp Hóa Thời Gian',
-    comic_cover_url: '/src/assets/images/cottage_greenhouse_store_1790241469393.jpg',
-    type: 'new_chapter',
-    message: 'Chương 46 đã ra mắt: "Hương vị của buổi chiều trà hoa cúc dại". Mau tới đọc thôi!',
-    is_read: false,
-    created_at: '2024-09-24T08:15:00Z',
-  },
-  {
-    id: 'notif_002',
-    comic_id: 'comic_003',
-    comic_title: 'Lữ Khách Phương Xa',
-    comic_cover_url: '/src/assets/images/traveler_in_sunlit_meadow_1790241493617.jpg',
-    type: 'new_chapter',
-    message: 'Chương 113 đã được dịch trên BlogTruyen: "Qua cánh đồng hoa bồ công anh rực nắng".',
-    is_read: false,
-    created_at: '2024-09-24T06:40:00Z',
-  },
-  {
-    id: 'notif_003',
-    comic_id: '',
-    comic_title: '',
-    comic_cover_url: '',
-    type: 'achievement',
-    message: 'Chúc mừng bạn đã hoàn thành mục tiêu đọc 5 chương tuần này! Huy hiệu "Tiên Cỏ" đang đón chờ.',
-    is_read: true,
-    created_at: '2024-09-23T20:00:00Z',
-  },
-  {
-    id: 'notif_004',
-    comic_id: 'comic_007',
-    comic_title: 'Thư Viện Những Vì Sao Đêm',
-    comic_cover_url: '',
-    type: 'new_chapter',
-    message: 'Chương 93 mới cập nhật trên Bilibili.',
-    is_read: true,
-    created_at: '2024-09-22T14:20:00Z',
-  },
+  make('notif_001', 'new_chapter', 5 * MIN, false, (c) => `Vừa có chồi biếc Chương ${(c?.current_chapter ?? 0) + 1} ✨ Nàng ghé đọc ngay nhé!`, 'comic_001'),
+  make('notif_002', 'broken_link', 2 * HOUR, false, (c) => `Link nguồn ${brokenSite(c)} không còn mở được. Nàng cập nhật đường dẫn giúp truyện nhé.`, 'comic_006'),
+  make('notif_003', 'new_chapter', 3 * HOUR, false, (c) => `Chương ${(c?.current_chapter ?? 0) + 1} vừa ra lò, thơm mùi bánh tart dâu 🍓`, 'comic_020'),
+  make('notif_004', 'achievement', 26 * HOUR, false, () => 'Nàng đã siêng năng đọc liền 7 ngày, khu vườn nở thêm một bông hoa mẫu đơn 🌸'),
+  make('notif_005', 'new_chapter', 2 * DAY, true, (c) => `Chương ${(c?.current_chapter ?? 0) + 1} mới cập nhật trên Bilibili.`, 'comic_007'),
+  make('notif_006', 'broken_link', 3 * DAY, true, (c) => `Link nguồn ${brokenSite(c)} báo lỗi khi mở chương mới nhất.`, 'comic_019'),
+  make('notif_007', 'new_chapter', 5 * DAY, true, (c) => `Chương ${(c?.current_chapter ?? 0) + 1} đã được dịch: "Qua cánh đồng hoa bồ công anh rực nắng".`, 'comic_003'),
 ];

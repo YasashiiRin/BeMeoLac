@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User } from '../types';
+import { LoginResult, User } from '../types';
 import { getCurrentUser } from '../services/userService';
-import { authService, LoginResult } from '../services/authService';
-import { getAuthToken, setAuthToken } from '../services/apiClient';
+import { authService } from '../services/authService';
+import { getAccessToken, setSession, setUnauthorizedHandler } from '../services/http';
 
 interface AuthContextType {
   user: User | null;
@@ -27,12 +27,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
-  const [token, setTokenState] = useState<string | null>(getAuthToken());
-  const [isLoading, setIsLoading] = useState<boolean>(() => !!getAuthToken());
+  const [token, setTokenState] = useState<string | null>(getAccessToken());
+  const [isLoading, setIsLoading] = useState<boolean>(() => !!getAccessToken());
 
   // Restore a saved session (localStorage or sessionStorage) on startup.
   useEffect(() => {
-    if (!getAuthToken()) return;
+    if (!getAccessToken()) return;
     let cancelled = false;
     getCurrentUser()
       .then((u) => {
@@ -41,7 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .catch((err) => {
         console.error('Failed to restore session', err);
         if (!cancelled) {
-          setAuthToken(null);
+          setSession(null);
           setTokenState(null);
           setUser(null);
         }
@@ -57,8 +57,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const authenticate = useCallback((identifier: string, password: string) => authService.login(identifier, password), []);
 
   const startSession = useCallback((result: LoginResult, remember: boolean) => {
-    setAuthToken(result.token, remember);
-    setTokenState(result.token);
+    setSession({ access_token: result.access_token, refresh_token: result.refresh_token }, remember);
+    setTokenState(result.access_token);
     setUser(result.user);
   }, []);
 
@@ -71,13 +71,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [authenticate, startSession]
   );
 
-  const logout = useCallback(() => {
-    authService.logout().catch((err) => console.error('Logout failed', err));
-    setAuthToken(null);
+  const endSession = useCallback(() => {
+    setSession(null);
     setTokenState(null);
     setUser(null);
     navigate('/login', { replace: true });
   }, [navigate]);
+
+  const logout = useCallback(() => {
+    // revoke on the server first (it needs the token), then clear locally
+    authService
+      .logout()
+      .catch((err) => console.error('Logout failed', err))
+      .finally(endSession);
+  }, [endSession]);
+
+  // Real API: the session expired and could not be refreshed
+  useEffect(() => {
+    setUnauthorizedHandler(endSession);
+    return () => setUnauthorizedHandler(() => {});
+  }, [endSession]);
 
   const updateUser = useCallback((next: User) => setUser(next), []);
 

@@ -1,35 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Flower2, Bell } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { comicsService } from '../../services/comicService';
+import { useUnreadCount } from '../../features/notifications/useNotifications';
+import { BellBadge, bellLabel } from '../../features/notifications/NotificationsDropdown';
 import { ThemeToggle } from '../ThemeToggle';
 
 interface MobileHeaderProps {
   title?: string;
   subtitle?: string;
-  unreadCount?: number;
 }
 
 export const MobileHeader: React.FC<MobileHeaderProps> = ({
   title = 'Tủ Truyện Nhỏ',
   subtitle = 'Tủ Sách',
-  unreadCount,
 }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [autoUnreadCount, setAutoUnreadCount] = useState<number>(0);
-
-  useEffect(() => {
-    if (unreadCount === undefined) {
-      comicsService
-        .getSummary()
-        .then((s) => setAutoUnreadCount(s.new_chapters))
-        .catch(console.error);
-    }
-  }, [unreadCount]);
-
-  const effectiveUnreadCount = unreadCount !== undefined ? unreadCount : autoUnreadCount;
+  const unreadCount = useUnreadCount();
 
   return (
     <div className="md:hidden sticky top-0 z-30 w-full bg-background/95 backdrop-blur-md border-b border-border px-4 py-2 flex items-center justify-between">
@@ -64,14 +52,10 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
           type="button"
           onClick={() => navigate('/notifications')}
           className="relative p-2 text-text-muted hover:text-text bg-surface rounded-full border border-border transition-colors cursor-pointer"
-          aria-label="Thông báo"
+          aria-label={bellLabel(unreadCount)}
         >
           <Bell className="w-4 h-4" />
-          {effectiveUnreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 bg-accent text-on-accent border border-accent rounded-full text-[9px] font-bold flex items-center justify-center shadow-xs">
-              {effectiveUnreadCount}
-            </span>
-          )}
+          <BellBadge count={unreadCount} />
         </button>
 
         <div

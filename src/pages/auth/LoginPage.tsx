@@ -2,7 +2,8 @@ import React, { useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import { AuthError, LoginResult } from '../../services/authService';
+import { LoginResult } from '../../types';
+import { isApiError } from '../../services/http';
 import { preloadRoute } from '../../routes/lazyPages';
 import { redirectTarget } from '../../components/ProtectedRoute';
 import type { LoginFormErrors } from '../../components/celestial/CelestialLogin';
@@ -72,7 +73,7 @@ export const LoginPage: React.FC = () => {
       setSuccessKey(1);
       // stay "loading" until we leave the page
     } catch (err) {
-      if (err instanceof AuthError && err.code === 'invalid_credentials') {
+      if (isApiError(err, 'invalid_credentials')) {
         setErrors({ form: 'Tên đăng nhập hoặc mật khẩu chưa đúng, nàng thử lại nhé' });
         setDeniedKey((k) => k + 1);
       } else {

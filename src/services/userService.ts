@@ -1,154 +1,66 @@
-import { Comic, DeviceSession, ExportFormat, User, UserSettings } from '../types';
-import { mockAccount, mockCurrentUser, mockOtherSessions } from '../mocks/user';
-import { simulateNetworkDelay } from './apiClient';
-import { getComics, importComics } from './comicService';
-import { getShelves } from './shelfService';
+import { DeviceSession, ExportFormat, ImportResult, User, UserSettings } from '../types';
+import * as mock from '../mocks/api/users';
+import { USE_MOCK, http, requestRaw } from './http';
 
-let userDatabase: User = { ...mockCurrentUser, settings: { ...mockCurrentUser.settings } };
-let otherSessions: DeviceSession[] = [...mockOtherSessions];
+/* Current user — docs/api-contract.md#users */
 
-export type UserErrorCode = 'wrong_password' | 'invalid_file';
+/** GET /api/users/me → User */
+export const getCurrentUser = (): Promise<User> => (USE_MOCK ? mock.getMe() : http.get('/api/users/me'));
 
-export class UserServiceError extends Error {
-  code: UserErrorCode;
-  constructor(code: UserErrorCode, message: string) {
-    super(message);
-    this.name = 'UserServiceError';
-    this.code = code;
-  }
-}
+/** PATCH /api/users/me body { display_name?, bio? } → User */
+export const updateUserProfile = (updates: Partial<Pick<User, 'display_name' | 'bio'>>): Promise<User> =>
+  USE_MOCK ? mock.updateProfile(updates) : http.patch('/api/users/me', updates);
 
-export const getCurrentUser = async (): Promise<User> => {
-  await simulateNetworkDelay(100);
-  return { ...userDatabase };
+/** PUT /api/users/me/avatar multipart { file } (image, ≤ 2 MB) → User */
+export const uploadAvatar = (file: File): Promise<User> => {
+  if (USE_MOCK) return mock.uploadAvatar(file);
+  const form = new FormData();
+  form.append('file', file);
+  return http.put('/api/users/me/avatar', form);
 };
 
-export const updateUserSettings = async (newSettings: Partial<UserSettings>): Promise<User> => {
-  await simulateNetworkDelay(120);
-  userDatabase = {
-    ...userDatabase,
-    settings: {
-      ...userDatabase.settings,
-      ...newSettings,
-    },
-  };
-  return { ...userDatabase };
-};
+/** PATCH /api/users/me/settings body Partial<UserSettings> → User */
+export const updateUserSettings = (patch: Partial<UserSettings>): Promise<User> =>
+  USE_MOCK ? mock.updateSettings(patch) : http.patch('/api/users/me/settings', patch);
 
-/** display_name, bio and avatar_url (a data URL from the upload preview in mock mode). */
-export const updateUserProfile = async (
-  updates: Partial<Pick<User, 'display_name' | 'bio' | 'avatar_url'>>
-): Promise<User> => {
-  await simulateNetworkDelay(150);
-  userDatabase = {
-    ...userDatabase,
-    ...updates,
-  };
-  return { ...userDatabase };
-};
+/** POST /api/users/me/password body { current_password, new_password } → 204; 400 wrong_password */
+export const changePassword = (currentPassword: string, newPassword: string): Promise<void> =>
+  USE_MOCK
+    ? mock.changePassword(currentPassword, newPassword)
+    : http.post('/api/users/me/password', { current_password: currentPassword, new_password: newPassword });
 
-/** Throws UserServiceError('wrong_password') when the current password is wrong. */
-export const changePassword = async (currentPassword: string, newPassword: string): Promise<void> => {
-  await simulateNetworkDelay(400);
-  if (currentPassword !== mockAccount.password) {
-    throw new UserServiceError('wrong_password', 'Mật khẩu hiện tại chưa đúng');
-  }
-  mockAccount.password = newPassword; // mock login accepts the new password
-};
+/** GET /api/users/me/sessions → DeviceSession[] (current first) */
+export const getSessions = (): Promise<DeviceSession[]> => (USE_MOCK ? mock.getSessions() : http.get('/api/users/me/sessions'));
 
-const describeThisDevice = (): Pick<DeviceSession, 'device_name' | 'device_type' | 'browser'> => {
-  const ua = typeof navigator === 'undefined' ? '' : navigator.userAgent;
-  const device_type = /iPad|Tablet/i.test(ua) ? 'tablet' : /Mobi|Android|iPhone/i.test(ua) ? 'phone' : 'desktop';
-  const browser = /Edg\//.test(ua)
-    ? 'Edge'
-    : /Firefox\//.test(ua)
-      ? 'Firefox'
-      : /Chrome\//.test(ua)
-        ? 'Chrome'
-        : /Safari\//.test(ua)
-          ? 'Safari'
-          : 'Trình duyệt';
-  const device_name = device_type === 'desktop' ? 'Máy tính này' : device_type === 'tablet' ? 'Máy tính bảng này' : 'Điện thoại này';
-  return { device_name, device_type, browser };
-};
+/** DELETE /api/users/me/sessions → { revoked } (signs out every other device; this one stays) */
+export const logoutAll = async (): Promise<number> =>
+  (USE_MOCK ? await mock.logoutOthers() : await http.delete<{ revoked: number }>('/api/users/me/sessions')).revoked;
 
-/** Signed-in devices, the current one first. */
-export const getSessions = async (): Promise<DeviceSession[]> => {
-  await simulateNetworkDelay(180);
-  const current: DeviceSession = {
-    id: 'ses_current',
-    ...describeThisDevice(),
-    location: 'Hà Nội, Việt Nam',
-    last_active_at: new Date().toISOString(),
-    is_current: true,
-  };
-  return [current, ...otherSessions];
-};
-
-/** Signs out every other device; this one stays signed in. Returns how many were signed out. */
-export const logoutAll = async (): Promise<number> => {
-  await simulateNetworkDelay(300);
-  const n = otherSessions.length;
-  otherSessions = [];
-  return n;
-};
-
-const csvCell = (v: unknown) => {
-  const s = Array.isArray(v) ? v.join('; ') : v == null ? '' : String(v);
-  return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-};
-
-const CSV_COLUMNS: (keyof Comic)[] = [
-  'id', 'title', 'author', 'status', 'current_chapter', 'total_chapters', 'rating',
-  'is_favorite', 'tags', 'note', 'last_read_at', 'created_at',
-];
-
-/** The whole library as a file; also records the backup time. */
+/** GET /api/users/me/export?format=json|csv → file download (Content-Disposition filename); sets last_backup_at */
 export const exportData = async (format: ExportFormat): Promise<{ blob: Blob; filename: string }> => {
-  const [{ items: comics }, shelves] = await Promise.all([getComics({ page_size: 10_000 }), getShelves()]);
-  await simulateNetworkDelay(250);
-  const now = new Date();
-  const stamp = now.toISOString().slice(0, 10);
-  userDatabase = { ...userDatabase, last_backup_at: now.toISOString() };
-
-  if (format === 'csv') {
-    const rows = [CSV_COLUMNS.join(','), ...comics.map((c) => CSV_COLUMNS.map((k) => csvCell(c[k])).join(','))];
-    // BOM so spreadsheet apps read Vietnamese correctly
-    return { blob: new Blob(['﻿' + rows.join('\n')], { type: 'text/csv;charset=utf-8' }), filename: `uyen-thu-cac-${stamp}.csv` };
-  }
-  const { settings, display_name, bio } = userDatabase;
-  const payload = { app: 'uyen-thu-cac', version: 1, exported_at: now.toISOString(), profile: { display_name, bio, settings }, shelves, comics };
-  return {
-    blob: new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }),
-    filename: `uyen-thu-cac-${stamp}.json`,
-  };
+  if (USE_MOCK) return mock.exportData(format);
+  const res = await requestRaw('GET', '/api/users/me/export', { query: { format } });
+  const disposition = res.headers.get('Content-Disposition') ?? '';
+  const filename = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition)?.[1] ?? `uyen-thu-cac.${format}`;
+  return { blob: await res.blob(), filename: decodeURIComponent(filename) };
 };
 
-/** Restores comics from a JSON backup made by exportData. Existing comics are kept. */
-export const importData = async (file: File): Promise<{ added: number; skipped: number }> => {
-  let data: unknown;
-  try {
-    data = JSON.parse(await file.text());
-  } catch {
-    throw new UserServiceError('invalid_file', 'Tệp này không phải bản sao lưu JSON hợp lệ');
-  }
-  const comics = (data as { comics?: unknown })?.comics;
-  if (!Array.isArray(comics) || comics.some((c) => typeof c?.id !== 'string' || typeof c?.title !== 'string')) {
-    throw new UserServiceError('invalid_file', 'Không tìm thấy danh sách truyện trong tệp này');
-  }
-  await simulateNetworkDelay(300);
-  return importComics(comics as Comic[]);
+/** POST /api/users/me/import multipart { file } (JSON from exportData) → ImportResult; 400 invalid_file */
+export const importData = (file: File): Promise<ImportResult> => {
+  if (USE_MOCK) return mock.importData(file);
+  const form = new FormData();
+  form.append('file', file);
+  return http.post('/api/users/me/import', form);
 };
 
-export const deleteAccount = async (): Promise<void> => {
-  await simulateNetworkDelay(400);
-  // Real API: DELETE /me. Mock mode keeps the demo account so nàng can log in again.
-};
+/** DELETE /api/users/me → 204 (deletes the account and all its data) */
+export const deleteAccount = (): Promise<void> => (USE_MOCK ? mock.deleteAccount() : http.delete('/api/users/me'));
 
 export const userService = {
   getCurrentUser,
-  updateSettings: updateUserSettings,
   updateProfile: updateUserProfile,
+  uploadAvatar,
+  updateSettings: updateUserSettings,
   changePassword,
   getSessions,
   logoutAll,

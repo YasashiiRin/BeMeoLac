@@ -5,6 +5,9 @@ import { shelvesService } from '../services/shelfService';
 import { getComics, addComicToShelf, toggleFavorite, updateComicProgress } from '../services/comicService';
 import { ComicCard } from '../components/ComicCard';
 import { EmptyState } from '../components/EmptyState';
+import { ErrorState } from '../components/ErrorState';
+import { timeAgo } from '../utils/timeAgo';
+import { COMIC_UPDATED, SHELVES_UPDATED } from '../services/events';
 import { Button } from '../components/Button';
 import { ResponsiveDrawer } from '../components/ResponsiveDrawer';
 import { ShelfFormModal } from '../components/ShelfFormModal';
@@ -46,6 +49,8 @@ export const ShelfDetailPage: React.FC = () => {
   const [allShelves, setAllShelves] = useState<Shelf[]>([]);
   const [comics, setComics] = useState<Comic[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   // Sorting & View
   const [sortOption, setSortOption] = useState<ShelfSortOption>('custom');
@@ -71,6 +76,7 @@ export const ShelfDetailPage: React.FC = () => {
   const [availableComics, setAvailableComics] = useState<Comic[]>([]);
   const [pickerSearch, setPickerSearch] = useState('');
   const [isLoadingPicker, setIsLoadingPicker] = useState(false);
+  const [pickerError, setPickerError] = useState(false);
 
   // Create new shelf modal (triggered from sidebar)
   const [isCreateShelfOpen, setIsCreateShelfOpen] = useState(false);
@@ -81,6 +87,7 @@ export const ShelfDetailPage: React.FC = () => {
     const loadShelfData = async () => {
       if (!id) return;
       setIsLoading(true);
+      setLoadError(null);
       try {
         const [shelfData, allShelvesData] = await Promise.all([
           shelvesService.getShelfById(id),
@@ -91,33 +98,21 @@ export const ShelfDetailPage: React.FC = () => {
         setShelf(shelfData);
         setAllShelves(allShelvesData);
 
-        // Fetch comics in this shelf
+        // Comics in this shelf, in its saved (drag-and-drop) order
         const res = await getComics({
-          shelf_id: id === 'all' ? undefined : id,
+          shelf: id,
+          sort: 'position',
           page_size: 100,
         });
 
-        let loadedComics = res.items;
-
-        // Check if custom order was previously saved
-        const savedOrder = shelvesService.getShelfComicOrder(id);
-        if (savedOrder && savedOrder.length > 0) {
-          loadedComics.sort((a, b) => {
-            const indexA = savedOrder.indexOf(a.id);
-            const indexB = savedOrder.indexOf(b.id);
-            if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-            if (indexA !== -1) return -1;
-            if (indexB !== -1) return 1;
-            return 0;
-          });
-        }
+        const loadedComics = res.items;
 
         if (isMounted) {
           setComics(loadedComics);
         }
       } catch (err) {
         console.error('Error fetching shelf detail:', err);
-        showToast('Không thể tải thông tin kệ sách', 'error');
+        if (isMounted) setLoadError(err);
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -127,7 +122,7 @@ export const ShelfDetailPage: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [id, showToast]);
+  }, [id, showToast, reloadKey]);
 
   // Sync shelves updates across app
   useEffect(() => {
@@ -141,8 +136,8 @@ export const ShelfDetailPage: React.FC = () => {
       }
       shelvesService.list().then(setAllShelves).catch(console.error);
     };
-    window.addEventListener('shelves-updated', handleShelvesUpdated);
-    return () => window.removeEventListener('shelves-updated', handleShelvesUpdated);
+    window.addEventListener(SHELVES_UPDATED, handleShelvesUpdated);
+    return () => window.removeEventListener(SHELVES_UPDATED, handleShelvesUpdated);
   }, [id, navigate]);
 
   // Sync updates to comic cards when updated from modal or detail
@@ -153,8 +148,8 @@ export const ShelfDetailPage: React.FC = () => {
         setComics((prev) => prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c)));
       }
     };
-    window.addEventListener('comic-updated', handleComicUpdated);
-    return () => window.removeEventListener('comic-updated', handleComicUpdated);
+    window.addEventListener(COMIC_UPDATED, handleComicUpdated);
+    return () => window.removeEventListener(COMIC_UPDATED, handleComicUpdated);
   }, []);
 
   // Click outside listener for "..." menu
@@ -264,13 +259,14 @@ export const ShelfDetailPage: React.FC = () => {
   const handleOpenAddPicker = async () => {
     setIsAddPickerOpen(true);
     setIsLoadingPicker(true);
+    setPickerError(false);
     try {
       const res = await getComics({ page_size: 100 });
       // Available comics are those not yet in this shelf
       const unassigned = res.items.filter((c) => !comics.some((existing) => existing.id === c.id));
       setAvailableComics(unassigned);
     } catch (err) {
-      showToast('Không thể tải danh sách truyện có sẵn', 'error');
+      setPickerError(true);
     } finally {
       setIsLoadingPicker(false);
     }
@@ -307,7 +303,7 @@ export const ShelfDetailPage: React.FC = () => {
     if (!shelf) return;
     setIsDeleting(true);
     try {
-      await shelvesService.deleteShelf(shelf.id);
+      await shelvesService.delete(shelf.id);
       showToast(`Đã xóa kệ sách "${shelf.name}" 🌿`, 'info');
       setIsConfirmDeleteOpen(false);
       navigate('/');
@@ -376,6 +372,10 @@ export const ShelfDetailPage: React.FC = () => {
     );
   }
 
+  if (loadError) {
+    return <ErrorState error={loadError} onRetry={() => setReloadKey((k) => k + 1)} className="my-10" />;
+  }
+
   // Not found
   if (!shelf) {
     return (
@@ -393,6 +393,9 @@ export const ShelfDetailPage: React.FC = () => {
       </div>
     );
   }
+
+  const lastUpdated = comics.reduce<string | null>((max, c) => (!max || c.updated_at > max ? c.updated_at : max), null);
+  const lastUpdatedLabel = lastUpdated ? `Cập nhật ${timeAgo(lastUpdated).toLowerCase()}` : 'Chưa có truyện nào';
 
   // Collage covers computation
   const collageCovers =
@@ -607,9 +610,6 @@ export const ShelfDetailPage: React.FC = () => {
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-scrim/60 via-transparent to-transparent" />
-                  <span className="absolute bottom-1.5 left-2 text-[10px] font-bold text-on-scrim shadow-xs">
-                    Tập 01
-                  </span>
                 </div>
 
                 {/* Layer 2: Right Angled */}
@@ -696,7 +696,7 @@ export const ShelfDetailPage: React.FC = () => {
                 <span className="text-border-strong">•</span>
                 <span className="flex items-center gap-1">
                   <Clock className="w-4 h-4 text-gold-ink" />
-                  Cập nhật 3 ngày trước
+                  {lastUpdatedLabel}
                 </span>
               </div>
 
@@ -835,7 +835,7 @@ export const ShelfDetailPage: React.FC = () => {
               <span className="text-gold-ink">·</span>
               <span>🌿 {completedCount} đã đọc xong</span>
               <span className="text-gold-ink">·</span>
-              <span>🕒 Cập nhật 3 ngày trước</span>
+              <span>🕒 {lastUpdatedLabel}</span>
             </div>
           </div>
 
@@ -1211,6 +1211,13 @@ export const ShelfDetailPage: React.FC = () => {
             {isLoadingPicker ? (
               <div className="py-8 text-center text-xs text-text-muted">
                 Đang tìm những cuốn truyện...
+              </div>
+            ) : pickerError ? (
+              <div className="py-8 flex flex-col items-center gap-2 text-center text-xs text-text-muted">
+                <span>Chưa tải được danh sách truyện 🍂</span>
+                <Button variant="outline" size="sm" onClick={handleOpenAddPicker}>
+                  Thử lại
+                </Button>
               </div>
             ) : filteredAvailableComics.length === 0 ? (
               <div className="py-8 text-center text-xs text-text-muted">
