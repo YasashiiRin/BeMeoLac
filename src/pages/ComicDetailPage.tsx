@@ -989,7 +989,7 @@ export const ComicDetailPage: React.FC = () => {
                         className="w-full bg-transparent font-serif italic text-sm text-text leading-6 focus:outline-none resize-none"
                       />
                     ) : (
-                      <p className="font-serif italic text-sm text-text leading-6 pl-1">
+                      <p className="font-serif italic reading-sm text-text leading-[1.7] pl-1">
                         {comic.note
                           ? `“${comic.note}”`
                           : '“Chưa có ghi chú nào. Nhấn chỉnh sửa để ghi lại những dòng cảm xúc êm dịu nhất...”'}
@@ -1501,7 +1501,7 @@ export const ComicDetailPage: React.FC = () => {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-xs text-text leading-relaxed italic py-1 font-serif">
+                  <p className="reading-xs text-text leading-relaxed italic py-1 font-serif">
                     {comic.note
                       ? `“${comic.note}”`
                       : '“Truyện đọc rất êm dịu. Nhấn \'Viết thêm\' để ghi lại cảm xúc của nàng...”'}
@@ -1564,7 +1564,7 @@ export const ComicDetailPage: React.FC = () => {
             </div>
             <div className="w-full p-4 rounded-2xl bg-surface text-text shadow-xs border border-border-strong/20">
               <p
-                className={`text-xs leading-relaxed text-text-muted ${
+                className={`reading-xs leading-relaxed text-text-muted ${
                   !isSynopsisExpanded ? 'line-clamp-3' : ''
                 }`}
               >

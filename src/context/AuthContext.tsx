@@ -18,6 +18,8 @@ interface AuthContextType {
   startSession: (result: LoginResult, remember: boolean) => void;
   /** Clears the session and goes to /login. */
   logout: () => void;
+  /** Replace the signed-in user after a profile/settings save (header, avatar menu update). */
+  updateUser: (user: User) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -77,6 +79,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     navigate('/login', { replace: true });
   }, [navigate]);
 
+  const updateUser = useCallback((next: User) => setUser(next), []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -88,6 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         authenticate,
         startSession,
         logout,
+        updateUser,
       }}
     >
       {children}

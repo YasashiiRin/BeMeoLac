@@ -22,7 +22,39 @@ interface ThemeContextType {
   /** Ambient fairy/sparkle effects (UserSettings.sparkle_enabled) */
   effectsEnabled: boolean;
   setEffectsEnabled: (enabled: boolean) => void;
+  /** Reading text size in px (UserSettings.font_size), applied as --reading-font-size */
+  fontSize: number;
+  setFontSize: (px: number) => void;
 }
+
+export const FONT_SIZE_MIN = 13;
+export const FONT_SIZE_MAX = 22;
+const FONT_SIZE_DEFAULT = 16;
+const FONT_STORAGE_KEY = 'tutruyen-font-size';
+const clampFont = (n: number) => Math.min(FONT_SIZE_MAX, Math.max(FONT_SIZE_MIN, Math.round(n)));
+
+const readLocalFont = (): number | null => {
+  try {
+    const v = Number(localStorage.getItem(FONT_STORAGE_KEY));
+    return v ? clampFont(v) : null;
+  } catch {
+    return null;
+  }
+};
+
+const saveLocalFont = (px: number) => {
+  try {
+    localStorage.setItem(FONT_STORAGE_KEY, String(px));
+  } catch {
+    // storage blocked — the in-memory value still applies
+  }
+};
+
+const applyFont = (px: number) => {
+  const root = document.documentElement.style;
+  root.setProperty('--reading-font-size', `${px}px`);
+  root.setProperty('--reading-scale', String(px / FONT_SIZE_DEFAULT));
+};
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
@@ -77,7 +109,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const { user } = useAuth();
   const [theme, setThemeState] = useState<ThemeId>(readInitialTheme);
   const [effectsEnabled, setEffectsState] = useState<boolean>(() => readLocalEffects() ?? true);
+  const [fontSize, setFontState] = useState<number>(() => {
+    const px = readLocalFont() ?? FONT_SIZE_DEFAULT;
+    applyFont(px);
+    return px;
+  });
   const fadeTimer = useRef<number | undefined>(undefined);
+  const fontTimer = useRef<number | undefined>(undefined);
 
   const applyTheme = useCallback((next: ThemeId) => {
     const root = document.documentElement;
@@ -135,6 +173,25 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     [user]
   );
 
+  // applies at once; the account save waits until the slider settles
+  const setFontSize = useCallback(
+    (px: number) => {
+      const next = clampFont(px);
+      setFontState(next);
+      applyFont(next);
+      saveLocalFont(next);
+      window.clearTimeout(fontTimer.current);
+      if (user) {
+        fontTimer.current = window.setTimeout(() => {
+          userService.updateSettings({ font_size: next }).catch((err) => {
+            console.error('Failed to save font size', err);
+          });
+        }, 400);
+      }
+    },
+    [user]
+  );
+
   const toggleTheme = useCallback(() => {
     setTheme(theme === 'day' ? 'night' : 'day');
   }, [theme, setTheme]);
@@ -174,6 +231,23 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, userEffects]);
 
+  // Same rule for the reading font size.
+  const userFont = user?.settings?.font_size;
+  useEffect(() => {
+    if (!user || typeof userFont !== 'number') return;
+    const local = readLocalFont();
+    if (local === null) {
+      setFontState(clampFont(userFont));
+      applyFont(clampFont(userFont));
+      saveLocalFont(clampFont(userFont));
+    } else if (local !== userFont) {
+      userService.updateSettings({ font_size: local }).catch((err) => {
+        console.error('Failed to save font size', err);
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, userFont]);
+
   // Keep other open tabs in sync.
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
@@ -187,7 +261,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   useEffect(() => {
     syncThemeColorMeta();
-    return () => window.clearTimeout(fadeTimer.current);
+    return () => {
+      window.clearTimeout(fadeTimer.current);
+      window.clearTimeout(fontTimer.current);
+    };
   }, []);
 
   const decoration = useCallback((key: keyof ThemeDecorations) => getDecoration(theme, key), [theme]);
@@ -202,6 +279,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         decoration,
         effectsEnabled,
         setEffectsEnabled,
+        fontSize,
+        setFontSize,
       }}
     >
       {children}

@@ -9,18 +9,42 @@ export interface UserSettings {
   sparkle_enabled: boolean;
   notify_new_chapter: boolean;
   notify_broken_link: boolean;
+  daily_reminder_enabled: boolean;
   daily_reminder_time: string; // e.g. "20:00"
 }
 
 export interface User {
   id: string;
+  username: string;
   email: string;
   display_name: string;
   bio: string;
   avatar_url: string;
   role: 'user' | 'admin';
   created_at: string;
+  last_backup_at: string | null; // last data export
   settings: UserSettings;
+}
+
+/** A signed-in device (Tài khoản › Bảo mật). */
+export interface DeviceSession {
+  id: string;
+  device_name: string;
+  device_type: 'desktop' | 'phone' | 'tablet';
+  browser: string;
+  location: string;
+  last_active_at: string;
+  is_current: boolean;
+}
+
+export type ExportFormat = 'json' | 'csv';
+
+/** Result of checking every comic source link. */
+export interface SourceCheckResult {
+  checked: number; // sources checked
+  comics: number; // comics covered
+  broken: { comic_id: string; comic_title: string; site_name: string }[];
+  checked_at: string;
 }
 
 export type ComicStatus = 'reading' | 'completed' | 'plan_to_read' | 'on_hold' | 'dropped';
@@ -126,4 +150,29 @@ export interface SearchFacets {
   genres: FacetOption[];
   sources: FacetOption[];
   shelves: FacetOption[];
+}
+
+/** Reading statistics (/stats). Counts cover the chosen period unless noted. */
+export type StatsPeriod = 'week' | 'month' | 'year' | 'all';
+
+export interface ReadingGoal {
+  year: number;
+  target: number; // comics to finish this year
+  completed: number;
+}
+
+export interface Stats {
+  period: StatsPeriod;
+  total_comics: number; // whole library
+  new_comics: number; // added to the library during the period
+  comics_read: number; // distinct comics opened during the period
+  completed_count: number;
+  chapters_read: number;
+  streak_days: number; // current run of consecutive reading days (period-independent)
+  chapters_by_month: { month: string; count: number }[]; // month = "YYYY-MM"
+  genres: { name: string; count: number }[]; // comics read in the period, per tag
+  reading_calendar: { date: string; count: number }[]; // date = "YYYY-MM-DD", chapters that day
+  top_sources: { site_name: string; favicon_url: string; count: number }[];
+  goal: ReadingGoal; // always the current year
+  recently_completed: Comic[];
 }

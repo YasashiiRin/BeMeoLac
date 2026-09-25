@@ -1,518 +1,240 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
+import { BookOpen, CalendarHeart, ChevronRight, Flower2, HeartCrack, LogOut, PenLine } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { updateUserSettings, updateUserProfile } from '../services/userService';
-import { Button } from '../components/Button';
-import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
-import { THEMES, THEME_IDS, ThemeId } from '../theme/themes';
-import {
-  User,
-  Shield,
-  Palette,
-  Bell,
-  Database,
-  Sparkles,
-  LogOut,
-  Save,
-  Check,
-} from 'lucide-react';
+import { useToast } from '../context/ToastContext';
+import { comicsService, ComicSummary } from '../services/comicService';
+import { userService } from '../services/userService';
+import { Button } from '../components/Button';
+import { Modal } from '../components/Modal';
+import { THEMES } from '../theme/themes';
+import { SECTIONS, SectionId, sectionById } from '../features/account/sections';
+import { FALLBACK_AVATAR } from '../features/account/avatar';
+import { ProfileSection } from '../features/account/ProfileSection';
+import { SecuritySection } from '../features/account/SecuritySection';
+import { AppearanceSection } from '../features/account/AppearanceSection';
+import { NotificationsSection } from '../features/account/NotificationsSection';
+import { DataSection } from '../features/account/DataSection';
+import { AboutSection } from '../features/account/AboutSection';
 
-type AccountTab = 'profile' | 'security' | 'appearance' | 'notifications' | 'data';
+const CONTENT: Record<SectionId, React.FC> = {
+  profile: ProfileSection,
+  security: SecuritySection,
+  appearance: AppearanceSection,
+  notifications: NotificationsSection,
+  data: DataSection,
+  about: AboutSection,
+};
 
+const memberSince = (iso?: string) => {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return `${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+};
+
+/*
+ * /account            phones: profile + grouped list · desktop: menu + Hồ sơ
+ * /account/<section>  phones: that sub-page with a back arrow · desktop: menu + section
+ */
 export const AccountPage: React.FC = () => {
+  const { '*': splat } = useParams();
+  const slug = (splat ?? '').split('/')[0];
+  const section = sectionById(slug);
   const { user, logout } = useAuth();
+  const { theme, fontSize } = useTheme();
   const { showToast } = useToast();
+  const navigate = useNavigate();
+  const [summary, setSummary] = useState<ComicSummary | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<AccountTab>('profile');
+  useEffect(() => {
+    comicsService.getSummary().then(setSummary).catch(() => setSummary(null));
+  }, []);
 
-  // Form states
-  const [displayName, setDisplayName] = useState(user?.display_name || 'Tiên Nữ Nhỏ');
-  const [bio, setBio] = useState(user?.bio || '');
-  const { theme, setTheme, effectsEnabled, setEffectsEnabled } = useTheme();
-  const [fontSize, setFontSize] = useState<number>(user?.settings?.font_size || 15);
-  const [notifyNewChapter, setNotifyNewChapter] = useState<boolean>(
-    user?.settings?.notify_new_chapter ?? true
-  );
-  const [notifyBrokenLink, setNotifyBrokenLink] = useState<boolean>(
-    user?.settings?.notify_broken_link ?? true
-  );
-  const [dailyReminderTime, setDailyReminderTime] = useState<string>(
-    user?.settings?.daily_reminder_time || '20:30'
-  );
+  if (slug && !section) return <Navigate to="/account" replace />;
 
-  const handleSaveProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const active: SectionId = section?.id ?? 'profile';
+  const Content = CONTENT[active];
+  const onSubPage = !!section; // phones show only the sub-page
+
+  const hints: Partial<Record<SectionId, string>> = {
+    appearance: `${THEMES[theme].label} · chữ ${fontSize}px`,
+    notifications: user?.settings.daily_reminder_enabled ? `Nhắc đọc lúc ${user.settings.daily_reminder_time}` : undefined,
+  };
+
+  const deleteAccount = async () => {
+    setDeleting(true);
     try {
-      await updateUserProfile({
-        display_name: displayName,
-        bio,
-      });
-      showToast('Đã lưu thông tin cá nhân! 🌸', 'success');
-    } catch (err) {
-      showToast('Lỗi lưu thông tin', 'error');
+      await userService.deleteAccount();
+      showToast('Tài khoản đã được xóa. Hẹn gặp lại nàng một ngày nắng đẹp 🌸', 'success');
+      setDeleteOpen(false);
+      logout();
+    } catch {
+      showToast('Chưa xóa được tài khoản, nàng thử lại nhé', 'error');
+      setDeleting(false);
     }
   };
 
-  const handleSaveAppearance = async () => {
-    try {
-      await updateUserSettings({
-        font_size: fontSize,
-      });
-      showToast('Đã cập nhật giao diện thần tiên! ✨', 'success');
-    } catch (err) {
-      showToast('Lỗi lưu cài đặt giao diện', 'error');
-    }
-  };
-
-  const handleSaveNotifications = async () => {
-    try {
-      await updateUserSettings({
-        notify_new_chapter: notifyNewChapter,
-        notify_broken_link: notifyBrokenLink,
-        daily_reminder_time: dailyReminderTime,
-      });
-      showToast('Đã lưu cấu hình thông báo! 🌿', 'success');
-    } catch (err) {
-      showToast('Lỗi lưu cài đặt thông báo', 'error');
-    }
-  };
-
-  return (
-    <div className="max-w-4xl mx-auto flex flex-col gap-6">
-      {/* Header */}
-      <div>
-        <h1 className="font-serif text-2xl sm:text-3xl font-bold text-text">
-          Tài Khoản & Cài Đặt Nhà Kính ✿
-        </h1>
-        <p className="text-xs sm:text-sm text-text-muted mt-1">
-          Quản lý trang cá nhân, giao diện botanical và bảo mật thư viện của bạn
-        </p>
-      </div>
-
-      <div className="flex flex-col md:flex-row gap-6">
-        {/* Sub-nav tabs */}
-        <div className="w-full md:w-56 shrink-0 flex flex-row md:flex-col gap-1.5 overflow-x-auto no-scrollbar pb-1">
-          <button
-            type="button"
-            onClick={() => setActiveTab('profile')}
-            className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${
-              activeTab === 'profile'
-                ? 'bg-accent-soft text-text border border-border-strong glow-accent'
-                : 'text-text-muted hover:bg-surface hover:text-text'
-            }`}
-          >
-            <User size={16} />
-            <span>Hồ sơ cá nhân</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('appearance')}
-            className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${
-              activeTab === 'appearance'
-                ? 'bg-accent-soft text-text border border-border-strong glow-accent'
-                : 'text-text-muted hover:bg-surface hover:text-text'
-            }`}
-          >
-            <Palette size={16} />
-            <span>Giao diện</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('notifications')}
-            className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${
-              activeTab === 'notifications'
-                ? 'bg-accent-soft text-text border border-border-strong glow-accent'
-                : 'text-text-muted hover:bg-surface hover:text-text'
-            }`}
-          >
-            <Bell size={16} />
-            <span>Thông báo</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('security')}
-            className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${
-              activeTab === 'security'
-                ? 'bg-accent-soft text-text border border-border-strong glow-accent'
-                : 'text-text-muted hover:bg-surface hover:text-text'
-            }`}
-          >
-            <Shield size={16} />
-            <span>Bảo mật</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('data')}
-            className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${
-              activeTab === 'data'
-                ? 'bg-accent-soft text-text border border-border-strong glow-accent'
-                : 'text-text-muted hover:bg-surface hover:text-text'
-            }`}
-          >
-            <Database size={16} />
-            <span>Dữ liệu & Sao lưu</span>
-          </button>
-
-          <div className="pt-3 mt-2 border-t border-border/60 hidden md:block">
-            <button
-              type="button"
-              onClick={logout}
-              className="w-full flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs text-danger hover:bg-danger-tint/50 transition-colors cursor-pointer"
-            >
-              <LogOut size={15} />
-              <span>Đăng xuất</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab content panel */}
-        <div className="flex-1 bg-surface-raised border-1.5 border-border-strong rounded-3xl p-6 sm:p-8 shadow-botanical">
-          {/* PROFILE TAB */}
-          {activeTab === 'profile' && (
-            <form onSubmit={handleSaveProfile} className="flex flex-col gap-5">
-              <h3 className="font-serif text-lg font-bold text-text pb-2 border-b border-border/50">
-                Thông Tin Cá Nhân
-              </h3>
-
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-border-strong p-0.5 bg-surface-raised">
-                  <img
-                    src={user?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
-                    alt="Avatar"
-                    className="w-full h-full object-cover rounded-full"
-                  />
-                </div>
-                <div>
-                  <h4 className="font-serif font-bold text-base text-text">
-                    {displayName}
-                  </h4>
-                  <p className="text-xs text-text-muted">{user?.email}</p>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-text mb-1">
-                  Tên hiển thị
-                </label>
-                <input
-                  type="text"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full px-3.5 py-2 bg-surface rounded-xl border border-border text-sm text-text focus:outline-none focus:border-leaf"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-text mb-1">
-                  Lời giới thiệu (Bio)
-                </label>
-                <textarea
-                  rows={3}
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  className="w-full px-3.5 py-2 bg-surface rounded-xl border border-border text-sm text-text focus:outline-none focus:border-leaf resize-none"
-                />
-              </div>
-
-              <Button
-                type="submit"
-                variant="primary"
-                className="self-start"
-                iconLeft={<Save size={14} />}
-              >
-                Lưu thay đổi
-              </Button>
-            </form>
-          )}
-
-          {/* APPEARANCE TAB */}
-          {activeTab === 'appearance' && (
-            <div className="flex flex-col gap-5">
-              <h3 className="font-serif text-lg font-bold text-text pb-2 border-b border-border/50">
-                Giao Diện & Hiệu Ứng
-              </h3>
-
-              <section aria-labelledby="garden-mood-heading">
-                <h4 id="garden-mood-heading" className="text-xs font-semibold text-text">
-                  Không khí khu vườn
-                </h4>
-                <p className="text-[11px] text-text-muted mt-0.5 mb-2.5">
-                  Chạm vào một khung cảnh để đổi ngay, nàng nhé ✨
-                </p>
-                <div role="radiogroup" aria-labelledby="garden-mood-heading" className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg">
-                  {THEME_IDS.map((id) => (
-                    <ThemePreviewCard
-                      key={id}
-                      themeId={id}
-                      selected={theme === id}
-                      onSelect={() => setTheme(id)}
-                    />
-                  ))}
-                </div>
-              </section>
-
-              <div>
-                <label className="block text-xs font-semibold text-text mb-1">
-                  Cỡ chữ hiển thị ({fontSize}px)
-                </label>
-                <input
-                  type="range"
-                  min={13}
-                  max={18}
-                  value={fontSize}
-                  onChange={(e) => setFontSize(Number(e.target.value))}
-                  className="w-full max-w-xs accent-leaf cursor-pointer"
-                />
-              </div>
-
-              <label className="flex items-center justify-between gap-3 max-w-md p-3 bg-surface rounded-xl border border-border cursor-pointer">
-                <div>
-                  <span className="text-xs font-semibold text-text block">Hiệu ứng lấp lánh ✨</span>
-                  <span className="text-[11px] text-text-muted">
-                    Tiên nhỏ bay lượn, bụi phấn tiên và đom đóm quanh trang của nàng
-                  </span>
-                </div>
-                <input
-                  type="checkbox"
-                  role="switch"
-                  checked={effectsEnabled}
-                  onChange={(e) => setEffectsEnabled(e.target.checked)}
-                  className="w-4 h-4 accent-leaf cursor-pointer shrink-0"
-                />
-              </label>
-
-              <Button
-                type="button"
-                variant="primary"
-                onClick={handleSaveAppearance}
-                className="self-start"
-                iconLeft={<Save size={14} />}
-              >
-                Cập nhật giao diện
-              </Button>
-            </div>
-          )}
-
-          {/* NOTIFICATIONS TAB */}
-          {activeTab === 'notifications' && (
-            <div className="flex flex-col gap-5">
-              <h3 className="font-serif text-lg font-bold text-text pb-2 border-b border-border/50">
-                Tùy Chọn Thông Báo
-              </h3>
-
-              <div className="flex items-center justify-between p-3 bg-surface rounded-xl border border-border">
-                <div>
-                  <span className="text-xs font-semibold text-text block">
-                    Thông báo khi có chương truyện mới
-                  </span>
-                  <span className="text-[11px] text-text-muted">
-                    Chuông báo rung khi tác phẩm đang theo dõi cập nhật tập tiếp theo
-                  </span>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={notifyNewChapter}
-                  onChange={(e) => setNotifyNewChapter(e.target.checked)}
-                  className="w-4 h-4 accent-leaf cursor-pointer"
-                />
-              </div>
-
-              <div className="flex items-center justify-between p-3 bg-surface rounded-xl border border-border">
-                <div>
-                  <span className="text-xs font-semibold text-text block">
-                    Báo liên kết bị gãy (Broken link)
-                  </span>
-                  <span className="text-[11px] text-text-muted">
-                    Nhắc nhở kiểm tra khi nguồn đọc bị lỗi hoặc die link
-                  </span>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={notifyBrokenLink}
-                  onChange={(e) => setNotifyBrokenLink(e.target.checked)}
-                  className="w-4 h-4 accent-leaf cursor-pointer"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-text mb-1">
-                  Giờ nhắc nhở đọc sách hàng ngày
-                </label>
-                <input
-                  type="time"
-                  value={dailyReminderTime}
-                  onChange={(e) => setDailyReminderTime(e.target.value)}
-                  className="px-3 py-1.5 bg-surface rounded-xl border border-border text-sm text-text"
-                />
-              </div>
-
-              <Button
-                type="button"
-                variant="primary"
-                onClick={handleSaveNotifications}
-                className="self-start"
-                iconLeft={<Save size={14} />}
-              >
-                Lưu cài đặt thông báo
-              </Button>
-            </div>
-          )}
-
-          {/* SECURITY TAB */}
-          {activeTab === 'security' && (
-            <div className="flex flex-col gap-5">
-              <h3 className="font-serif text-lg font-bold text-text pb-2 border-b border-border/50">
-                Bảo Mật Tài Khoản
-              </h3>
-
-              <div>
-                <label className="block text-xs font-semibold text-text mb-1">
-                  Mật khẩu hiện tại
-                </label>
-                <input
-                  type="password"
-                  placeholder="••••••••"
-                  className="w-full max-w-sm px-3.5 py-2 bg-surface rounded-xl border border-border text-sm text-text"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-text mb-1">
-                  Mật khẩu mới
-                </label>
-                <input
-                  type="password"
-                  placeholder="Tối thiểu 8 ký tự"
-                  className="w-full max-w-sm px-3.5 py-2 bg-surface rounded-xl border border-border text-sm text-text"
-                />
-              </div>
-
-              <Button
-                type="button"
-                variant="honey"
-                onClick={() => showToast('Đã đổi mật khẩu thành công! 🌸', 'success')}
-                className="self-start"
-              >
-                Cập nhật mật khẩu
-              </Button>
-            </div>
-          )}
-
-          {/* DATA TAB */}
-          {activeTab === 'data' && (
-            <div className="flex flex-col gap-5">
-              <h3 className="font-serif text-lg font-bold text-text pb-2 border-b border-border/50">
-                Quản Lý Dữ Liệu & Sao Lưu
-              </h3>
-
-              <div className="p-4 bg-surface rounded-2xl border border-border flex flex-col gap-2">
-                <h4 className="font-semibold text-sm text-text">
-                  Sao lưu toàn bộ thư viện sang file JSON
-                </h4>
-                <p className="text-xs text-text-muted">
-                  Xuất tất cả truyện tranh, kệ sách, ghi chú và tiến độ để lưu trữ ngoại tuyến an toàn.
-                </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => showToast('Đã tải xuống file bản sao lưu tủ sách! 📜', 'success')}
-                  className="self-start mt-2"
-                >
-                  Tải bản sao lưu (.JSON)
-                </Button>
-              </div>
-
-              <div className="p-4 bg-danger-tint/30 rounded-2xl border border-danger/30 flex flex-col gap-2">
-                <h4 className="font-semibold text-sm text-danger">
-                  Dọn dẹp bộ nhớ tạm
-                </h4>
-                <p className="text-xs text-text-muted">
-                  Xóa bộ nhớ đệm hình ảnh và lịch sử đọc tạm thời trên trình duyệt này.
-                </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => showToast('Đã làm sạch bộ nhớ tạm nhà kính! 🌿', 'info')}
-                  className="self-start mt-2 text-danger border-danger/40"
-                >
-                  Xóa bộ nhớ đệm
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Logout on mobile (desktop has it in the side menu and the avatar menu) */}
+  const bottomActions = (
+    <div className={`${onSubPage ? 'hidden md:flex' : 'flex'} flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-3xl bg-surface/70 border border-border/60 p-3 sm:px-5`}>
       <button
         type="button"
         onClick={logout}
-        className="md:hidden w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border-1.5 border-danger/40 bg-surface-raised text-sm font-semibold text-danger hover:bg-danger-tint transition-colors cursor-pointer"
+        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 h-11 px-5 rounded-full bg-surface-raised border-1.5 border-border text-sm font-semibold text-text hover:border-primary transition-colors cursor-pointer"
       >
-        <LogOut size={16} />
-        <span>Đăng xuất</span>
+        <LogOut className="w-4 h-4" aria-hidden="true" />
+        Đăng xuất
+      </button>
+      <button
+        type="button"
+        onClick={() => setDeleteOpen(true)}
+        className="self-center inline-flex items-center gap-1 text-xs text-text-muted underline underline-offset-4 decoration-border-strong hover:text-danger-ink cursor-pointer"
+      >
+        <HeartCrack className="w-3.5 h-3.5" aria-hidden="true" />
+        Xóa tài khoản
       </button>
     </div>
   );
-};
 
-interface ThemePreviewCardProps {
-  themeId: ThemeId;
-  selected: boolean;
-  onSelect: () => void;
-}
-
-/** Mini garden rendered in its own palette via a scoped data-theme. */
-const ThemePreviewCard: React.FC<ThemePreviewCardProps> = ({ themeId, selected, onSelect }) => {
-  const def = THEMES[themeId];
   return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={selected}
-      onClick={onSelect}
-      className={`relative text-left rounded-2xl p-1 border-1.5 transition-all cursor-pointer ${
-        selected ? 'border-primary glow-primary' : 'border-border hover:border-primary-soft'
-      }`}
-    >
-      <div data-theme={themeId} className="rounded-xl overflow-hidden bg-background text-text">
-        {/* mini scene */}
-        <div className="relative h-24 px-3 pt-3 bg-sunbeam-gradient">
-          <span className="absolute top-2 right-3 text-[10px] text-gold">✦ ✧</span>
-          <span className="absolute top-8 right-8 w-1.5 h-1.5 rounded-full bg-accent glow-accent" />
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-primary" />
-            <span className="h-1.5 w-14 rounded-full bg-text/70" />
-          </div>
-          <div className="mt-2.5 flex gap-2">
-            <div className="flex-1 h-12 arch-card-sm bg-surface border border-border p-1.5 flex flex-col justify-end gap-1">
-              <span className="h-1 w-full rounded-full bg-surface-sunken overflow-hidden">
-                <span className="block h-full w-2/3 bg-accent rounded-full" />
-              </span>
-            </div>
-            <div className="flex-1 h-12 arch-card-sm bg-surface-raised border border-border p-1.5 flex flex-col justify-end">
-              <span className="h-2.5 w-full rounded-full bg-primary glow-primary" />
-            </div>
-            <div className="flex-1 h-12 arch-card-sm bg-fairy-gradient border border-border" />
-          </div>
+    <div className="max-w-6xl mx-auto flex flex-col gap-5 sm:gap-6">
+      {/* Title + profile header (phones: only on the list page) */}
+      <div className={`${onSubPage ? 'hidden md:flex' : 'flex'} flex-col gap-5 sm:gap-6`}>
+        <div>
+          <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-text tracking-tight">
+            Góc Nhỏ Của Nàng <span className="text-accent" aria-hidden="true">✿</span>
+          </h1>
+          <p className="text-sm text-text-muted mt-1">Chăm chút khu vườn cá nhân và thiết lập thế giới đọc sách của nàng ✨</p>
         </div>
-        <div className="px-3 py-2.5 bg-surface border-t border-border">
-          <span className="flex items-center gap-1.5 text-sm font-bold text-text">
-            <span>{def.icon}</span>
-            {def.label}
-          </span>
-          <span className="block text-[11px] text-text-muted mt-0.5">{def.description}</span>
-        </div>
+
+        <section aria-label="Hồ sơ" className="relative overflow-hidden rounded-3xl bg-sunbeam-gradient border-1.5 border-border p-5 sm:p-6 shadow-botanical">
+          <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-accent-tint/70 blur-2xl pointer-events-none" aria-hidden="true" />
+          <div className="relative flex flex-col md:flex-row items-center md:items-start gap-5">
+            <div className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-full p-1 bg-fairy-gradient shadow-botanical">
+              <img src={user?.avatar_url || FALLBACK_AVATAR} alt="" className="w-full h-full rounded-full object-cover bg-surface" />
+            </div>
+            <div className="flex-1 min-w-0 text-center md:text-left">
+              <p className="font-serif text-xl sm:text-2xl font-semibold text-text">{user?.display_name}</p>
+              <p className="text-sm text-text-muted">@{user?.username}</p>
+              {user?.bio && <p className="mt-1.5 font-serif italic text-sm sm:text-base text-accent-ink line-clamp-2">“{user.bio}”</p>}
+              <ul className="mt-3 grid grid-cols-3 md:flex md:flex-wrap gap-2" aria-label="Thống kê nhỏ">
+                {[
+                  { icon: BookOpen, value: summary ? String(summary.total) : '…', label: 'truyện trong tủ' },
+                  { icon: Flower2, value: summary ? String(summary.by_status.completed) : '…', label: 'đã đọc xong' },
+                  { icon: CalendarHeart, value: memberSince(user?.created_at), label: 'thành viên từ' },
+                ].map(({ icon: Icon, value, label }) => (
+                  <li
+                    key={label}
+                    className="flex flex-col md:flex-row items-center gap-0.5 md:gap-1.5 rounded-2xl md:rounded-full bg-surface-raised/80 border border-border/60 px-2 py-2 md:px-3 md:py-1"
+                  >
+                    <span className="flex items-center gap-1 text-sm font-bold text-text tabular-nums">
+                      <Icon className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+                      {value}
+                    </span>
+                    <span className="text-[11px] text-text-muted">{label}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <Button
+              variant="honey"
+              className="w-full md:w-auto"
+              onClick={() => navigate('/account/profile#edit')}
+              iconLeft={<PenLine className="w-4 h-4" />}
+            >
+              Sửa hồ sơ
+            </Button>
+          </div>
+        </section>
       </div>
-      {selected && (
-        <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-botanical-sm">
-          <Check size={14} strokeWidth={3} />
-        </span>
-      )}
-    </button>
+
+      <div className="grid grid-cols-1 md:grid-cols-[15rem_minmax(0,1fr)] lg:grid-cols-[17rem_minmax(0,1fr)] gap-5 sm:gap-6 items-start">
+        {/* Desktop: left menu */}
+        <nav aria-label="Mục cài đặt" className="hidden md:flex flex-col gap-1 rounded-3xl bg-surface-raised border-1.5 border-border p-3 shadow-botanical md:sticky md:top-24">
+          <span className="px-3 pt-1 pb-2 text-[11px] font-bold uppercase tracking-widest text-text-muted">Mục lục sổ tay</span>
+          {SECTIONS.map((s) => {
+            const on = s.id === active;
+            const Icon = s.icon;
+            return (
+              <Link
+                key={s.id}
+                to={`/account/${s.id}`}
+                aria-current={on ? 'page' : undefined}
+                className={`flex items-center justify-between gap-2 px-3 py-2.5 rounded-2xl text-sm font-semibold transition-colors ${
+                  on ? 'bg-primary text-on-primary glow-primary' : 'text-text hover:bg-surface'
+                }`}
+              >
+                <span className="flex items-center gap-2.5">
+                  <Icon className="w-[18px] h-[18px]" aria-hidden="true" />
+                  {s.label}
+                </span>
+                {on ? <span aria-hidden="true">✿</span> : <ChevronRight className="w-4 h-4 text-text-muted" aria-hidden="true" />}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Phones: grouped list of rows */}
+        {!onSubPage && (
+          <nav aria-label="Mục cài đặt" className="md:hidden rounded-3xl bg-surface-raised border-1.5 border-border p-2 shadow-botanical">
+            <span className="block px-3 pt-2 pb-1 text-[11px] font-bold uppercase tracking-widest text-text-muted">Khu vực cài đặt</span>
+            <ul>
+              {SECTIONS.map((s) => {
+                const Icon = s.icon;
+                return (
+                  <li key={s.id}>
+                    <Link to={`/account/${s.id}`} className="flex items-center gap-3 px-3 py-3 rounded-2xl active:bg-surface hover:bg-surface transition-colors">
+                      <span className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center ${s.tint}`} aria-hidden="true">
+                        <Icon className="w-5 h-5" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[15px] font-semibold text-text">{s.label}</span>
+                        <span className="block text-xs text-text-muted truncate">{hints[s.id] ?? s.hint}</span>
+                      </span>
+                      <ChevronRight className="w-5 h-5 text-text-muted shrink-0" aria-hidden="true" />
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+        )}
+
+        {/* Section content */}
+        <section
+          aria-label={sectionById(active)!.title}
+          className={`${onSubPage ? '' : 'hidden md:block'} min-w-0 rounded-3xl bg-surface-raised border-1.5 border-border p-4 sm:p-6 shadow-botanical`}
+        >
+          <Content key={active} />
+        </section>
+      </div>
+
+      {bottomActions}
+
+      <Modal isOpen={deleteOpen} onClose={() => !deleting && setDeleteOpen(false)} title="Xóa tài khoản vĩnh viễn?" maxWidth="sm">
+        <div className="flex flex-col gap-3 text-sm text-text leading-relaxed">
+          <p>
+            Toàn bộ tủ truyện, kệ sách, ghi chú và tiến độ đọc của nàng sẽ bị xóa và <strong>không thể khôi phục</strong>.
+          </p>
+          <p className="text-text-muted">
+            Nàng có thể{' '}
+            <Link to="/account/data" onClick={() => setDeleteOpen(false)} className="font-semibold text-primary-ink underline underline-offset-2">
+              xuất dữ liệu
+            </Link>{' '}
+            để giữ lại một bản sao trước nhé.
+          </p>
+        </div>
+        <div className="flex flex-wrap justify-end gap-2.5 mt-6">
+          <Button variant="outline" onClick={() => setDeleteOpen(false)} disabled={deleting}>
+            Giữ lại khu vườn
+          </Button>
+          <Button variant="primary" onClick={deleteAccount} isLoading={deleting} className="bg-danger! text-on-danger! border-danger! hover:bg-danger-ink!">
+            Xóa vĩnh viễn
+          </Button>
+        </div>
+      </Modal>
+    </div>
   );
 };

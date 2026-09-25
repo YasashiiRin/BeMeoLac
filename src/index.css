@@ -81,6 +81,14 @@
   --c-shelf-linen-tint: #F3EBDF;
   --c-shelf-linen-ink: #5A4632;
 
+  /* Charts & reading-calendar blooms (/stats) */
+  --c-chart-1: #5E8F4E;
+  --c-chart-2: #D98BA3;
+  --c-chart-3: #C9A24E;
+  --c-chart-4: #8C74C8;
+  --c-chart-5: #E09A62;
+  --c-chart-6: #A3B394;
+
   /* Shadows & glows */
   --shadow-rgb: 79 107 71;
   --glow-primary: 0 2px 10px rgb(79 107 71 / 0.18);
@@ -185,6 +193,13 @@
   --c-shelf-linen-tint: #33302F;
   --c-shelf-linen-ink: #E8DCC8;
 
+  --c-chart-1: #6FBF9A;
+  --c-chart-2: #E8A0B4;
+  --c-chart-3: #F2D98A;
+  --c-chart-4: #B9A6F0;
+  --c-chart-5: #F0B98B;
+  --c-chart-6: #7A86A8;
+
   --shadow-rgb: 7 14 31;
   --glow-primary: 0 4px 20px rgb(185 166 240 / 0.25);
   --glow-accent: 0 0 12px rgb(159 227 196 / 0.35);
@@ -275,6 +290,13 @@
   --color-shelf-linen: var(--c-shelf-linen);
   --color-shelf-linen-tint: var(--c-shelf-linen-tint);
   --color-shelf-linen-ink: var(--c-shelf-linen-ink);
+
+  --color-chart-1: var(--c-chart-1);
+  --color-chart-2: var(--c-chart-2);
+  --color-chart-3: var(--c-chart-3);
+  --color-chart-4: var(--c-chart-4);
+  --color-chart-5: var(--c-chart-5);
+  --color-chart-6: var(--c-chart-6);
 
   --color-celestial-gold: var(--c-celestial-gold);
   --color-celestial-gold-light: var(--c-celestial-gold-light);
@@ -531,6 +553,17 @@
 
 @utility glow-gold {
   box-shadow: var(--glow-gold);
+}
+
+/* ── Reading text (Tài khoản › Giao diện › Cỡ chữ; 16px = the normal size) ── */
+@utility reading-xs {
+  font-size: calc(0.75rem * var(--reading-scale, 1));
+}
+@utility reading-sm {
+  font-size: calc(0.875rem * var(--reading-scale, 1));
+}
+@utility reading-base {
+  font-size: var(--reading-font-size, 16px);
 }
 
 /* ── Scrollbars ───────────────────────────────────────────────────── */

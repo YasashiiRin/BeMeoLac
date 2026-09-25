@@ -466,6 +466,14 @@ export const getSearchFacets = async (): Promise<SearchFacets> => {
   return { total: comicsDatabase.length, statuses, genres, sources, shelves };
 };
 
+/** Adds comics from a backup; ids already in the library are skipped. */
+export const importComics = async (comics: Comic[]): Promise<{ added: number; skipped: number }> => {
+  const known = new Set(comicsDatabase.map((c) => c.id));
+  const fresh = comics.filter((c) => !known.has(c.id));
+  comicsDatabase = [...fresh, ...comicsDatabase];
+  return { added: fresh.length, skipped: comics.length - fresh.length };
+};
+
 export const comicsService = {
   getComics,
   getComicById,
@@ -485,6 +493,7 @@ export const comicsService = {
   removeComicFromShelf,
   searchComics,
   getSearchFacets,
+  importComics,
 };
 
 
