@@ -1,4 +1,6 @@
-import { Comic, Paginated, ComicStatus, SortOption, Source } from '../types';
+import { Comic, Paginated, ComicStatus, SortOption, Source, ComicSearchParams, SearchFacets, FacetOption } from '../types';
+import { fold } from '../utils/text';
+import { getShelves } from './shelfService';
 import { mockComics } from '../mocks/comics';
 import { simulateNetworkDelay } from './apiClient';
 
@@ -356,6 +358,114 @@ export const getSummary = async (): Promise<ComicSummary> => {
   };
 };
 
+/* ── Advanced search (/search) ─────────────────────────────────────── */
+
+const STATUS_LABELS: Record<ComicStatus, string> = {
+  reading: 'Đang đọc',
+  completed: 'Đã đọc xong',
+  plan_to_read: 'Muốn đọc',
+  on_hold: 'Tạm dừng',
+  dropped: 'Bỏ dở',
+};
+
+const progressOf = (c: Comic) => (c.total_chapters > 0 ? Math.min(100, (c.current_chapter / c.total_chapters) * 100) : 0);
+
+/** 0 when the comic doesn't match the text; higher = better match. */
+function relevance(c: Comic, q: string): number {
+  if (!q) return 1;
+  let score = 0;
+  const title = fold(c.title);
+  if (title.includes(q)) score += title.startsWith(q) ? 6 : 4;
+  if (fold(c.author).includes(q)) score += 3;
+  if (c.tags.some((t) => fold(t).includes(q))) score += 2;
+  if (fold(c.note || '').includes(q)) score += 1;
+  return score;
+}
+
+/**
+ * Search title, author, tags and notes (accent-insensitive) with filters.
+ * Array filters mean "any of"; results are paginated.
+ */
+export const searchComics = async (params: ComicSearchParams = {}): Promise<Paginated<Comic>> => {
+  await simulateNetworkDelay(160);
+  const q = fold((params.q || '').trim());
+  const pmin = params.progress_min ?? 0;
+  const pmax = params.progress_max ?? 100;
+
+  const scored = comicsDatabase
+    .map((c) => ({ c, score: relevance(c, q) }))
+    .filter(({ c, score }) => {
+      if (score === 0) return false;
+      if (params.statuses?.length && !params.statuses.includes(c.status)) return false;
+      if (params.genres?.length && !c.tags.some((t) => params.genres!.includes(t))) return false;
+      if (params.sources?.length && !c.sources.some((s) => params.sources!.includes(s.site_name))) return false;
+      if (params.shelves?.length && !c.shelf_ids.some((id) => params.shelves!.includes(id))) return false;
+      if (params.min_rating && c.rating < params.min_rating) return false;
+      const p = progressOf(c);
+      if (p < pmin || p > pmax) return false;
+      if (params.has_new_chapter && !c.has_new_chapter) return false;
+      if (params.has_broken_link && !c.sources.some((s) => !s.is_alive)) return false;
+      return true;
+    });
+
+  const sort = params.sort || (q ? 'relevance' : 'updated_at');
+  scored.sort((a, b) => {
+    switch (sort) {
+      case 'relevance':
+        return b.score - a.score || b.c.updated_at.localeCompare(a.c.updated_at);
+      case 'title':
+        return a.c.title.localeCompare(b.c.title, 'vi');
+      case 'rating':
+        return b.c.rating - a.c.rating;
+      case 'progress':
+        return progressOf(b.c) - progressOf(a.c);
+      default:
+        return b.c.updated_at.localeCompare(a.c.updated_at);
+    }
+  });
+
+  const page = Math.max(1, params.page || 1);
+  const pageSize = params.page_size || 12;
+  return {
+    items: scored.slice((page - 1) * pageSize, page * pageSize).map((x) => x.c),
+    total: scored.length,
+    page,
+    page_size: pageSize,
+  };
+};
+
+/** Filter options with counts over the whole library. */
+export const getSearchFacets = async (): Promise<SearchFacets> => {
+  await simulateNetworkDelay(120);
+  const count = <T,>(values: T[]) => values.reduce((m, v) => m.set(v, (m.get(v) || 0) + 1), new Map<T, number>());
+
+  const statusCounts = count(comicsDatabase.map((c) => c.status));
+  const statuses: FacetOption[] = (Object.keys(STATUS_LABELS) as ComicStatus[]).map((st) => ({
+    value: st,
+    label: STATUS_LABELS[st],
+    count: statusCounts.get(st) || 0,
+  }));
+
+  const genreCounts = count(comicsDatabase.flatMap((c) => c.tags));
+  const genres: FacetOption[] = [...genreCounts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'vi'))
+    .map(([value, n]) => ({ value, label: value, count: n }));
+
+  const sourceInfo = new Map<string, string>();
+  comicsDatabase.forEach((c) => c.sources.forEach((s) => sourceInfo.set(s.site_name, s.favicon_url)));
+  const sourceCounts = count(comicsDatabase.flatMap((c) => [...new Set(c.sources.map((s) => s.site_name))]));
+  const sources: FacetOption[] = [...sourceCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([value, n]) => ({ value, label: value, icon: sourceInfo.get(value), count: n }));
+
+  const shelfCounts = count(comicsDatabase.flatMap((c) => c.shelf_ids));
+  const shelves: FacetOption[] = (await getShelves())
+    .filter((sh) => sh.id !== 'all')
+    .map((sh) => ({ value: sh.id, label: sh.name, icon: sh.icon, count: shelfCounts.get(sh.id) || 0 }));
+
+  return { total: comicsDatabase.length, statuses, genres, sources, shelves };
+};
+
 export const comicsService = {
   getComics,
   getComicById,
@@ -373,6 +483,8 @@ export const comicsService = {
   deleteComic,
   addComicToShelf,
   removeComicFromShelf,
+  searchComics,
+  getSearchFacets,
 };
 
 

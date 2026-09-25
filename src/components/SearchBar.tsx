@@ -8,6 +8,12 @@ interface SearchBarProps {
   placeholder?: string;
   className?: string;
   showFilterButton?: boolean;
+  /** Enter pressed */
+  onSubmit?: () => void;
+  /** ⌘K / Ctrl+K focuses this input (keep it on one input per page) */
+  shortcut?: boolean;
+  ariaLabel?: string;
+  onBlur?: () => void;
 }
 
 export const SearchBar: React.FC<SearchBarProps> = ({
@@ -17,11 +23,16 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   placeholder = 'Tìm truyện, tác giả, thẻ hoa...',
   className = '',
   showFilterButton = false,
+  onSubmit,
+  shortcut = true,
+  ariaLabel,
+  onBlur,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   // ⌘K / Ctrl+K keyboard shortcut focus
   useEffect(() => {
+    if (!shortcut) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
@@ -30,7 +41,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [shortcut]);
 
   return (
     <div className={`relative flex items-center w-full ${className}`}>
@@ -40,9 +51,18 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
       <input
         ref={inputRef}
-        type="text"
+        type="search"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && onSubmit) {
+            e.preventDefault();
+            onSubmit();
+          }
+        }}
+        onBlur={onBlur}
+        enterKeyHint={onSubmit ? 'search' : undefined}
+        aria-label={ariaLabel ?? placeholder}
         placeholder={placeholder}
         className="w-full pl-10 pr-20 py-2 text-sm bg-surface text-text placeholder-text-muted rounded-full border-1.5 border-border focus:border-leaf focus:bg-surface-raised focus:outline-none focus:ring-2 focus:ring-primary-soft/30 transition-all duration-200 shadow-inner"
       />

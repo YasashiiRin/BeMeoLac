@@ -92,3 +92,38 @@ export interface Paginated<T> {
 export type SortOption = 'updated_at' | 'title' | 'rating' | 'progress';
 export type FilterGenre = 'all' | 'healing' | 'fantasy' | 'romance' | 'adventure' | 'comedy' | 'drama' | 'mystery';
 export type FilterSource = 'all' | 'Cuutruyen' | 'BlogTruyen' | 'Bilibili' | 'Kakao' | 'Webtoon' | 'Hako';
+
+/** Advanced search (/search). Every field is optional; arrays mean "any of". */
+export type SearchSort = 'relevance' | 'updated_at' | 'title' | 'rating' | 'progress';
+
+export interface ComicSearchParams {
+  q?: string;
+  statuses?: ComicStatus[];
+  genres?: string[];
+  sources?: string[];
+  shelves?: string[];
+  min_rating?: number;
+  progress_min?: number; // 0–100
+  progress_max?: number; // 0–100
+  has_new_chapter?: boolean;
+  has_broken_link?: boolean;
+  sort?: SearchSort;
+  page?: number;
+  page_size?: number;
+}
+
+export interface FacetOption {
+  value: string;
+  label: string;
+  icon?: string;
+  count: number;
+}
+
+/** Filter options with counts over the whole library. */
+export interface SearchFacets {
+  total: number;
+  statuses: FacetOption[];
+  genres: FacetOption[];
+  sources: FacetOption[];
+  shelves: FacetOption[];
+}

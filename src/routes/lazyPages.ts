@@ -1,4 +1,4 @@
-import { lazy } from 'react';
+import { ComponentType, createElement, lazy } from 'react';
 import { matchPath } from 'react-router-dom';
 
 /*
@@ -17,14 +17,34 @@ const loaders = {
   account: () => import('../pages/AccountPage'),
 };
 
-export const BookshelfPage = lazy(() => loaders.bookshelf().then((m) => ({ default: m.BookshelfPage })));
-export const ComicDetailPage = lazy(() => loaders.comic().then((m) => ({ default: m.ComicDetailPage })));
-export const AddComicPage = lazy(() => loaders.add().then((m) => ({ default: m.AddComicPage })));
-export const ShelfDetailPage = lazy(() => loaders.shelf().then((m) => ({ default: m.ShelfDetailPage })));
-export const SearchPage = lazy(() => loaders.search().then((m) => ({ default: m.SearchPage })));
-export const StatsPage = lazy(() => loaders.stats().then((m) => ({ default: m.StatsPage })));
-export const NotificationsPage = lazy(() => loaders.notifications().then((m) => ({ default: m.NotificationsPage })));
-export const AccountPage = lazy(() => loaders.account().then((m) => ({ default: m.AccountPage })));
+/**
+ * Like React.lazy, but once the chunk has been preloaded the page renders
+ * synchronously — no Suspense fallback flash (React.lazy always suspends on
+ * its first render, even when the module is already cached).
+ */
+function lazyPage<P extends object>(key: keyof typeof loaders, pick: (m: any) => ComponentType<P>) {
+  let loaded: ComponentType<P> | null = null;
+  const load = () =>
+    loaders[key]().then((m) => {
+      loaded = pick(m);
+      return { default: loaded };
+    });
+  const Lazy = lazy(load);
+  const Page = (props: P) => createElement(loaded ?? Lazy, props);
+  preloaders[key] = () => (loaded ? Promise.resolve() : load());
+  return Page;
+}
+
+const preloaders: Partial<Record<keyof typeof loaders, () => Promise<unknown>>> = {};
+
+export const BookshelfPage = lazyPage('bookshelf', (m) => m.BookshelfPage);
+export const ComicDetailPage = lazyPage('comic', (m) => m.ComicDetailPage);
+export const AddComicPage = lazyPage('add', (m) => m.AddComicPage);
+export const ShelfDetailPage = lazyPage('shelf', (m) => m.ShelfDetailPage);
+export const SearchPage = lazyPage('search', (m) => m.SearchPage);
+export const StatsPage = lazyPage('stats', (m) => m.StatsPage);
+export const NotificationsPage = lazyPage('notifications', (m) => m.NotificationsPage);
+export const AccountPage = lazyPage('account', (m) => m.AccountPage);
 
 const ROUTES: [string, keyof typeof loaders][] = [
   ['/', 'bookshelf'],
@@ -41,5 +61,6 @@ const ROUTES: [string, keyof typeof loaders][] = [
 export function preloadRoute(path: string): Promise<unknown> {
   const pathname = path.split(/[?#]/)[0] || '/';
   const hit = ROUTES.find(([pattern]) => matchPath(pattern, pathname));
-  return (hit ? loaders[hit[1]] : loaders.bookshelf)().catch(() => undefined);
+  const key = hit ? hit[1] : 'bookshelf';
+  return (preloaders[key] ?? loaders[key])().catch(() => undefined);
 }

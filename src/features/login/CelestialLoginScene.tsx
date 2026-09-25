@@ -9,6 +9,7 @@ import {
   MoonPhases,
   OrbitRings,
   ShootingStars,
+  SideDecor,
   StarChains,
   SuccessFx,
   TypingSparkles,
@@ -61,6 +62,7 @@ export const CelestialLoginScene: React.FC<Props> = ({ deniedKey, successKey, on
           {/* spiral groups: each spirals into the vortex as one layer */}
           <div className="orn-layer inset-0" data-spiral="scene">
             <BackgroundGlows />
+            <SideDecor />
             <Constellations />
             <GoldDust />
             <ShootingStars />

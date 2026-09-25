@@ -18,9 +18,10 @@ export const SourceBadge: React.FC<SourceBadgeProps> = ({
 
   return (
     <span
-      className={`inline-flex items-center font-medium rounded-full bg-scrim/70 text-on-scrim backdrop-blur-md border border-on-scrim/25 shadow-xs whitespace-nowrap tracking-wide select-none ${sizeClasses} ${className}`}
+      title={name}
+      className={`inline-flex items-center max-w-full font-medium rounded-full bg-scrim/70 text-on-scrim backdrop-blur-md border border-on-scrim/25 shadow-xs whitespace-nowrap tracking-wide select-none ${sizeClasses} ${className}`}
     >
-      {name}
+      <span className="truncate">{name}</span>
     </span>
   );
 };

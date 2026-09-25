@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { BookOpen, Search, Plus, BarChart3, User, Sparkles } from 'lucide-react';
+import { lastSearchHref } from '../../features/search/searchState';
 
 interface MobileBottomNavProps {
   onOpenAddModal?: () => void;
@@ -35,7 +36,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onOpenAddModal
 
         {/* Tìm kiếm */}
         <NavLink
-          to="/search"
+          to={lastSearchHref()}
           className={({ isActive }) =>
             `flex flex-col items-center gap-0.5 py-1 px-2 rounded-xl transition-colors ${
               isActive ? 'text-primary font-bold' : 'text-text-muted font-medium'

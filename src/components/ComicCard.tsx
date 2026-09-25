@@ -4,12 +4,15 @@ import { Comic } from '../types';
 import { SourceBadge } from './SourceBadge';
 import { HeartRating } from './HeartRating';
 import { VineProgressBar } from './VineProgressBar';
+import { HighlightText } from './HighlightText';
 import { Bookmark, BookOpen, RotateCcw } from 'lucide-react';
 
 interface ComicCardProps {
   comic: Comic;
   onToggleFavorite?: (id: string) => void;
   onQuickRead?: (comic: Comic) => void;
+  /** search text to highlight softly in the title */
+  highlight?: string;
   className?: string;
 }
 
@@ -17,6 +20,7 @@ export const ComicCard: React.FC<ComicCardProps> = ({
   comic,
   onToggleFavorite,
   onQuickRead,
+  highlight,
   className = '',
 }) => {
   const navigate = useNavigate();
@@ -93,20 +97,17 @@ export const ComicCard: React.FC<ComicCardProps> = ({
         {/* Delicate Glass Inner Vignette */}
         <div className="absolute inset-0 bg-gradient-to-t from-scrim/40 via-transparent to-scrim/20 pointer-events-none" />
 
-        {/* Top Badges Row */}
-        <div className="absolute top-2 left-2 right-2 flex items-center justify-between pointer-events-none z-10">
-          {/* Source Badge */}
-          <SourceBadge name={primarySource.site_name} size="sm" />
+        {/* Top badges, one line: source top-left (truncates), status top-right (never shrinks) */}
+        <div className="absolute top-2 left-2 right-2 flex items-center justify-between gap-1.5 pointer-events-none z-10">
+          <SourceBadge name={primarySource.site_name} size="sm" className="min-w-0" />
 
-          {/* Status Badge: NEW or COMPLETED */}
           {comic.has_new_chapter ? (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold bg-accent text-on-accent border border-accent shadow-xs animate-pulse">
+            <span className="shrink-0 whitespace-nowrap inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-accent text-on-accent border border-accent shadow-xs animate-pulse">
               MỚI ✿
             </span>
           ) : isCompleted ? (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold bg-primary text-on-primary border border-primary shadow-xs">
-              <span className="hidden sm:inline">HOÀN THÀNH</span>
-              <span className="sm:hidden">XONG</span> 🌿
+            <span className="shrink-0 whitespace-nowrap inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary text-on-primary border border-primary shadow-xs">
+              XONG 🌿
             </span>
           ) : null}
         </div>
@@ -137,7 +138,7 @@ export const ComicCard: React.FC<ComicCardProps> = ({
             title={comic.title}
             className="font-serif font-semibold text-sm sm:text-base text-text group-hover:text-primary transition-colors line-clamp-1 leading-snug"
           >
-            {comic.title}
+            <HighlightText text={comic.title} query={highlight} />
           </h3>
 
           {/* Author */}
@@ -150,7 +151,7 @@ export const ComicCard: React.FC<ComicCardProps> = ({
         <div className="mt-2 pt-2 border-t border-border/50 flex flex-col gap-1.5">
           <div className="flex items-center justify-between text-xs">
             {/* Rating */}
-            <HeartRating rating={comic.rating} votes="890" size="sm" />
+            <HeartRating rating={comic.rating} size="sm" />
 
             {/* Chapter progress text */}
             <div className="text-[11px] sm:text-xs font-medium tabular-nums text-right">

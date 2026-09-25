@@ -7,6 +7,8 @@ interface EmptyStateProps {
   description: string;
   actionText?: string;
   onAction?: () => void;
+  secondaryText?: string;
+  onSecondary?: () => void;
   className?: string;
 }
 
@@ -16,6 +18,8 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   description,
   actionText,
   onAction,
+  secondaryText,
+  onSecondary,
   className = '',
 }) => {
   return (
@@ -31,10 +35,19 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       <p className="text-sm text-text-muted max-w-md mb-6 leading-relaxed">
         {description}
       </p>
-      {actionText && onAction && (
-        <Button variant="primary" onClick={onAction}>
-          {actionText}
-        </Button>
+      {((actionText && onAction) || (secondaryText && onSecondary)) && (
+        <div className="flex flex-wrap items-center justify-center gap-2.5">
+          {actionText && onAction && (
+            <Button variant="primary" onClick={onAction}>
+              {actionText}
+            </Button>
+          )}
+          {secondaryText && onSecondary && (
+            <Button variant="outline" onClick={onSecondary}>
+              {secondaryText}
+            </Button>
+          )}
+        </div>
       )}
     </div>
   );

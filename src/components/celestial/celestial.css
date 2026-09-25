@@ -1,7 +1,42 @@
 /*
- * Night-sky login (mobile). Colors: --c-celestial-* tokens in src/index.css.
- * Static for now: hover/focus feedback only.
+ * Night-sky login (all widths). Colors: --c-celestial-* tokens in src/index.css.
  */
+
+/* Deep emerald sky behind the artwork (visible beside it on wide screens),
+   with a faint star-dust texture. */
+.celestial-sky-bg {
+  --dust: color-mix(in srgb, var(--c-celestial-gold-light) 55%, transparent);
+  --dust-soft: color-mix(in srgb, var(--c-celestial-cream) 30%, transparent);
+  background-color: var(--c-celestial-emerald-deep);
+  background-image:
+    radial-gradient(circle at 12% 18%, var(--dust) 0 0.8px, transparent 1.4px),
+    radial-gradient(circle at 63% 42%, var(--dust-soft) 0 0.7px, transparent 1.3px),
+    radial-gradient(circle at 37% 77%, var(--dust) 0 0.6px, transparent 1.2px),
+    radial-gradient(circle at 86% 64%, var(--dust-soft) 0 0.9px, transparent 1.5px),
+    radial-gradient(circle at 24% 52%, var(--dust-soft) 0 0.6px, transparent 1.2px),
+    radial-gradient(circle at 71% 9%, var(--dust) 0 0.7px, transparent 1.3px),
+    radial-gradient(ellipse 75% 70% at 50% 45%, var(--c-celestial-emerald) 0%, var(--c-celestial-emerald-deep) 100%);
+  background-size: 190px 190px, 190px 190px, 190px 190px, 310px 310px, 310px 310px, 310px 310px, 100% 100%;
+}
+
+/* The portrait artwork always fills the height and stays centered: on narrow
+   screens its sides are cropped (= cover); on wider screens it sits in the
+   middle with feathered edges that melt into the emerald sky. */
+.celestial-sky {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  height: 100%;
+  width: auto;
+  max-width: none;
+  translate: -50% 0;
+}
+@media (min-aspect-ratio: 736 / 1308) {
+  .celestial-sky {
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 16%, #000 84%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, #000 16%, #000 84%, transparent 100%);
+  }
+}
 
 .celestial-frame {
   position: relative;

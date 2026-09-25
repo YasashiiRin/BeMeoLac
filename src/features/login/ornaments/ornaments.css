@@ -20,6 +20,9 @@
 .login-stage {
   --orn-line: var(--c-celestial-gold);
   --orn-line-light: var(--c-celestial-gold-light);
+  /* The wheel follows the screen height so its outer rings frame the form;
+     phones stay capped by width (170vw), short landscape screens by 560px. */
+  --wheel-size: min(170vw, max(560px, 100dvh - 24px));
 }
 
 /* frame lines follow the ornament color (same gold at rest) */
@@ -78,7 +81,7 @@
 .orn-wheel {
   left: 50%;
   top: 50%;
-  width: min(170vw, 720px);
+  width: var(--wheel-size);
   aspect-ratio: 1;
   translate: -50% -50%;
   /* keep the outer rings, soften the middle under the form fields */
@@ -148,6 +151,14 @@
 /* ── 4. Star chains (pendulums hanging from above the arch) ───────── */
 .orn-chain {
   bottom: calc(100% + 30px);
+  width: 14px;
+  transform-origin: 50% 0;
+  animation: orn-sway var(--d, 7s) ease-in-out var(--delay, 0s) infinite alternate;
+  will-change: transform;
+}
+/* chains hanging from the top edge in the wide-screen side bands */
+.orn-side-chain {
+  top: 0;
   width: 14px;
   transform-origin: 50% 0;
   animation: orn-sway var(--d, 7s) ease-in-out var(--delay, 0s) infinite alternate;
@@ -414,7 +425,7 @@
   opacity: 0;
 }
 .orn-pulse-ring {
-  width: min(170vw, 720px);
+  width: var(--wheel-size);
   aspect-ratio: 1;
   border: 2px solid var(--c-celestial-glow);
   box-shadow: 0 0 18px color-mix(in srgb, var(--c-celestial-glow) 70%, transparent), inset 0 0 18px color-mix(in srgb, var(--c-celestial-glow) 45%, transparent);
@@ -440,7 +451,7 @@
 
 /* 2.4–3.1s: a dark vortex opens; everything spirals inward */
 .orn-vortex {
-  width: min(92vw, 380px);
+  width: calc(var(--wheel-size) * 0.56);
   aspect-ratio: 1;
   background: radial-gradient(
     circle,
@@ -498,7 +509,6 @@
 }
 /* background stars stretch slightly toward the center */
 .login-stage.is-blackhole [data-part="sky"] {
-  transform-origin: var(--vx, 50%) var(--vy, 50%);
   scale: 1.16;
   opacity: 0.55;
   transition: scale 0.7s cubic-bezier(0.55, 0, 0.9, 0.45), opacity 0.7s ease;

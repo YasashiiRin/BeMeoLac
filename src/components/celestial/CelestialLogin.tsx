@@ -1,17 +1,38 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
-import type { ScrollFormProps } from '../gate/ScrollForm';
 import skyBackground from '../../assets/images/login-celestial-night.jpg';
 import './celestial.css';
 
 /*
  * Mobile login on the night-sky artwork: a thin gold arched frame with a
- * crescent moon, sitting in the empty center of the image. Same props as the
- * desktop ScrollForm, so LoginPage owns all state, validation and auth.
+ * crescent moon, sitting in the empty center of the image. LoginPage owns all
+ * state, validation and auth.
  */
 
-export type CelestialLoginProps = Omit<ScrollFormProps, 'className'> & {
+export interface LoginFormErrors {
+  identifier?: string;
+  password?: string;
+  /** Form-level message, e.g. wrong credentials */
+  form?: string;
+}
+
+export interface LoginFormProps {
+  identifier: string;
+  password: string;
+  remember: boolean;
+  isLoading: boolean;
+  errors: LoginFormErrors;
+  /** Bumped after each failed submit; focus then moves to the first invalid field. */
+  focusInvalidKey?: number;
+  onIdentifierChange: (v: string) => void;
+  onPasswordChange: (v: string) => void;
+  onRememberChange: (v: boolean) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  onGoogle: () => void;
+}
+
+export type CelestialLoginProps = LoginFormProps & {
   /** Extra classes on the page root (intro / denied / paused states). */
   stageClassName?: string;
   rootRef?: React.Ref<HTMLElement>;
@@ -115,7 +136,7 @@ export const CelestialLogin: React.FC<CelestialLoginProps> = ({
     <main
       ref={rootRef}
       data-part="celestial-login"
-      className={`relative min-h-[100dvh] overflow-hidden bg-celestial-glass ${stageClassName}`}
+      className={`celestial-sky-bg relative min-h-[100dvh] overflow-hidden ${stageClassName}`}
       onPointerDown={onStagePointerDown}
     >
       <img
@@ -123,13 +144,13 @@ export const CelestialLogin: React.FC<CelestialLoginProps> = ({
         src={skyBackground}
         alt=""
         aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-cover object-center select-none pointer-events-none"
+        className="celestial-sky select-none pointer-events-none"
       />
 
       {sceneDecor}
 
       <div className="relative flex min-h-[100dvh] items-center justify-center px-6 py-12">
-        <div data-part="frame-box" className="relative w-[min(86vw,360px)]">
+        <div data-part="frame-box" className="relative w-[min(86vw,420px)]">
         {frameBehind}
         <div data-part="frame" className="celestial-frame relative z-10 w-full px-7 pt-14 pb-7">
           <ArchMoon />

@@ -7,6 +7,8 @@ interface BottomSheetProps {
   title: string;
   subtitle?: string;
   children: React.ReactNode;
+  /** sticky actions under the scrolling content */
+  footer?: React.ReactNode;
 }
 
 export const BottomSheet: React.FC<BottomSheetProps> = ({
@@ -15,6 +17,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   title,
   subtitle,
   children,
+  footer,
 }) => {
   useEffect(() => {
     if (isOpen) {
@@ -61,6 +64,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
         <div className="p-5 overflow-y-auto botanical-scrollbar flex-1">
           {children}
         </div>
+        {footer && <div className="px-5 py-3 border-t border-border/60 bg-surface-raised">{footer}</div>}
       </div>
     </div>
   );

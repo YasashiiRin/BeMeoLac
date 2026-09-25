@@ -3,7 +3,6 @@ import { Star, Heart } from 'lucide-react';
 
 interface HeartRatingProps {
   rating: number; // 0 to 5
-  votes?: number | string;
   mode?: 'star' | 'heart';
   interactive?: boolean;
   onChange?: (val: number) => void;
@@ -12,7 +11,6 @@ interface HeartRatingProps {
 
 export const HeartRating: React.FC<HeartRatingProps> = ({
   rating,
-  votes,
   mode = 'star',
   interactive = false,
   onChange,
@@ -48,7 +46,7 @@ export const HeartRating: React.FC<HeartRatingProps> = ({
     );
   }
 
-  // Display mode (e.g. "★ 4.9 (1.2k)")
+  // Display mode (e.g. "★ 4.9")
   return (
     <div className="inline-flex items-center gap-1 text-text font-medium">
       {mode === 'heart' ? (
@@ -59,11 +57,7 @@ export const HeartRating: React.FC<HeartRatingProps> = ({
       <span className="text-xs font-semibold tabular-nums text-text">
         {rating.toFixed(1)}
       </span>
-      {votes && (
-        <span className="text-[11px] text-text-muted tabular-nums font-normal">
-          ({votes})
-        </span>
-      )}
+
     </div>
   );
 };

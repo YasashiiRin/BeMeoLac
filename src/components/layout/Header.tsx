@@ -1,26 +1,78 @@
-import React, { useState, useEffect } from 'react';
-import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { NavLink, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Bell, Plus, Flower2, Sparkles, BookHeart, Compass, Tag, BookOpen } from 'lucide-react';
 import { SearchBar } from '../SearchBar';
+import { lastSearchHref, rememberLastSearch } from '../../features/search/searchState';
 import { ThemeToggle } from '../ThemeToggle';
 import { AvatarMenu } from './AvatarMenu';
 import { comicsService } from '../../services/comicService';
 
+const NAV_ITEMS = [
+  { to: '/', label: 'Tủ Sách', icon: '✿' },
+  { to: '/search', label: 'Tìm kiếm', icon: '🔍' },
+  { to: '/stats', label: 'Thống kê', icon: '🌿' },
+];
+
+/** Header search: on /search it edits the page's query; elsewhere Enter opens /search. */
+const HeaderSearch: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
+  const onSearchPage = location.pathname === '/search';
+  const urlQ = onSearchPage ? params.get('q') ?? '' : '';
+  const [text, setText] = useState(urlQ);
+  const written = useRef(urlQ);
+
+  // follow the URL when the page (or a chip) changes the query
+  useEffect(() => {
+    if (onSearchPage && urlQ !== written.current) {
+      written.current = urlQ;
+      setText(urlQ);
+    }
+  }, [onSearchPage, urlQ]);
+
+  // on /search, typing updates the page's query after a 300ms pause
+  useEffect(() => {
+    if (!onSearchPage || text === urlQ) return;
+    const t = window.setTimeout(() => {
+      written.current = text;
+      setParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (text.trim()) next.set('q', text);
+          else next.delete('q');
+          next.delete('page');
+          return next;
+        },
+        { replace: true }
+      );
+    }, 300);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [text]);
+
+  const handleSubmit = () => {
+    const q = text.trim();
+    rememberLastSearch(q);
+    if (!onSearchPage) {
+      navigate(q ? `/search?q=${encodeURIComponent(q)}` : '/search');
+      setText('');
+    }
+  };
+
+  return <SearchBar value={text} onChange={setText} onSubmit={handleSubmit} placeholder="Tìm truyện, tác giả, thẻ hoa..." ariaLabel="Tìm kiếm trong tủ truyện" />;
+};
+
 interface HeaderProps {
-  searchQuery: string;
-  onSearchChange: (q: string) => void;
   unreadCount?: number;
   onOpenAddModal?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  searchQuery,
-  onSearchChange,
   unreadCount,
   onOpenAddModal,
 }) => {
   const navigate = useNavigate();
-  const location = useLocation();
   const [autoUnreadCount, setAutoUnreadCount] = useState<number>(0);
 
   useEffect(() => {
@@ -73,68 +125,27 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Center Nav Tabs (Desktop) */}
-        <nav className="hidden lg:flex items-center gap-1 bg-surface p-1 rounded-full border border-border shadow-inner">
-          <NavLink
-            to="/"
-            className={({ isActive }) =>
-              `flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 cursor-pointer ${
-                isActive && location.pathname === '/'
-                  ? 'bg-primary text-on-primary glow-primary'
-                  : 'text-text-muted hover:text-text hover:bg-background'
-              }`
-            }
-          >
-            <span>✿</span>
-            <span>Tủ Sách</span>
-          </NavLink>
-
-          <NavLink
-            to="/search"
-            className={({ isActive }) =>
-              `flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 cursor-pointer ${
-                isActive
-                  ? 'bg-primary text-on-primary glow-primary'
-                  : 'text-text-muted hover:text-text hover:bg-background'
-              }`
-            }
-          >
-            <span>Khám Phá</span>
-          </NavLink>
-
-          <NavLink
-            to="/shelves/healing"
-            className={({ isActive }) =>
-              `flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 cursor-pointer ${
-                isActive
-                  ? 'bg-primary text-on-primary glow-primary'
-                  : 'text-text-muted hover:text-text hover:bg-background'
-              }`
-            }
-          >
-            <span>Thể Loại</span>
-          </NavLink>
-
-          <NavLink
-            to="/stats"
-            className={({ isActive }) =>
-              `flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 cursor-pointer ${
-                isActive
-                  ? 'bg-primary text-on-primary glow-primary'
-                  : 'text-text-muted hover:text-text hover:bg-background'
-              }`
-            }
-          >
-            <span>Nhật Ký Đọc</span>
-          </NavLink>
+        <nav className="hidden lg:flex items-center gap-1 bg-surface p-1 rounded-full border border-border shadow-inner" aria-label="Điều hướng chính">
+          {NAV_ITEMS.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to === '/search' ? lastSearchHref() : item.to}
+              end={item.to === '/'}
+              className={({ isActive }) =>
+                `flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                  isActive ? 'bg-primary text-on-primary glow-primary' : 'text-text-muted hover:text-text hover:bg-background'
+                }`
+              }
+            >
+              <span aria-hidden="true">{item.icon}</span>
+              <span>{item.label}</span>
+            </NavLink>
+          ))}
         </nav>
 
-        {/* Search Bar (Desktop) */}
+        {/* Search Bar (Desktop): mirrors /search, elsewhere Enter opens it */}
         <div className="hidden md:block flex-1 max-w-xs xl:max-w-sm">
-          <SearchBar
-            value={searchQuery}
-            onChange={onSearchChange}
-            placeholder="Tìm truyện, tác giả, thẻ hoa..."
-          />
+          <HeaderSearch />
         </div>
 
         {/* Right Actions: Add Comic, Theme, Bell, Avatar */}

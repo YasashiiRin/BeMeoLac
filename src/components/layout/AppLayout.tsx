@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Suspense } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Header } from './Header';
 import { MobileHeader } from './MobileHeader';
 import { MobileBottomNav } from './MobileBottomNav';
@@ -19,16 +19,12 @@ const PageLoading: React.FC = () => (
 
 interface AppLayoutProps {
   children: React.ReactNode;
-  searchQuery?: string;
-  onSearchChange?: (q: string) => void;
   title?: string;
   subtitle?: string;
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({
   children,
-  searchQuery = '',
-  onSearchChange = () => {},
   title,
   subtitle,
 }) => {
@@ -58,8 +54,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       {/* Desktop Header */}
       <div className="hidden md:block">
         <Header
-          searchQuery={searchQuery}
-          onSearchChange={onSearchChange}
           unreadCount={summary?.new_chapters}
           onOpenAddModal={() => navigate('/add')}
         />
@@ -89,11 +83,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           </div>
 
           <div className="flex items-center gap-6">
-            <a href="/search" className="hover:text-text transition-colors">Khám Phá</a>
+            <Link to="/search" className="hover:text-text transition-colors">Tìm kiếm</Link>
             <span>·</span>
-            <a href="/stats" className="hover:text-text transition-colors">Nhật Ký Đọc</a>
+            <Link to="/stats" className="hover:text-text transition-colors">Thống kê</Link>
             <span>·</span>
-            <a href="/account" className="hover:text-text transition-colors">Cài Đặt</a>
+            <Link to="/account" className="hover:text-text transition-colors">Cài Đặt</Link>
           </div>
 
           <div className="text-text-muted">

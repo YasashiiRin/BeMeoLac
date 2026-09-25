@@ -775,7 +775,6 @@ export const ComicDetailPage: React.FC = () => {
                     <div className="text-xs text-text font-bold">
                       {comic.rating.toFixed(1)} / 5.0
                     </div>
-                    <span className="text-[11px] text-text-muted">(1.2k lượt đọc)</span>
                   </div>
                 </div>
 
@@ -1314,7 +1313,6 @@ export const ComicDetailPage: React.FC = () => {
                   {comic.rating.toFixed(1)}
                   <span className="text-text-muted font-normal">/5.0</span>
                 </span>
-                <span className="text-[10px] text-text-muted">(1.2k)</span>
               </div>
             </div>
           </div>

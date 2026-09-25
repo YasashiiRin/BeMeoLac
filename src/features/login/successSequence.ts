@@ -141,6 +141,12 @@ export function runSuccessSequence({ root, wheel, reduced, onCommit }: Options):
       root.style.setProperty('--vy', oy);
       const scene = root.querySelector<HTMLElement>('[data-spiral="scene"]');
       if (scene) scene.style.transformOrigin = `${ox} ${oy}`;
+      // the artwork is its own centered box: stretch it toward the vortex
+      const sky = root.querySelector<HTMLElement>('[data-part="sky"]');
+      if (sky) {
+        const sr = sky.getBoundingClientRect();
+        sky.style.transformOrigin = `${(cx - sr.left).toFixed(1)}px ${(cy - sr.top).toFixed(1)}px`;
+      }
       root.classList.add('is-blackhole');
     });
 

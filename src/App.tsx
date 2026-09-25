@@ -88,7 +88,7 @@ export default function App() {
                 <Route
                   path="/search"
                   element={
-                    <AppLayout title="Tìm Kiếm" subtitle="Khám Phá">
+                    <AppLayout title="Tìm Kiếm" subtitle="Kính Lúp Hoa Cỏ">
                       <SearchPage />
                     </AppLayout>
                   }

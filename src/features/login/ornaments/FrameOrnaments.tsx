@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import { seeded } from '../../../components/gate/sceneUtils';
+import { seeded } from './random';
 import { usePageVisible, usePrefersReducedMotion } from './useMotionPrefs';
 
 /*
