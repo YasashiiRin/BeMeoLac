@@ -102,6 +102,83 @@
   --fx-halo-a: #B9A6F0;
   --fx-halo-b: #A9D8BF;
   --fx-halo-strength: 0.7;
+
+  /* Fairy-forest gate scene (login). Day only for now: the page pins data-theme="day". */
+  --c-scene-sky-top: #E4EEDC;
+  --c-scene-sky-bottom: #F6F3E4;
+  --c-scene-sun: #FFF7DC;
+  --c-scene-sunray: #FFF3C8;
+  --c-scene-mist: #EEF3E7;
+  --c-scene-far-1: #C3D4BA;
+  --c-scene-far-2: #B2C7A9;
+  --c-scene-mid-1: #93B287;
+  --c-scene-mid-2: #7D9F72;
+  --c-scene-mid-3: #6A8C60;
+  --c-scene-trunk: #8C715C;
+  --c-scene-trunk-dark: #6C5646;
+  --c-scene-near-1: #5F8452;
+  --c-scene-near-2: #4B6C41;
+  --c-scene-ground: #A7C398;
+  --c-scene-ground-dark: #8FB080;
+  --c-scene-fern: #6C9A5C;
+  --c-scene-fern-dark: #4F7743;
+  --c-scene-mushroom: #D39A86;
+  --c-scene-mushroom-dark: #B07564;
+  --c-scene-mushroom-spot: #FFF6EA;
+  --c-scene-mushroom-stem: #F2E8D6;
+  --c-scene-bloom-lavender: #B7A3E6;
+  --c-scene-bloom-butter: #F2DF9A;
+  --c-scene-bloom-white: #FBF9F1;
+  --c-scene-bloom-center: #E0B84F;
+  --c-scene-stone: #D2CDBF;
+  --c-scene-stone-light: #E8E4D9;
+  --c-scene-stone-dark: #ABA595;
+  --c-scene-stone-shadow: #8C8778;
+  --c-scene-ivy: #6E9A5E;
+  --c-scene-ivy-dark: #4F7243;
+  --c-scene-ivy-light: #9CBF8B;
+  --c-scene-wisteria: #B9A6F0;
+  --c-scene-wisteria-light: #DCD0F7;
+  --c-scene-wisteria-deep: #8E78D6;
+  --c-scene-rose: #EDB6C6;
+  --c-scene-rose-deep: #CB879C;
+  --c-scene-rose-light: #F9DCE4;
+  --c-scene-wood: #A47A56;
+  --c-scene-wood-light: #C29970;
+  --c-scene-wood-dark: #7B5739;
+  --c-scene-wood-deep: #573B26;
+  --c-scene-gilt: #CBA650;
+  --c-scene-gilt-light: #F2DC95;
+  --c-scene-gilt-deep: #8F6E22;
+  --c-scene-gilt-ink: #735515;
+  --c-scene-seam: #FFE7A0;
+  --c-scene-interior: #FFF3D1;
+  --c-scene-leather: #E6CDA3;
+  --c-scene-leather-light: #F4E5C8;
+  --c-scene-leather-dark: #CBA97D;
+  --c-scene-leather-edge: #A5805A;
+  --c-scene-stitch: #8A6746;
+  --c-scene-ink: #45372A;
+  --c-scene-ink-muted: #5F4E3D;
+  --c-scene-error: #9E2F2F;
+
+  /* Night-sky mobile login (background: src/assets/images/login-celestial-night.jpg) */
+  --c-celestial-gold: #D8B77A;
+  --c-celestial-gold-light: #E6C98F;
+  --c-celestial-cream: #F1E6CF;
+  --c-celestial-muted: #9FB5AE;
+  --c-celestial-glass: #061C1C;
+  --c-celestial-error: #F0B3A6;
+  --c-celestial-rose: #C9A0A2;
+  --c-celestial-glow: #F5DE8A;
+  --c-celestial-void: #020709;
+  --c-scene-wax: #8069BF;
+  --c-scene-wax-light: #B9A6EE;
+  --c-scene-wax-dark: #5A4494;
+  --c-scene-on-wax: #FBF8FF;
+  --c-scene-tassel: #B9A6F0;
+  --c-scene-tassel-dark: #8672CF;
+  --c-scene-aura: #C4B3E0;
 }
 
 /* ── Night: Khu vườn tiên đêm ─────────────────────────────────────── */
@@ -196,6 +273,7 @@
 @theme {
   --font-serif: "Playfair Display", Georgia, Cambria, serif;
   --font-sans: "Nunito Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-script: "Dancing Script", "Playfair Display", cursive;
 }
 
 @theme inline {
@@ -262,6 +340,80 @@
   --color-shelf-linen: var(--c-shelf-linen);
   --color-shelf-linen-tint: var(--c-shelf-linen-tint);
   --color-shelf-linen-ink: var(--c-shelf-linen-ink);
+
+  --color-scene-sky-top: var(--c-scene-sky-top);
+  --color-scene-sky-bottom: var(--c-scene-sky-bottom);
+  --color-scene-sun: var(--c-scene-sun);
+  --color-scene-sunray: var(--c-scene-sunray);
+  --color-scene-mist: var(--c-scene-mist);
+  --color-scene-far-1: var(--c-scene-far-1);
+  --color-scene-far-2: var(--c-scene-far-2);
+  --color-scene-mid-1: var(--c-scene-mid-1);
+  --color-scene-mid-2: var(--c-scene-mid-2);
+  --color-scene-mid-3: var(--c-scene-mid-3);
+  --color-scene-trunk: var(--c-scene-trunk);
+  --color-scene-trunk-dark: var(--c-scene-trunk-dark);
+  --color-scene-near-1: var(--c-scene-near-1);
+  --color-scene-near-2: var(--c-scene-near-2);
+  --color-scene-ground: var(--c-scene-ground);
+  --color-scene-ground-dark: var(--c-scene-ground-dark);
+  --color-scene-fern: var(--c-scene-fern);
+  --color-scene-fern-dark: var(--c-scene-fern-dark);
+  --color-scene-mushroom: var(--c-scene-mushroom);
+  --color-scene-mushroom-dark: var(--c-scene-mushroom-dark);
+  --color-scene-mushroom-spot: var(--c-scene-mushroom-spot);
+  --color-scene-mushroom-stem: var(--c-scene-mushroom-stem);
+  --color-scene-bloom-lavender: var(--c-scene-bloom-lavender);
+  --color-scene-bloom-butter: var(--c-scene-bloom-butter);
+  --color-scene-bloom-white: var(--c-scene-bloom-white);
+  --color-scene-bloom-center: var(--c-scene-bloom-center);
+  --color-scene-stone: var(--c-scene-stone);
+  --color-scene-stone-light: var(--c-scene-stone-light);
+  --color-scene-stone-dark: var(--c-scene-stone-dark);
+  --color-scene-stone-shadow: var(--c-scene-stone-shadow);
+  --color-scene-ivy: var(--c-scene-ivy);
+  --color-scene-ivy-dark: var(--c-scene-ivy-dark);
+  --color-scene-ivy-light: var(--c-scene-ivy-light);
+  --color-scene-wisteria: var(--c-scene-wisteria);
+  --color-scene-wisteria-light: var(--c-scene-wisteria-light);
+  --color-scene-wisteria-deep: var(--c-scene-wisteria-deep);
+  --color-scene-rose: var(--c-scene-rose);
+  --color-scene-rose-deep: var(--c-scene-rose-deep);
+  --color-scene-rose-light: var(--c-scene-rose-light);
+  --color-scene-wood: var(--c-scene-wood);
+  --color-scene-wood-light: var(--c-scene-wood-light);
+  --color-scene-wood-dark: var(--c-scene-wood-dark);
+  --color-scene-wood-deep: var(--c-scene-wood-deep);
+  --color-scene-gilt: var(--c-scene-gilt);
+  --color-scene-gilt-light: var(--c-scene-gilt-light);
+  --color-scene-gilt-deep: var(--c-scene-gilt-deep);
+  --color-scene-gilt-ink: var(--c-scene-gilt-ink);
+  --color-scene-seam: var(--c-scene-seam);
+  --color-scene-interior: var(--c-scene-interior);
+  --color-scene-leather: var(--c-scene-leather);
+  --color-scene-leather-light: var(--c-scene-leather-light);
+  --color-scene-leather-dark: var(--c-scene-leather-dark);
+  --color-scene-leather-edge: var(--c-scene-leather-edge);
+  --color-scene-stitch: var(--c-scene-stitch);
+  --color-scene-ink: var(--c-scene-ink);
+  --color-scene-ink-muted: var(--c-scene-ink-muted);
+  --color-scene-error: var(--c-scene-error);
+  --color-celestial-gold: var(--c-celestial-gold);
+  --color-celestial-gold-light: var(--c-celestial-gold-light);
+  --color-celestial-cream: var(--c-celestial-cream);
+  --color-celestial-muted: var(--c-celestial-muted);
+  --color-celestial-glass: var(--c-celestial-glass);
+  --color-celestial-error: var(--c-celestial-error);
+  --color-celestial-rose: var(--c-celestial-rose);
+  --color-celestial-glow: var(--c-celestial-glow);
+  --color-celestial-void: var(--c-celestial-void);
+  --color-scene-wax: var(--c-scene-wax);
+  --color-scene-wax-light: var(--c-scene-wax-light);
+  --color-scene-wax-dark: var(--c-scene-wax-dark);
+  --color-scene-on-wax: var(--c-scene-on-wax);
+  --color-scene-tassel: var(--c-scene-tassel);
+  --color-scene-tassel-dark: var(--c-scene-tassel-dark);
+  --color-scene-aura: var(--c-scene-aura);
 }
 
 @layer base {

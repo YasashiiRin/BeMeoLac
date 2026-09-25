@@ -3,7 +3,7 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { Bell, Plus, Flower2, Sparkles, BookHeart, Compass, Tag, BookOpen } from 'lucide-react';
 import { SearchBar } from '../SearchBar';
 import { ThemeToggle } from '../ThemeToggle';
-import { useAuth } from '../../context/AuthContext';
+import { AvatarMenu } from './AvatarMenu';
 import { comicsService } from '../../services/comicService';
 
 interface HeaderProps {
@@ -21,7 +21,6 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
   const [autoUnreadCount, setAutoUnreadCount] = useState<number>(0);
 
   useEffect(() => {
@@ -168,22 +167,8 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </button>
 
-          {/* User Profile Avatar */}
-          <div
-            onClick={() => navigate('/account')}
-            className="flex items-center gap-2 p-1 pl-1.5 pr-2.5 rounded-full bg-surface border-1.5 border-border hover:border-primary transition-all cursor-pointer select-none"
-          >
-            <div className="w-7 h-7 rounded-full overflow-hidden border border-border p-0.5 bg-background">
-              <img
-                src={user?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
-                alt={user?.display_name || 'Tiên Nữ Nhỏ'}
-                className="w-full h-full object-cover rounded-full"
-              />
-            </div>
-            <span className="text-xs font-serif italic font-semibold text-text hidden xl:inline">
-              {user?.display_name || 'Tiên Nữ Nhỏ'}
-            </span>
-          </div>
+          {/* Avatar + account menu (Tài khoản, Đăng xuất) */}
+          <AvatarMenu />
         </div>
       </div>
     </header>

@@ -3,7 +3,7 @@ import { User } from '../types';
 export const mockCurrentUser: User = {
   id: 'usr_elf_001',
   email: 'tiennu@tutruyennho.vn',
-  display_name: 'Tiên Nữ Nhỏ',
+  display_name: 'Uyên',
   bio: 'Người trông coi khu vườn chữ và những trang truyện thơm mùi thảo mộc. 🌸📖',
   avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
   role: 'user',
@@ -16,4 +16,14 @@ export const mockCurrentUser: User = {
     notify_broken_link: true,
     daily_reminder_time: '20:30',
   },
+};
+
+/**
+ * Default mock login, checked only by authService while using mock data.
+ * Never render these values in the UI.
+ */
+export const mockAccount = {
+  username: 'bemeolac',
+  password: '12012007',
+  userId: mockCurrentUser.id,
 };

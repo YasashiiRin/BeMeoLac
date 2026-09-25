@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from './Header';
 import { MobileHeader } from './MobileHeader';
@@ -9,6 +9,13 @@ import { Button } from '../Button';
 import { useToast } from '../../context/ToastContext';
 import { comicsService, ComicSummary } from '../../services/comicService';
 import { Plus, Sparkles } from 'lucide-react';
+
+const PageLoading: React.FC = () => (
+  <div className="flex flex-col items-center justify-center py-24" role="status">
+    <span className="text-2xl animate-bounce" aria-hidden="true">🌸</span>
+    <span className="font-serif text-sm text-text-muted mt-2">Đang mở trang...</span>
+  </div>
+);
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -69,7 +76,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
       {/* Main Content Area */}
       <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 pb-24 md:pb-8">
-        {children}
+        <Suspense fallback={<PageLoading />}>{children}</Suspense>
       </main>
 
       {/* Desktop Footer (as seen in Image 1.jpeg) */}

@@ -5,15 +5,39 @@
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
-// In-memory token storage for mock auth
-let inMemoryAuthToken: string | null = 'mock-fairytale-jwt-token-2024';
+// Session token. "Ghi nhớ đăng nhập" keeps it in localStorage (survives closing
+// the browser); otherwise sessionStorage (ends with the tab).
+const SESSION_KEY = 'tutruyen-session';
 
-export const setAuthToken = (token: string | null) => {
-  inMemoryAuthToken = token;
+const readStore = (store: () => Storage): string | null => {
+  try {
+    return store().getItem(SESSION_KEY);
+  } catch {
+    return null;
+  }
+};
+
+let cachedToken: string | null = readStore(() => localStorage) ?? readStore(() => sessionStorage);
+
+export const setAuthToken = (token: string | null, remember = true) => {
+  cachedToken = token;
+  for (const store of [() => localStorage, () => sessionStorage]) {
+    try {
+      store().removeItem(SESSION_KEY);
+    } catch {
+      // storage blocked — keep the in-memory token only
+    }
+  }
+  if (!token) return;
+  try {
+    (remember ? localStorage : sessionStorage).setItem(SESSION_KEY, token);
+  } catch {
+    // storage blocked — session lasts until reload
+  }
 };
 
 export const getAuthToken = (): string | null => {
-  return inMemoryAuthToken;
+  return cachedToken;
 };
 
 /**

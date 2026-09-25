@@ -1,0 +1,167 @@
+/*
+ * Night-sky login (mobile). Colors: --c-celestial-* tokens in src/index.css.
+ * Static for now: hover/focus feedback only.
+ */
+
+.celestial-frame {
+  position: relative;
+  /* arched top: full-width ellipse, soft bottom corners */
+  border-radius: 50% 50% 18px 18px / 112px 112px 18px 18px;
+  border: 1px solid color-mix(in srgb, var(--c-celestial-gold) 75%, transparent);
+  background: color-mix(in srgb, var(--c-celestial-glass) 34%, transparent);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow: 0 0 28px color-mix(in srgb, var(--c-celestial-gold) 10%, transparent);
+}
+/* thin inner line, like the image's double gold rules */
+.celestial-frame::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 50% 50% 13px 13px / 106px 106px 13px 13px;
+  border: 1px solid color-mix(in srgb, var(--c-celestial-gold) 28%, transparent);
+  pointer-events: none;
+}
+
+.celestial-title {
+  font-family: var(--font-serif);
+  background: linear-gradient(180deg, var(--c-celestial-gold-light) 20%, var(--c-celestial-gold) 85%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--c-celestial-gold) 35%, transparent));
+}
+
+.celestial-label {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--c-celestial-muted);
+}
+
+.celestial-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--c-celestial-gold) 55%, transparent);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.celestial-field:focus-within {
+  border-bottom-color: var(--c-celestial-gold-light);
+  box-shadow: 0 1px 0 0 color-mix(in srgb, var(--c-celestial-gold-light) 60%, transparent);
+}
+.celestial-field.has-error {
+  border-bottom-color: var(--c-celestial-error);
+}
+
+.celestial-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  outline: none;
+  padding: 8px 0 9px;
+  font-family: var(--font-serif);
+  font-size: 15.5px;
+  color: var(--c-celestial-cream);
+  caret-color: var(--c-celestial-gold-light);
+}
+/* keep browser autofill from painting a light box on the dark sky */
+.celestial-input:-webkit-autofill,
+.celestial-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--c-celestial-cream);
+  -webkit-box-shadow: 0 0 0 1000px transparent inset;
+  transition: background-color 9999s ease-out 0s;
+}
+
+.celestial-error {
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--c-celestial-error);
+}
+.celestial-error-banner {
+  padding: 7px 12px;
+  border-radius: 10px;
+  text-align: center;
+  background: color-mix(in srgb, var(--c-celestial-error) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--c-celestial-error) 40%, transparent);
+}
+
+.celestial-link {
+  color: var(--c-celestial-muted);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--c-celestial-muted) 40%, transparent);
+  text-underline-offset: 3px;
+}
+.celestial-link:hover {
+  color: var(--c-celestial-gold-light);
+}
+.celestial-link.is-gold {
+  color: var(--c-celestial-gold-light);
+  text-decoration-color: color-mix(in srgb, var(--c-celestial-gold-light) 50%, transparent);
+}
+
+.celestial-focus:focus-visible {
+  outline: 1.5px solid var(--c-celestial-gold-light);
+  outline-offset: 3px;
+}
+
+.celestial-button {
+  position: relative;
+  width: 100%;
+  height: 48px;
+  border-radius: 9999px;
+  border: 1px solid var(--c-celestial-gold);
+  background: color-mix(in srgb, var(--c-celestial-gold) 4%, transparent);
+  color: var(--c-celestial-gold-light);
+  font-family: var(--font-serif);
+  font-size: 15.5px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+.celestial-button:hover {
+  background: color-mix(in srgb, var(--c-celestial-gold) 12%, transparent);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--c-celestial-gold) 22%, transparent);
+}
+.celestial-button:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.celestial-check {
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 3px;
+  border: 1px solid var(--c-celestial-gold);
+  color: var(--c-celestial-glass);
+  transition: background-color 0.15s ease;
+}
+.celestial-check svg {
+  opacity: 0;
+}
+.peer:checked + .celestial-check {
+  background: var(--c-celestial-gold);
+}
+.peer:checked + .celestial-check svg {
+  opacity: 1;
+}
+.peer:focus-visible + .celestial-check {
+  outline: 1.5px solid var(--c-celestial-gold-light);
+  outline-offset: 2px;
+}
+
+.celestial-ring {
+  display: grid;
+  place-items: center;
+  border-radius: 9999px;
+  border: 1px solid var(--c-celestial-gold);
+  color: var(--c-celestial-gold-light);
+  background: color-mix(in srgb, var(--c-celestial-glass) 40%, transparent);
+  cursor: pointer;
+  transition: box-shadow 0.2s ease;
+}
+.celestial-ring:hover {
+  box-shadow: 0 0 12px color-mix(in srgb, var(--c-celestial-gold) 30%, transparent);
+}

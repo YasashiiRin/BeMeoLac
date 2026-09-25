@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/Button';
 import { useToast } from '../../context/ToastContext';
 import { Flower2, Sparkles, Mail, Lock, User } from 'lucide-react';
 
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
   const { showToast } = useToast();
 
   const [name, setName] = useState('');
@@ -19,9 +17,9 @@ export const RegisterPage: React.FC = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await login('new-user-token');
-      showToast('Chúc mừng bạn đã nhận chìa khóa Tủ Truyện Nhỏ! 🌸', 'success');
-      navigate('/');
+      // No sign-up API yet: registering must not open a session by itself.
+      showToast('Cổng đăng ký sắp mở, nàng đăng nhập bằng tài khoản sẵn có nhé 🌸', 'info');
+      navigate('/login');
     } catch (err) {
       showToast('Đăng ký thất bại', 'error');
     } finally {

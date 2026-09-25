@@ -446,6 +446,16 @@ export const AccountPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Logout on mobile (desktop has it in the side menu and the avatar menu) */}
+      <button
+        type="button"
+        onClick={logout}
+        className="md:hidden w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border-1.5 border-danger/40 bg-surface-raised text-sm font-semibold text-danger hover:bg-danger-tint transition-colors cursor-pointer"
+      >
+        <LogOut size={16} />
+        <span>Đăng xuất</span>
+      </button>
     </div>
   );
 };

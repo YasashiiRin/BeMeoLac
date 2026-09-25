@@ -1,0 +1,601 @@
+/*
+ * Celestial ornaments for the night-sky login.
+ * Gold line art. Every ornament line uses --orn-line / --orn-line-light, a
+ * registered color, so the "wrong credentials" flicker can animate all lines
+ * to a muted rose and back in one keyframe. Continuous motion animates HTML
+ * wrappers (compositor-friendly), never SVG internals.
+ */
+
+@property --orn-line {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+@property --orn-line-light {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+.login-stage {
+  --orn-line: var(--c-celestial-gold);
+  --orn-line-light: var(--c-celestial-gold-light);
+}
+
+/* frame lines follow the ornament color (same gold at rest) */
+.login-stage .celestial-frame {
+  border-color: color-mix(in srgb, var(--orn-line) 75%, transparent);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.login-stage .celestial-frame::before {
+  border-color: color-mix(in srgb, var(--orn-line) 28%, transparent);
+}
+
+/* ── Focus: brighter frame (the wheel speeds up in WheelController) ── */
+.login-stage .celestial-frame:focus-within {
+  border-color: var(--orn-line-light);
+  box-shadow:
+    0 0 18px color-mix(in srgb, var(--orn-line-light) 30%, transparent),
+    0 0 42px color-mix(in srgb, var(--orn-line) 16%, transparent),
+    inset 0 0 22px color-mix(in srgb, var(--orn-line) 8%, transparent);
+}
+.login-stage .celestial-frame:focus-within::before {
+  border-color: color-mix(in srgb, var(--orn-line-light) 45%, transparent);
+}
+
+/* ── Shared line-art helpers ─────────────────────────────────────── */
+.orn-layer {
+  position: absolute;
+  pointer-events: none;
+}
+.orn-stroke {
+  fill: none;
+  stroke: var(--orn-line);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.orn-stroke-light {
+  fill: none;
+  stroke: var(--orn-line-light);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.orn-fill {
+  fill: var(--orn-line);
+}
+.orn-fill-light {
+  fill: var(--orn-line-light);
+}
+
+@keyframes orn-rotate {
+  to { transform: rotate(360deg); }
+}
+@keyframes orn-rotate-rev {
+  to { transform: rotate(-360deg); }
+}
+
+/* ── 1. Zodiac wheel ──────────────────────────────────────────────── */
+.orn-wheel {
+  left: 50%;
+  top: 50%;
+  width: min(170vw, 720px);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  /* keep the outer rings, soften the middle under the form fields */
+  -webkit-mask-image: radial-gradient(circle, rgb(0 0 0 / 0.4) 0%, rgb(0 0 0 / 0.4) 40%, #000 66%);
+  mask-image: radial-gradient(circle, rgb(0 0 0 / 0.4) 0%, rgb(0 0 0 / 0.4) 40%, #000 66%);
+}
+.orn-wheel-part {
+  position: absolute;
+  inset: 0;
+}
+/* one composited layer per ring; rotation is set by WheelController (rAF) */
+.orn-ring-layer {
+  position: absolute;
+  opacity: 0.35;
+  will-change: transform;
+}
+.orn-wheel-text {
+  stroke: none;
+}
+.orn-moon {
+  opacity: 0.5;
+  will-change: auto;
+}
+.orn-moon-glow {
+  position: absolute;
+  inset: 8%;
+  border-radius: 9999px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--orn-line-light) 50%, transparent) 0%, transparent 68%);
+  animation: orn-pulse 5s ease-in-out infinite;
+}
+
+/* ── 2. Medallion ─────────────────────────────────────────────────── */
+.orn-medallion {
+  left: 50%;
+  top: -7px; /* center of the crescent drawn by the form */
+  width: 96px;
+  height: 96px;
+  translate: -50% -50%;
+}
+.orn-medallion-glow {
+  position: absolute;
+  inset: 14px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--orn-line-light) 45%, transparent) 0%, transparent 70%);
+  animation: orn-pulse 4.5s ease-in-out infinite;
+}
+.orn-medallion-rays {
+  position: absolute;
+  inset: 0;
+  animation: orn-rotate 70s linear infinite;
+  will-change: transform;
+}
+@keyframes orn-pulse {
+  0%, 100% { opacity: 0.45; scale: 0.9; }
+  50% { opacity: 1; scale: 1.08; }
+}
+
+/* ── 3. Orbits ────────────────────────────────────────────────────── */
+.orn-orbits {
+  left: 50%;
+  top: -7px;
+  width: 170px;
+  height: 70px;
+  translate: -50% -50%;
+}
+
+/* ── 4. Star chains (pendulums hanging from above the arch) ───────── */
+.orn-chain {
+  bottom: calc(100% + 30px);
+  width: 14px;
+  transform-origin: 50% 0;
+  animation: orn-sway var(--d, 7s) ease-in-out var(--delay, 0s) infinite alternate;
+  will-change: transform;
+}
+@keyframes orn-sway {
+  from { rotate: -2.2deg; }
+  to { rotate: 2.2deg; }
+}
+
+/* ── 5. Sparkles around the frame ─────────────────────────────────── */
+.orn-sparkle {
+  width: var(--s, 10px);
+  height: var(--s, 10px);
+  translate: -50% -50%;
+  animation: orn-twinkle var(--d, 6s) ease-in-out var(--delay, 0s) infinite;
+}
+@keyframes orn-twinkle {
+  0%, 70%, 100% { opacity: 0.15; scale: 0.35; }
+  82% { opacity: 1; scale: 1; }
+  90% { opacity: 0.7; scale: 0.8; }
+}
+
+/* ── 6. Constellations ────────────────────────────────────────────── */
+.orn-const-line {
+  stroke-dasharray: 1;
+  animation: orn-constellation 11s ease-in-out var(--delay, 0s) infinite;
+}
+@keyframes orn-constellation {
+  0% { stroke-dashoffset: 1; opacity: 0.9; }
+  35% { stroke-dashoffset: 0; opacity: 0.9; }
+  70% { stroke-dashoffset: 0; opacity: 0.9; }
+  85% { stroke-dashoffset: 0; opacity: 0; }
+  100% { stroke-dashoffset: 1; opacity: 0; }
+}
+.orn-const-star {
+  animation: orn-breathe 5s ease-in-out var(--delay, 0s) infinite;
+}
+
+/* ── 7. Moon phases ───────────────────────────────────────────────── */
+.orn-phases {
+  left: 50%;
+  top: calc(100% + 14px);
+  translate: -50% 0;
+}
+.orn-phase {
+  opacity: 0.35;
+  animation: orn-phase-light 5.6s ease-in-out var(--delay, 0s) infinite;
+}
+@keyframes orn-phase-light {
+  0%, 30%, 100% { opacity: 0.35; filter: none; }
+  10%, 18% { opacity: 1; filter: drop-shadow(0 0 4px var(--orn-line-light)); }
+}
+
+/* ── 8. Shooting star ─────────────────────────────────────────────── */
+.orn-shooting-star {
+  position: absolute;
+  height: 1px;
+  width: 110px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--orn-line-light) 85%, transparent) 70%, var(--c-celestial-cream));
+  box-shadow: 0 0 6px color-mix(in srgb, var(--orn-line-light) 60%, transparent);
+  transform-origin: 100% 50%;
+  animation: orn-shoot 1.1s ease-out forwards;
+}
+@keyframes orn-shoot {
+  0% { opacity: 0; translate: 0 0; scale: 0.3 1; }
+  15% { opacity: 1; }
+  100% { opacity: 0; translate: var(--dx) var(--dy); scale: 1 1; }
+}
+
+/* ── 9. Gold dust ─────────────────────────────────────────────────── */
+.orn-dust {
+  bottom: -8px;
+  width: var(--s, 2px);
+  height: var(--s, 2px);
+  border-radius: 9999px;
+  background: var(--orn-line-light);
+  box-shadow: 0 0 5px color-mix(in srgb, var(--orn-line-light) 80%, transparent);
+  animation: orn-rise var(--d, 18s) linear var(--delay, 0s) infinite;
+  will-change: transform, opacity;
+}
+@keyframes orn-rise {
+  0% { transform: translate(0, 0); opacity: 0; }
+  10% { opacity: var(--o, 0.7); }
+  50% { transform: translate(var(--drift, 10px), -55dvh); }
+  90% { opacity: var(--o, 0.7); }
+  100% { transform: translate(0, -110dvh); opacity: 0; }
+}
+
+/* ── 10. Glows on the background's moons and sun rays ─────────────── */
+.orn-glow {
+  border-radius: 9999px;
+  translate: -50% -50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--c-celestial-gold-light) 42%, transparent) 0%, color-mix(in srgb, var(--c-celestial-gold) 14%, transparent) 45%, transparent 70%);
+  mix-blend-mode: screen;
+  animation: orn-breathe var(--d, 6s) ease-in-out var(--delay, 0s) infinite;
+}
+@keyframes orn-breathe {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.95; }
+}
+
+/* ── Typing sparkles ──────────────────────────────────────────────── */
+.orn-typing-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  overflow: hidden;
+}
+.orn-typing-spark {
+  position: absolute;
+  width: var(--s, 7px);
+  height: var(--s, 7px);
+  translate: -50% -50%;
+  color: var(--orn-line-light);
+  animation: orn-spark-rise 0.9s ease-out forwards;
+}
+@keyframes orn-spark-rise {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
+  25% { opacity: 1; transform: translate(calc(var(--dx) * 0.3), -6px) scale(1); }
+  100% { opacity: 0; transform: translate(var(--dx), -26px) scale(0.3) rotate(45deg); }
+}
+
+/* ── Button: shimmer sweep + twinkling end stars on hover ─────────── */
+.login-stage .celestial-button {
+  overflow: hidden;
+}
+.login-stage .celestial-button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 30%, color-mix(in srgb, var(--c-celestial-gold-light) 28%, transparent) 50%, transparent 70%);
+  translate: -120% 0;
+  pointer-events: none;
+}
+.login-stage .celestial-button:hover::after,
+.login-stage .celestial-button:focus-visible::after {
+  animation: orn-shimmer 1.1s ease-in-out;
+}
+.login-stage .celestial-button:hover > svg,
+.login-stage .celestial-button:focus-visible > svg {
+  animation: orn-button-star 0.9s ease-in-out infinite;
+}
+.login-stage .celestial-button:hover > svg:last-of-type {
+  animation-delay: 0.45s;
+}
+@keyframes orn-shimmer {
+  to { translate: 120% 0; }
+}
+@keyframes orn-button-star {
+  0%, 100% { scale: 1; opacity: 1; }
+  50% { scale: 1.6; opacity: 0.55; }
+}
+
+/* ── Wrong credentials: gentle shake + lines flicker to muted rose ── */
+.login-stage.is-denied {
+  animation: orn-denied 0.95s ease-in-out;
+}
+.login-stage.is-denied .celestial-frame {
+  animation: orn-shake 0.5s ease-in-out;
+}
+@keyframes orn-denied {
+  0%, 100% { --orn-line: var(--c-celestial-gold); --orn-line-light: var(--c-celestial-gold-light); }
+  12%, 40% { --orn-line: var(--c-celestial-rose); --orn-line-light: var(--c-celestial-rose); }
+  26% { --orn-line: color-mix(in srgb, var(--c-celestial-rose) 50%, var(--c-celestial-gold)); --orn-line-light: var(--c-celestial-gold-light); }
+  70% { --orn-line: var(--c-celestial-rose); --orn-line-light: color-mix(in srgb, var(--c-celestial-rose) 60%, var(--c-celestial-gold-light)); }
+}
+@keyframes orn-shake {
+  0%, 100% { translate: 0 0; }
+  18% { translate: -6px 0; }
+  36% { translate: 5px 0; }
+  54% { translate: -3px 0; }
+  72% { translate: 2px 0; }
+}
+
+/* ── Intro (≈1.5s, first visit in the session, click to skip) ─────── */
+.login-stage.is-intro [data-part="sky"] {
+  animation: orn-fade-in 0.55s ease-out both;
+}
+.login-stage.is-intro .orn-wheel-intro {
+  animation: orn-wheel-intro 1.25s cubic-bezier(0.2, 0.7, 0.3, 1) 0.1s both;
+}
+.login-stage.is-intro .orn-draw {
+  stroke-dasharray: 1;
+  animation: orn-draw 1.1s ease-out 0.15s both;
+}
+.login-stage.is-intro .celestial-frame {
+  animation: orn-frame-reveal 0.6s ease-in-out 0.45s backwards;
+}
+.login-stage.is-intro .celestial-frame > * {
+  animation: orn-fade-in 0.45s ease-out 1.05s backwards;
+}
+.login-stage.is-intro .orn-late {
+  animation: orn-fade-in 0.5s ease-out 1.05s backwards;
+}
+@keyframes orn-fade-in {
+  from { opacity: 0; }
+}
+@keyframes orn-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes orn-wheel-intro {
+  from { rotate: -70deg; opacity: 0; }
+  20% { opacity: 1; }
+  to { rotate: 0deg; opacity: 1; }
+}
+/* frame lines reveal from the top down (negative insets keep the arch moon) */
+@keyframes orn-frame-reveal {
+  from { clip-path: inset(-60px -24px 100% -24px); }
+  to { clip-path: inset(-60px -24px -24px -24px); }
+}
+
+/* ── Success sequence (driven by successSequence.ts, ≈3.5s) ────────── */
+/* 0–0.4s: form content dissolves upward, then the frame lines fade */
+.login-stage.is-success .celestial-frame > *,
+.login-stage.is-success-reduced .celestial-frame > * {
+  opacity: 0;
+  translate: 0 -8px;
+  transition: opacity 0.32s ease, translate 0.4s ease;
+}
+.login-stage.is-success .celestial-frame,
+.login-stage.is-success-reduced .celestial-frame {
+  opacity: 0;
+  transition: opacity 0.25s ease 0.28s;
+}
+
+/* 0.4–1.8s: the wheel awakens, rings brighten outside → in */
+.login-stage.is-success .orn-wheel {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+.login-stage.is-success .orn-ring-layer {
+  opacity: 1;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--c-celestial-glow) 60%, transparent));
+  transition:
+    opacity 0.55s ease calc(0.4s + var(--ring-order, 0) * 0.22s),
+    filter 0.55s ease calc(0.4s + var(--ring-order, 0) * 0.22s);
+}
+/* everything else steps back */
+.login-stage.is-success :is(
+    [data-part="star-chain"],
+    [data-part="frame-sparkles"],
+    [data-part="constellation"],
+    [data-part="moon-phases"],
+    [data-part="gold-dust"],
+    [data-part="background-glows"],
+    [data-part="shooting-stars"]
+  ) {
+  opacity: 0.12;
+  transition: opacity 0.6s ease 0.4s;
+}
+
+/* 1.8–2.4s: after alignment, a gold pulse runs outward and the moon flares */
+.orn-success-fx {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  border-radius: 9999px;
+  pointer-events: none;
+  opacity: 0;
+}
+.orn-pulse-ring {
+  width: min(170vw, 720px);
+  aspect-ratio: 1;
+  border: 2px solid var(--c-celestial-glow);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--c-celestial-glow) 70%, transparent), inset 0 0 18px color-mix(in srgb, var(--c-celestial-glow) 45%, transparent);
+  scale: 0.08;
+}
+.login-stage.is-pulse .orn-pulse-ring {
+  animation: orn-pulse-out 0.5s cubic-bezier(0.2, 0.6, 0.3, 1) forwards;
+}
+@keyframes orn-pulse-out {
+  0% { scale: 0.08; opacity: 1; }
+  100% { scale: 1.05; opacity: 0; }
+}
+.login-stage.is-pulse [data-ring="moon"] {
+  scale: 1.3;
+  opacity: 1;
+  transition: scale 0.22s ease-out, opacity 0.22s ease-out;
+}
+.login-stage.is-pulse .orn-moon-glow {
+  animation: none;
+  opacity: 1;
+  scale: 1.25;
+}
+
+/* 2.4–3.1s: a dark vortex opens; everything spirals inward */
+.orn-vortex {
+  width: min(92vw, 380px);
+  aspect-ratio: 1;
+  background: radial-gradient(
+    circle,
+    var(--c-celestial-void) 0%,
+    var(--c-celestial-void) 34%,
+    color-mix(in srgb, var(--c-celestial-void) 70%, transparent) 50%,
+    transparent 70%
+  );
+  scale: 0;
+}
+.orn-vortex-swirl {
+  position: absolute;
+  inset: 16%;
+  border-radius: 9999px;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    color-mix(in srgb, var(--c-celestial-gold) 22%, transparent) 40deg,
+    transparent 120deg,
+    color-mix(in srgb, var(--c-celestial-gold) 16%, transparent) 200deg,
+    transparent 300deg
+  );
+  animation: orn-rotate 1.1s linear infinite;
+}
+.orn-vortex-ring {
+  position: absolute;
+  inset: 31%;
+  border-radius: 9999px;
+  border: 1.5px solid var(--c-celestial-glow);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--c-celestial-glow) 80%, transparent), 0 0 26px color-mix(in srgb, var(--c-celestial-gold) 45%, transparent);
+}
+.orn-singularity {
+  width: 90px;
+  aspect-ratio: 1;
+  background: radial-gradient(circle, var(--c-celestial-cream) 0%, var(--c-celestial-glow) 22%, color-mix(in srgb, var(--c-celestial-glow) 40%, transparent) 45%, transparent 70%);
+  scale: 0.2;
+}
+.login-stage.is-blackhole .orn-vortex {
+  opacity: 1;
+  scale: 1;
+  transition: scale 0.38s cubic-bezier(0.2, 0.7, 0.3, 1), opacity 0.2s ease;
+}
+.login-stage.is-blackhole [data-spiral],
+.login-stage.is-blackhole [data-spiral-wheel] {
+  rotate: 160deg;
+  scale: 0.02;
+  opacity: 0;
+  transition:
+    rotate 0.62s cubic-bezier(0.55, 0, 0.9, 0.45) 0.05s,
+    scale 0.62s cubic-bezier(0.55, 0, 0.9, 0.45) 0.05s,
+    opacity 0.4s ease 0.27s;
+}
+.login-stage.is-blackhole [data-spiral-wheel] {
+  rotate: 260deg;
+}
+/* background stars stretch slightly toward the center */
+.login-stage.is-blackhole [data-part="sky"] {
+  transform-origin: var(--vx, 50%) var(--vy, 50%);
+  scale: 1.16;
+  opacity: 0.55;
+  transition: scale 0.7s cubic-bezier(0.55, 0, 0.9, 0.45), opacity 0.7s ease;
+}
+/* 3.0–3.1s: the vortex collapses into a bright point */
+.login-stage.is-collapse .orn-vortex {
+  scale: 0.04;
+  opacity: 0;
+  transition: scale 0.16s cubic-bezier(0.6, 0, 1, 0.6), opacity 0.16s ease 0.04s;
+}
+.login-stage.is-collapse .orn-singularity {
+  opacity: 1;
+  scale: 1;
+  transition: scale 0.14s ease-out, opacity 0.1s ease-out;
+}
+
+/* gold dust the form dissolves into */
+.orn-dissolve-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  overflow: hidden;
+}
+.orn-dissolve-mote {
+  position: absolute;
+  width: var(--s, 2px);
+  height: var(--s, 2px);
+  border-radius: 9999px;
+  background: var(--c-celestial-gold-light);
+  box-shadow: 0 0 4px color-mix(in srgb, var(--c-celestial-gold-light) 80%, transparent);
+  translate: -50% -50%;
+  animation: orn-dissolve var(--d, 0.6s) ease-out var(--delay, 0s) both;
+  will-change: transform, opacity;
+}
+@keyframes orn-dissolve {
+  0% { opacity: 0; transform: translate(0, 0) scale(1); }
+  18% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx, 0px), var(--dy, -60px)) scale(0.3); }
+}
+
+/* arrival veil: blocks input during the sequence, then holds the collapsed
+   point while the destination opens outward from it (arrivalReveal.ts) */
+.orn-arrival-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: auto;
+  opacity: 0;
+  background: var(--c-celestial-void);
+  transition: opacity var(--veil-ms, 150ms) ease;
+}
+.orn-arrival-veil.is-soft {
+  background: var(--c-celestial-glass);
+}
+.orn-arrival-veil.is-on {
+  opacity: 1;
+}
+.orn-arrival-point {
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  translate: -50% -50%;
+  border-radius: 9999px;
+  background: radial-gradient(circle, var(--c-celestial-cream) 0%, var(--c-celestial-glow) 22%, color-mix(in srgb, var(--c-celestial-glow) 40%, transparent) 45%, transparent 70%);
+}
+.orn-arrival-ring {
+  position: absolute;
+  border-radius: 9999px;
+  border: 2px solid var(--c-celestial-glow);
+  box-shadow: 0 0 22px color-mix(in srgb, var(--c-celestial-glow) 80%, transparent);
+  will-change: transform;
+}
+
+/* ── Hidden tab: pause everything ─────────────────────────────────── */
+.login-stage.is-paused *,
+.login-stage.is-paused *::before,
+.login-stage.is-paused *::after {
+  animation-play-state: paused !important;
+}
+
+/* ── Reduced motion: ornaments stay, motion stops ─────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .login-stage *,
+  .login-stage *::before,
+  .login-stage *::after {
+    animation: none !important;
+  }
+  .orn-dust,
+  .orn-shooting-star,
+  .orn-typing-layer {
+    display: none;
+  }
+  .orn-const-line {
+    stroke-dasharray: none;
+  }
+  .orn-sparkle {
+    opacity: 0.6;
+  }
+}
