@@ -4,43 +4,61 @@
   --font-serif: "Playfair Display", Georgia, Cambria, serif;
   --font-sans: "Nunito Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
-  --color-cream: #FBF4E8;
-  --color-cream-light: #FFF8F5;
-  --color-parchment: #F6EBDD;
-  --color-parchment-light: #FFF8F5;
-  --color-parchment-dim: #EFE1CF;
+  /* Palette A: Rừng tiên oải hương */
+  --color-background: #F5F7F0;
+  --color-surface: #EAF0E3;
+  --color-border: #C9D4BC;
+
+  --color-primary: #4F6B47;
+  --color-primary-soft: #7E9C74;
+  --color-primary-tint: #E1E8D8;
+
+  --color-accent: #7D68A8;
+  --color-accent-soft: #C4B3E0;
+
+  --color-gold: #D9BE7C;
+
+  --color-text: #2F3A2E;
+  --color-text-muted: #5C6B58;
+
+  /* Existing / Legacy token mappings to Palette A */
+  --color-cream: #F5F7F0;
+  --color-cream-light: #F5F7F0;
+  --color-parchment: #EAF0E3;
+  --color-parchment-light: #F5F7F0;
+  --color-parchment-dim: #E1E8D8;
   
-  --color-walnut: #A67B5B;
-  --color-walnut-dark: #7A563C;
-  --color-walnut-soft: #C4A482;
-  --color-oak: #D9B99B;
-  --color-oak-light: #ECDBCB;
+  --color-walnut: #4F6B47;
+  --color-walnut-dark: #2F3A2E;
+  --color-walnut-soft: #7E9C74;
+  --color-oak: #C9D4BC;
+  --color-oak-light: #E1E8D8;
   
-  --color-cocoa: #5E4636;
-  --color-cocoa-dark: #3A2B20;
-  --color-cocoa-light: #806350;
-  --color-cocoa-muted: #9E8574;
+  --color-cocoa: #2F3A2E;
+  --color-cocoa-dark: #2F3A2E;
+  --color-cocoa-light: #5C6B58;
+  --color-cocoa-muted: #5C6B58;
   
-  --color-honey: #F3D38A;
-  --color-honey-deep: #D7B973;
-  --color-honey-light: #FDE8B5;
+  --color-honey: #D9BE7C;
+  --color-honey-deep: #D9BE7C;
+  --color-honey-light: #E1E8D8;
   
-  --color-blush: #F2A7B5;
-  --color-blush-light: #F4C2C2;
-  --color-blush-soft: #FEB2C0;
-  --color-blush-deep: #894D59;
+  /* Replace pink / peach / apricot tokens with accent lavender */
+  --color-blush: #7D68A8;
+  --color-blush-light: #C4B3E0;
+  --color-blush-soft: #C4B3E0;
+  --color-blush-deep: #7D68A8;
+  --color-apricot: #C4B3E0;
   
-  --color-sage: #A8C49A;
-  --color-sage-light: #C2D9B7;
-  --color-sage-dark: #4C6542;
+  --color-sage: #7E9C74;
+  --color-sage-light: #E1E8D8;
+  --color-sage-dark: #4F6B47;
   
-  --color-leaf: #7FAF6B;
-  --color-leaf-dark: #588746;
+  --color-leaf: #4F6B47;
+  --color-leaf-dark: #2F3A2E;
   
-  --color-mint: #CFE8D5;
-  --color-mint-light: #E4F3E8;
-  
-  --color-apricot: #F6B98B;
+  --color-mint: #E1E8D8;
+  --color-mint-light: #EAF0E3;
 }
 
 /* Custom Botanical & Greenhouse utilities */
@@ -72,47 +90,47 @@
   border-bottom-right-radius: 1rem;
 }
 
-/* Fairy Magic Gradient */
+/* Fairy Magic Gradient: #D9C8F0 → #C9EDDC */
 .bg-fairy-gradient {
-  background: linear-gradient(135deg, #F7C6D9 0%, #D9C8F0 50%, #C9EDDC 100%);
+  background: linear-gradient(135deg, #D9C8F0 0%, #C9EDDC 100%);
 }
 
 .bg-sunbeam-gradient {
-  background: linear-gradient(135deg, #FDE8B5 0%, #F6EBDD 100%);
+  background: linear-gradient(135deg, #E1E8D8 0%, #EAF0E3 100%);
 }
 
 .bg-moss-gradient {
-  background: linear-gradient(135deg, #CFE8D5 0%, #A8C49A 100%);
+  background: linear-gradient(135deg, #E1E8D8 0%, #7E9C74 100%);
 }
 
 /* Glassmorphism */
 .glass-conservatory {
-  background: rgba(251, 244, 232, 0.78);
+  background: rgba(245, 247, 240, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
 
 .glass-cloche {
-  background: rgba(255, 255, 255, 0.65);
+  background: rgba(234, 240, 227, 0.75);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
 
 /* Delicate Botanical Shadows & Borders */
 .shadow-botanical-sm {
-  box-shadow: 0 2px 8px -1px rgba(94, 70, 54, 0.06), 0 1px 3px 0 rgba(166, 123, 91, 0.08);
+  box-shadow: 0 2px 8px -1px rgba(47, 58, 46, 0.06), 0 1px 3px 0 rgba(79, 107, 71, 0.08);
 }
 
 .shadow-botanical {
-  box-shadow: 0 6px 18px -2px rgba(166, 123, 91, 0.1), 0 2px 6px -1px rgba(94, 70, 54, 0.05);
+  box-shadow: 0 6px 18px -2px rgba(79, 107, 71, 0.1), 0 2px 6px -1px rgba(47, 58, 46, 0.05);
 }
 
 .shadow-botanical-lg {
-  box-shadow: 0 16px 32px -4px rgba(166, 123, 91, 0.14), 0 6px 12px -2px rgba(94, 70, 54, 0.06);
+  box-shadow: 0 16px 32px -4px rgba(79, 107, 71, 0.14), 0 6px 12px -2px rgba(47, 58, 46, 0.06);
 }
 
 .shadow-fairy-glow {
-  box-shadow: 0 0 20px rgba(247, 198, 217, 0.45);
+  box-shadow: 0 0 20px rgba(125, 104, 168, 0.35);
 }
 
 /* Custom Scrollbar for horizontal shelves and lists */
@@ -129,13 +147,13 @@
   height: 6px;
 }
 .botanical-scrollbar::-webkit-scrollbar-track {
-  background: #F6EBDD;
+  background: #EAF0E3;
   border-radius: 9999px;
 }
 .botanical-scrollbar::-webkit-scrollbar-thumb {
-  background: #D9B99B;
+  background: #C9D4BC;
   border-radius: 9999px;
 }
 .botanical-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #A67B5B;
+  background: #7E9C74;
 }

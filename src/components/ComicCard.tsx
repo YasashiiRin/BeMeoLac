@@ -57,22 +57,22 @@ export const ComicCard: React.FC<ComicCardProps> = ({
   return (
     <div
       onClick={handleCardClick}
-      className={`group relative flex flex-col bg-[#FFF8F5] border-1.5 border-[#A67B5B] arch-card shadow-botanical hover:shadow-botanical-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden p-2.5 sm:p-3 ${className}`}
+      className={`group relative flex flex-col bg-surface border-1.5 border-border arch-card shadow-botanical hover:shadow-botanical-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden p-2.5 sm:p-3 ${className}`}
     >
       {/* Arched Cloche Image Frame */}
-      <div className="relative w-full aspect-[3/4] arch-card-sm overflow-hidden bg-[#F6EBDD] border border-[#D9B99B]/60 shadow-inner">
+      <div className="relative w-full aspect-[3/4] arch-card-sm overflow-hidden bg-background border border-border/60 shadow-inner">
         {/* Fallback pattern / loading placeholder */}
         {!imageLoaded && !imageError && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-[#F6EBDD] to-[#EFE1CF] text-[#A67B5B]">
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-surface to-primary-tint text-primary">
             <span className="text-2xl animate-pulse">🌸</span>
-            <span className="text-[11px] font-medium mt-1 text-[#806350]">Đang mở sách...</span>
+            <span className="text-[11px] font-medium mt-1 text-text-muted">Đang mở sách...</span>
           </div>
         )}
 
         {imageError ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-3 bg-gradient-to-b from-[#F6EBDD] to-[#EFE1CF] text-[#806350] text-center">
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-3 bg-gradient-to-b from-surface to-primary-tint text-text-muted text-center">
             <span className="text-3xl mb-1">🌿</span>
-            <span className="font-serif font-semibold text-xs text-[#5E4636] line-clamp-2">
+            <span className="font-serif font-semibold text-xs text-text line-clamp-2">
               {comic.title}
             </span>
           </div>
@@ -100,11 +100,11 @@ export const ComicCard: React.FC<ComicCardProps> = ({
 
           {/* Status Badge: NEW or COMPLETED */}
           {comic.has_new_chapter ? (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold bg-[#F2A7B5] text-[#5E4636] border border-[#A67B5B] shadow-xs animate-pulse">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold bg-accent text-white border border-accent shadow-xs animate-pulse">
               MỚI ✿
             </span>
           ) : isCompleted ? (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold bg-[#A8C49A] text-[#1E3314] border border-[#7FAF6B] shadow-xs">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold bg-primary text-white border border-primary shadow-xs">
               <span className="hidden sm:inline">HOÀN THÀNH</span>
               <span className="sm:hidden">XONG</span> 🌿
             </span>
@@ -118,13 +118,13 @@ export const ComicCard: React.FC<ComicCardProps> = ({
           aria-label={comic.is_favorite ? 'Bỏ yêu thích' : 'Yêu thích'}
           className={`absolute bottom-2 right-2 p-1.5 rounded-full backdrop-blur-md transition-all duration-200 z-10 cursor-pointer ${
             comic.is_favorite
-              ? 'bg-[#F2A7B5] text-[#5E4636] shadow-md scale-105'
-              : 'bg-white/70 text-[#A67B5B] hover:bg-white hover:text-[#5E4636]'
+              ? 'bg-accent text-white shadow-md scale-105'
+              : 'bg-surface/80 text-text-muted hover:bg-surface hover:text-text'
           }`}
         >
           <Bookmark
             size={14}
-            className={comic.is_favorite ? 'fill-[#5E4636]' : ''}
+            className={comic.is_favorite ? 'fill-white' : ''}
           />
         </button>
       </div>
@@ -135,19 +135,19 @@ export const ComicCard: React.FC<ComicCardProps> = ({
           {/* Title */}
           <h3
             title={comic.title}
-            className="font-serif font-semibold text-sm sm:text-base text-[#5E4636] group-hover:text-[#7A563C] transition-colors line-clamp-1 leading-snug"
+            className="font-serif font-semibold text-sm sm:text-base text-text group-hover:text-primary transition-colors line-clamp-1 leading-snug"
           >
             {comic.title}
           </h3>
 
           {/* Author */}
-          <p className="text-xs text-[#806350] italic line-clamp-1 mt-0.5">
+          <p className="text-xs text-text-muted italic line-clamp-1 mt-0.5">
             tác giả {comic.author}
           </p>
         </div>
 
         {/* Stats row */}
-        <div className="mt-2 pt-2 border-t border-[#D9B99B]/50 flex flex-col gap-1.5">
+        <div className="mt-2 pt-2 border-t border-border/50 flex flex-col gap-1.5">
           <div className="flex items-center justify-between text-xs">
             {/* Rating */}
             <HeartRating rating={comic.rating} votes="890" size="sm" />
@@ -155,11 +155,11 @@ export const ComicCard: React.FC<ComicCardProps> = ({
             {/* Chapter progress text */}
             <div className="text-[11px] sm:text-xs font-medium tabular-nums text-right">
               {isCompleted ? (
-                <span className="text-[#3A5230] font-semibold">
+                <span className="text-primary font-semibold">
                   {comic.total_chapters}/{comic.total_chapters} (100%)
                 </span>
               ) : (
-                <span className="text-[#806350]">
+                <span className="text-text-muted">
                   Ch. {comic.current_chapter}/{comic.total_chapters}
                 </span>
               )}
@@ -170,7 +170,7 @@ export const ComicCard: React.FC<ComicCardProps> = ({
           <VineProgressBar
             current={comic.current_chapter}
             total={comic.total_chapters}
-            variant={isCompleted ? 'leaf' : 'leaf'}
+            variant="leaf"
             height="sm"
           />
 
@@ -179,16 +179,16 @@ export const ComicCard: React.FC<ComicCardProps> = ({
             <button
               type="button"
               onClick={handleQuickReadClick}
-              className="w-full py-1.5 px-2.5 rounded-lg text-xs font-medium bg-[#F6EBDD] text-[#5E4636] border border-[#D9B99B] hover:bg-[#EFE1CF] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              className="w-full py-1.5 px-2.5 rounded-lg text-xs font-medium bg-surface text-text border border-border hover:bg-primary-tint flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
             >
               {isCompleted ? (
                 <>
-                  <RotateCcw size={12} className="text-[#7FAF6B]" />
+                  <RotateCcw size={12} className="text-primary" />
                   <span>Đọc lại</span>
                 </>
               ) : (
                 <>
-                  <BookOpen size={12} className="text-[#A67B5B]" />
+                  <BookOpen size={12} className="text-text-muted" />
                   <span>Đọc tiếp</span>
                 </>
               )}

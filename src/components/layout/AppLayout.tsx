@@ -46,7 +46,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#FBF4E8] text-[#5E4636] flex flex-col font-sans selection:bg-[#CFE8D5] selection:text-[#3A5230]">
+    <div className="min-h-screen bg-background text-text flex flex-col font-sans selection:bg-primary-tint selection:text-primary">
       {/* Desktop Header */}
       <div className="hidden md:block">
         <Header
@@ -72,23 +72,23 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       </main>
 
       {/* Desktop Footer (as seen in Image 1.jpeg) */}
-      <footer className="hidden md:block w-full border-t border-[#D9B99B]/60 bg-[#F6EBDD]/60 py-6 px-6 lg:px-8 text-xs text-[#806350] mt-auto">
+      <footer className="hidden md:block w-full border-t border-border/60 bg-surface/60 py-6 px-6 lg:px-8 text-xs text-text-muted mt-auto">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <span className="font-serif font-bold text-[#5E4636]">Tủ Truyện Nhỏ ✿</span>
+            <span className="font-serif font-bold text-text">Tủ Truyện Nhỏ ✿</span>
             <span>—</span>
             <span className="italic">Nơi cất giữ ký ức hoa cỏ và từng trang sách thần tiên</span>
           </div>
 
           <div className="flex items-center gap-6">
-            <a href="/search" className="hover:text-[#5E4636] transition-colors">Khám Phá</a>
+            <a href="/search" className="hover:text-text transition-colors">Khám Phá</a>
             <span>·</span>
-            <a href="/stats" className="hover:text-[#5E4636] transition-colors">Nhật Ký Đọc</a>
+            <a href="/stats" className="hover:text-text transition-colors">Nhật Ký Đọc</a>
             <span>·</span>
-            <a href="/account" className="hover:text-[#5E4636] transition-colors">Cài Đặt</a>
+            <a href="/account" className="hover:text-text transition-colors">Cài Đặt</a>
           </div>
 
-          <div className="text-[#9E8574]">
+          <div className="text-text-muted">
             © 2024 Tủ Truyện Nhỏ. Chúc công chúa đọc sách an yên. ✨
           </div>
         </div>
@@ -107,8 +107,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       >
         <form onSubmit={handleQuickAddSubmit} className="flex flex-col gap-4">
           <div>
-            <label className="block text-xs font-semibold text-[#5E4636] mb-1">
-              Tên truyện <span className="text-[#BA1A1A]">*</span>
+            <label className="block text-xs font-semibold text-text mb-1">
+              Tên truyện <span className="text-red-600">*</span>
             </label>
             <input
               type="text"
@@ -116,12 +116,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               value={quickTitle}
               onChange={(e) => setQuickTitle(e.target.value)}
               placeholder="VD: Tiệm Tạp Hóa Thời Gian..."
-              className="w-full px-3.5 py-2.5 bg-[#F6EBDD] rounded-xl border border-[#D9B99B] text-sm text-[#5E4636] focus:border-[#7FAF6B] focus:outline-none"
+              className="w-full px-3.5 py-2.5 bg-surface rounded-xl border border-border text-sm text-text focus:border-primary focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#5E4636] mb-1">
+            <label className="block text-xs font-semibold text-text mb-1">
               Tác giả
             </label>
             <input
@@ -129,18 +129,18 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               value={quickAuthor}
               onChange={(e) => setQuickAuthor(e.target.value)}
               placeholder="VD: Hatori M."
-              className="w-full px-3.5 py-2.5 bg-[#F6EBDD] rounded-xl border border-[#D9B99B] text-sm text-[#5E4636] focus:border-[#7FAF6B] focus:outline-none"
+              className="w-full px-3.5 py-2.5 bg-surface rounded-xl border border-border text-sm text-text focus:border-primary focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#5E4636] mb-1">
+            <label className="block text-xs font-semibold text-text mb-1">
               Nguồn theo dõi
             </label>
             <select
               value={quickSource}
               onChange={(e) => setQuickSource(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-[#F6EBDD] rounded-xl border border-[#D9B99B] text-sm text-[#5E4636] focus:border-[#7FAF6B] focus:outline-none cursor-pointer"
+              className="w-full px-3.5 py-2.5 bg-surface rounded-xl border border-border text-sm text-text focus:border-primary focus:outline-none cursor-pointer"
             >
               <option value="Cuutruyen">Cuutruyen</option>
               <option value="Kakao">Kakao</option>
@@ -151,7 +151,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             </select>
           </div>
 
-          <div className="pt-3 border-t border-[#D9B99B]/60 flex items-center justify-end gap-2.5">
+          <div className="pt-3 border-t border-border/60 flex items-center justify-end gap-2.5">
             <Button
               type="button"
               variant="text"
@@ -162,7 +162,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             <Button
               type="submit"
               variant="honey"
-              iconLeft={<Sparkles className="w-4 h-4 text-[#5E4636]" />}
+              iconLeft={<Sparkles className="w-4 h-4 text-text" />}
             >
               Thêm vào tủ sách
             </Button>

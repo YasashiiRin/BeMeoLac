@@ -26,23 +26,23 @@ export const VineProgressBar: React.FC<VineProgressBarProps> = ({
   };
 
   const fillGradients = {
-    leaf: 'bg-gradient-to-r from-[#A8C49A] to-[#7FAF6B]',
-    fairy: 'bg-gradient-to-r from-[#F2A7B5] via-[#D9C8F0] to-[#7FAF6B]',
-    honey: 'bg-gradient-to-r from-[#F3D38A] to-[#F6B98B]',
+    leaf: 'bg-gradient-to-r from-primary-soft to-primary',
+    fairy: 'bg-fairy-gradient',
+    honey: 'bg-gradient-to-r from-gold to-primary-soft',
   };
 
   return (
     <div className={`w-full ${className}`}>
       {showText && (
-        <div className="flex justify-between items-center text-xs text-[#806350] mb-1">
+        <div className="flex justify-between items-center text-xs text-text-muted mb-1">
           <span className="font-medium">
             Chương {current}/{total}
           </span>
-          <span className="font-semibold text-[#5E4636] tabular-nums">{percentage}%</span>
+          <span className="font-semibold text-text tabular-nums">{percentage}%</span>
         </div>
       )}
       <div
-        className={`w-full bg-[#EFE1CF] rounded-full overflow-hidden p-0.5 border border-[#D9B99B]/50 ${heightClasses[height]}`}
+        className={`w-full bg-primary-tint rounded-full overflow-hidden p-0.5 border border-border ${heightClasses[height]}`}
       >
         <div
           className={`h-full rounded-full transition-all duration-500 ease-out relative ${fillGradients[variant]}`}
