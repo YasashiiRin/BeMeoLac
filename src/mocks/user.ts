@@ -23,7 +23,7 @@ export const mockCurrentUser: User = {
  * Never render these values in the UI.
  */
 export const mockAccount = {
-  username: 'bemeolac',
+  username: 'lacbeo',
   password: '12012007',
   userId: mockCurrentUser.id,
 };
