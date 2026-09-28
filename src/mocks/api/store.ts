@@ -4,7 +4,7 @@ import { mockComics } from '../comics';
 import { mockShelves } from '../shelves';
 
 /*
- * In-memory "database" for mock mode (VITE_USE_MOCK=true). Every mock API
+ * In-memory "database" for the services in mock mode (see isMock in services/http.ts). Every mock API
  * module reads and writes here, so the pages stay consistent with each other.
  * It resets on reload.
  */

@@ -1,6 +1,8 @@
 import { TagCount } from '../types';
-import { USE_MOCK, http, simulateNetworkDelay } from './http';
+import { isMock, http, simulateNetworkDelay } from './http';
 import { all } from '../mocks/api/comics';
+
+const MOCK = isMock('tags');
 
 /* Tags — docs/api-contract.md#tags */
 
@@ -14,6 +16,6 @@ async function mockList(): Promise<TagCount[]> {
 }
 
 /** GET /api/tags → TagCount[] (every tag in the library, most used first) */
-export const listTags = (): Promise<TagCount[]> => (USE_MOCK ? mockList() : http.get('/api/tags'));
+export const listTags = (): Promise<TagCount[]> => (MOCK ? mockList() : http.get('/api/tags'));
 
 export const tagsService = { list: listTags };

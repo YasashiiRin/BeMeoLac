@@ -25,15 +25,25 @@ Mở <http://localhost:3000>.
 
 ### Dữ liệu giả hay API thật
 
-Mọi lời gọi API đều nằm trong `src/services/`. Biến `VITE_USE_MOCK` chọn nơi lấy dữ liệu:
+Mọi lời gọi API đều nằm trong `src/services/`. Có thể bật API thật **cho từng service**. Các service còn lại vẫn dùng dữ liệu giả trong `src/mocks/`.
 
-| Biến            | Giá trị                  | Ý nghĩa                                                                                                                    |
-| --------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| `VITE_USE_MOCK` | `true` (mặc định)        | Dùng dữ liệu giả trong `src/mocks/`, không cần backend. Dữ liệu nằm trong bộ nhớ và trở về ban đầu khi tải lại trang.       |
-|                 | `false`                  | Gọi backend thật tại `VITE_API_URL`.                                                                                       |
-| `VITE_API_URL`  | ví dụ `http://localhost:8000` | Địa chỉ gốc của backend, không có dấu `/` ở cuối. Mọi đường dẫn đều bắt đầu bằng `/api`.                              |
+| Biến                 | Ví dụ                   | Ý nghĩa                                                                                                                    |
+| -------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `VITE_REAL_SERVICES` | `auth,users`            | Các service gọi backend thật, cách nhau bằng dấu phẩy. Để trống thì tất cả dùng dữ liệu giả. Tên service: `auth`, `users`, `comics`, `shelves`, `sources`, `tags`, `stats`, `notifications`. |
+| `VITE_USE_MOCK`      | `true` / `false`        | Tùy chọn, ghi đè cho tất cả: `true` là mọi service dùng dữ liệu giả, `false` là mọi service gọi API thật. Không đặt thì dùng `VITE_REAL_SERVICES`. |
+| `VITE_API_URL`       | để trống                | Địa chỉ gốc của backend, không có `/` ở cuối. Để trống thì ứng dụng gọi `/api/...` trên chính địa chỉ của nó, giống khi chạy thật. |
+| `API_PROXY_TARGET`   | `http://localhost:8000` | Chỉ dùng cho máy chủ phát triển: `npm run dev` chuyển mọi request `/api` tới địa chỉ này, nên không bị lỗi CORS.         |
 
-Ở chế độ dữ liệu giả, tài khoản đăng nhập mẫu được khai báo trong `src/mocks/user.ts` (`mockAccount`).
+Dữ liệu giả nằm trong bộ nhớ và trở về ban đầu khi tải lại trang. Tài khoản mẫu cho chế độ dữ liệu giả được khai báo trong `src/mocks/user.ts` (`mockAccount`).
+
+Khi có service gọi API thật, hãy luôn thêm `auth`: API thật cần token từ lần đăng nhập thật.
+
+**Chạy cùng backend trên máy** (backend ở thư mục `meoLacService`, cổng 8000):
+
+```bash
+# .env.local
+VITE_REAL_SERVICES=auth,users
+```
 
 Ở chế độ API thật:
 
@@ -72,10 +82,12 @@ Dự án đã có sẵn [`vercel.json`](vercel.json): framework Vite, lệnh bui
 2. Trên [vercel.com](https://vercel.com): **Add New… → Project**, rồi chọn repository.
    Nếu repository chứa nhiều dự án, đặt **Root Directory** là thư mục chứa `package.json` này.
 3. Vào **Settings → Environment Variables**, thêm:
-   - `VITE_USE_MOCK` = `false`
-   - `VITE_API_URL` = địa chỉ backend, ví dụ `https://api.uyenthucac.vn`
+   - `VITE_REAL_SERVICES` = các service đã có trên backend, ví dụ `auth,users`. Khi backend làm xong mọi service, đặt `VITE_USE_MOCK` = `false`.
+   - `VITE_API_URL` = địa chỉ backend, ví dụ `https://api.uyenthucac.vn`.
 
-   Nếu chỉ muốn bản demo với dữ liệu giả, đặt `VITE_USE_MOCK` = `true`. Khi đó không cần `VITE_API_URL`.
+     Trên Vercel không có proxy của Vite. Nếu để trống biến này, request `/api/...` sẽ bị rewrite của `vercel.json` trả về `index.html`. Muốn giữ đường dẫn `/api` cùng địa chỉ, hãy thêm vào `vercel.json` một rewrite **trước** rewrite hiện có: `{ "source": "/api/:path*", "destination": "https://<backend>/api/:path*" }`.
+
+   Nếu chỉ muốn bản demo với dữ liệu giả, không cần đặt biến nào.
 4. Bấm **Deploy**. Từ đó, mỗi lần push lên nhánh chính, Vercel tự build lại. Các nhánh khác có bản Preview riêng.
 
 **Cách 2 — bằng Vercel CLI**
@@ -83,7 +95,7 @@ Dự án đã có sẵn [`vercel.json`](vercel.json): framework Vite, lệnh bui
 ```bash
 npm i -g vercel
 vercel                # lần đầu: liên kết dự án, tạo bản Preview
-vercel env add VITE_USE_MOCK
+vercel env add VITE_REAL_SERVICES
 vercel env add VITE_API_URL
 vercel --prod         # triển khai bản Production
 ```

@@ -76,6 +76,9 @@ export const LoginPage: React.FC = () => {
       if (isApiError(err, 'invalid_credentials')) {
         setErrors({ form: 'Tên đăng nhập hoặc mật khẩu chưa đúng, nàng thử lại nhé' });
         setDeniedKey((k) => k + 1);
+      } else if (isApiError(err, 'account_locked')) {
+        setErrors({ form: err.detail });
+        setDeniedKey((k) => k + 1);
       } else {
         console.error('Login failed', err);
         showToast('Cổng chưa mở được, nàng thử lại sau nhé', 'error');

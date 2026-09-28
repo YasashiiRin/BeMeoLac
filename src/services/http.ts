@@ -1,16 +1,60 @@
 /**
  * HTTP client for the FastAPI backend (docs/api-contract.md).
  *
- * - VITE_USE_MOCK !== "false" → services answer from src/mocks/api (no network).
- * - VITE_API_URL is the backend origin; every path starts with /api.
+ * Which services call the real API (see isRealService):
+ * - VITE_REAL_SERVICES=auth,users → only those services call the API; the others
+ *   answer from src/mocks/api. Empty or unset → everything is mock.
+ * - VITE_USE_MOCK is a global override: "true" → everything mock,
+ *   "false" → everything real (VITE_REAL_SERVICES is then ignored).
+ *
+ * - Requests go to VITE_API_URL + /api/... When VITE_API_URL is empty they go to the
+ *   same origin (/api/...): the Vite dev server proxies them to the backend.
  * - Requests carry "Authorization: Bearer <access token>". On a 401 the client
  *   refreshes the token once (POST /api/auth/refresh) and retries; if that
  *   fails the session is cleared and the app goes to /login.
  * - Every error is an ApiError built from the backend body { detail, code? }.
  */
 
-export const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';
-export const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
+export const SERVICE_NAMES = ['auth', 'users', 'comics', 'shelves', 'sources', 'tags', 'stats', 'notifications'] as const;
+export type ServiceName = (typeof SERVICE_NAMES)[number];
+
+const GLOBAL_MOCK = import.meta.env.VITE_USE_MOCK?.trim().toLowerCase();
+
+/** The services configured to call the real API. */
+export const REAL_SERVICES: ReadonlySet<ServiceName> = (() => {
+  if (GLOBAL_MOCK === 'false') return new Set(SERVICE_NAMES);
+  if (GLOBAL_MOCK === 'true') return new Set();
+  const names = (import.meta.env.VITE_REAL_SERVICES ?? '')
+    .split(',')
+    .map((n) => n.trim().toLowerCase())
+    .filter(Boolean);
+  const unknown = names.filter((n) => !(SERVICE_NAMES as readonly string[]).includes(n));
+  if (unknown.length) console.warn(`VITE_REAL_SERVICES: unknown service(s) ${unknown.join(', ')}. Known: ${SERVICE_NAMES.join(', ')}`);
+  return new Set(names.filter((n): n is ServiceName => !unknown.includes(n)));
+})();
+
+/** true → this service answers from src/mocks/api; false → it calls the backend. */
+export const isMock = (service: ServiceName): boolean => !REAL_SERVICES.has(service);
+
+// Real data services need a real session: a mock token would get 401 → logout.
+if (REAL_SERVICES.size > 0 && !REAL_SERVICES.has('auth')) {
+  console.warn('VITE_REAL_SERVICES: add "auth" — real services need a token from the real login.');
+}
+
+export const API_BASE_URL = (import.meta.env.VITE_API_URL ?? '').trim().replace(/\/+$/, '');
+
+// Say at startup where each service gets its data, so a mock login is never mistaken for a real one.
+{
+  const real = SERVICE_NAMES.filter((n) => REAL_SERVICES.has(n));
+  const mock = SERVICE_NAMES.filter((n) => !REAL_SERVICES.has(n));
+  const why =
+    GLOBAL_MOCK === 'true' || GLOBAL_MOCK === 'false'
+      ? `VITE_USE_MOCK=${GLOBAL_MOCK}`
+      : `VITE_REAL_SERVICES=${JSON.stringify(import.meta.env.VITE_REAL_SERVICES ?? '')}`;
+  console.info(
+    `[api] real: ${real.join(', ') || '—'} | mock: ${mock.join(', ') || '—'} | API: ${API_BASE_URL || window.location.origin}/api (${why})`
+  );
+}
 
 /** The one error type services throw (mock and real). */
 export class ApiError extends Error {
