@@ -14,6 +14,8 @@ import { isMock, http, orNull } from './http';
 import { emitComicUpdated } from './events';
 
 const MOCK = isMock('comics');
+// shelf membership lives under /api/shelves, so it follows the "shelves" switch
+const SHELVES_MOCK = isMock('shelves');
 
 /* Comics — docs/api-contract.md#comics */
 
@@ -75,7 +77,10 @@ export const findExistingByTitle = async (title: string): Promise<Comic | null> 
 export const createComic = (data: ComicCreate): Promise<Comic> =>
   withEvent(MOCK ? mock.create(data) : http.post<Comic>('/api/comics', data));
 
-/** PATCH /api/comics/{id} body ComicUpdate → Comic (sources are replaced when given) */
+/**
+ * PATCH /api/comics/{id} body ComicUpdate → Comic
+ * (sources, tags, shelf_ids replace the whole list; new sources may carry a client id that primary_source_id names)
+ */
 export const updateComic = (id: string, data: ComicUpdate): Promise<Comic> =>
   withEvent(MOCK ? mock.update(id, data) : http.patch<Comic>(`/api/comics/${encodeURIComponent(id)}`, data));
 
@@ -105,11 +110,11 @@ export const addSourceToComic = (comicId: string, source: Source): Promise<Comic
 
 /** POST /api/shelves/{shelf_id}/comics body { comic_id } → Comic */
 export const addComicToShelf = (shelfId: string, comicId: string): Promise<Comic> =>
-  MOCK ? mock.addToShelf(shelfId, comicId) : http.post<Comic>(`/api/shelves/${encodeURIComponent(shelfId)}/comics`, { comic_id: comicId });
+  SHELVES_MOCK ? mock.addToShelf(shelfId, comicId) : http.post<Comic>(`/api/shelves/${encodeURIComponent(shelfId)}/comics`, { comic_id: comicId });
 
 /** DELETE /api/shelves/{shelf_id}/comics/{comic_id} → Comic */
 export const removeComicFromShelf = (shelfId: string, comicId: string): Promise<Comic> =>
-  MOCK
+  SHELVES_MOCK
     ? mock.removeFromShelf(shelfId, comicId)
     : http.delete<Comic>(`/api/shelves/${encodeURIComponent(shelfId)}/comics/${encodeURIComponent(comicId)}`);
 

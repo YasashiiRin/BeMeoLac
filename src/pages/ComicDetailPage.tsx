@@ -853,7 +853,7 @@ export const ComicDetailPage: React.FC = () => {
                   <div className="flex items-center justify-between text-[11px] text-text-muted">
                     <span>Cập nhật {timeAgo(comic.updated_at).toLowerCase()}</span>
                     <span className="text-primary font-semibold">
-                      Đọc lần cuối {timeAgo(comic.last_read_at).toLowerCase()} ✿
+                      {comic.last_read_at ? `Đọc lần cuối ${timeAgo(comic.last_read_at).toLowerCase()}` : 'Chưa đọc chương nào'} ✿
                     </span>
                   </div>
                 </div>
@@ -1395,7 +1395,7 @@ export const ComicDetailPage: React.FC = () => {
                 <Clock className="w-3.5 h-3.5 text-gold-ink" />
                 <span>Cập nhật {timeAgo(comic.updated_at).toLowerCase()}</span>
               </span>
-              <span className="text-accent-ink font-medium">Đọc {timeAgo(comic.last_read_at).toLowerCase()} ✿</span>
+              <span className="text-accent-ink font-medium">{comic.last_read_at ? `Đọc ${timeAgo(comic.last_read_at).toLowerCase()}` : 'Chưa đọc'} ✿</span>
             </div>
           </div>
 

@@ -236,11 +236,25 @@ async function send(method: string, path: string, opts: RequestOptions, retried 
   return res;
 }
 
+/**
+ * The API returns its own images (covers, avatars) as relative "/api/…" URLs. They work as-is on
+ * the same origin (dev proxy / production rewrite); with VITE_API_URL they need the backend origin.
+ */
+function absolutizeApiUrls(value: unknown): unknown {
+  if (!API_BASE_URL || value === null || typeof value !== 'object') return value;
+  if (Array.isArray(value)) return value.map(absolutizeApiUrls);
+  const out: Record<string, unknown> = {};
+  for (const [key, v] of Object.entries(value)) {
+    out[key] = key.endsWith('_url') && typeof v === 'string' && v.startsWith('/api/') ? `${API_BASE_URL}${v}` : absolutizeApiUrls(v);
+  }
+  return out;
+}
+
 export async function request<T>(method: string, path: string, opts: RequestOptions = {}): Promise<T> {
   const res = await send(method, path, opts);
   if (res.status === 204) return undefined as T;
   const text = await res.text();
-  return (text ? JSON.parse(text) : undefined) as T;
+  return absolutizeApiUrls(text ? JSON.parse(text) : undefined) as T;
 }
 
 /** For downloads: the raw Response. */

@@ -57,7 +57,7 @@ export interface Source {
   chapter_url: string;
   latest_chapter: number;
   is_alive: boolean;
-  last_checked_at: string;
+  last_checked_at: string | null; // set by the server's link check; null = never checked
 }
 
 export interface Comic {
@@ -77,7 +77,7 @@ export interface Comic {
   primary_source_id: string;
   shelf_ids: string[];
   has_new_chapter: boolean;
-  last_read_at: string;
+  last_read_at: string | null; // null = never read
   created_at: string;
   updated_at: string;
 }

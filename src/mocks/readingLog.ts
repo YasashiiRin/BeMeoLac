@@ -1,6 +1,9 @@
 import { Comic } from '../types';
 import { mockComics } from './comics';
 
+/** Never-read comics (last_read_at null) count from when they were added. */
+export const lastRead = (c: Pick<Comic, 'last_read_at' | 'created_at'>): string => c.last_read_at ?? c.created_at;
+
 /*
  * Mock reading history, derived from the mock comics so the numbers agree:
  * each comic's current_chapter is spread over reading sessions between its
@@ -37,7 +40,7 @@ function buildLog(comic: Comic): Map<DayKey, number> {
   if (remaining <= 0) return log;
 
   const rng = mulberry32(hash(comic.id));
-  const end = Date.parse(dayKey(comic.last_read_at));
+  const end = Date.parse(dayKey(lastRead(comic)));
   const start = Math.min(end, Date.parse(dayKey(comic.created_at)));
   const span = Math.round((end - start) / DAY_MS);
   const add = (t: number, n: number) => {
@@ -60,7 +63,7 @@ const baseLogs = new Map<string, Map<DayKey, number>>();
 
 /** The mock library's "today": the most recent reading day in the mock data. */
 export const MOCK_TODAY: DayKey = mockComics.reduce(
-  (max, c) => (dayKey(c.last_read_at) > max ? dayKey(c.last_read_at) : max),
+  (max, c) => (dayKey(lastRead(c)) > max ? dayKey(lastRead(c)) : max),
   '0000-00-00'
 );
 
@@ -78,13 +81,13 @@ export function readingLogFor(comic: Comic): Map<DayKey, number> {
   const base = baseComics.get(comic.id);
   let log = baseLogs.get(comic.id);
   if (!log) {
-    log = buildLog(base ?? { ...comic, last_read_at: mockDay(comic.last_read_at), created_at: mockDay(comic.created_at) });
+    log = buildLog(base ?? { ...comic, last_read_at: mockDay(lastRead(comic)), created_at: mockDay(comic.created_at) });
     baseLogs.set(comic.id, log);
   }
   const extra = base ? comic.current_chapter - base.current_chapter : 0;
   if (extra <= 0) return log;
   const merged = new Map(log);
-  const k = mockDay(comic.last_read_at);
+  const k = mockDay(lastRead(comic));
   merged.set(k, (merged.get(k) ?? 0) + extra);
   return merged;
 }

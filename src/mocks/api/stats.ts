@@ -1,6 +1,6 @@
 import { Comic, ReadingGoal, Stats, StatsPeriod } from '../../types';
 import { simulateNetworkDelay } from '../../services/http';
-import { DayKey, MOCK_TODAY, dayKey, mockDay, mockReadingGoals, readingLogFor } from '../readingLog';
+import { DayKey, MOCK_TODAY, dayKey, lastRead, mockDay, mockReadingGoals, readingLogFor } from '../readingLog';
 import { all } from './comics';
 
 /* Mock implementation of /api/stats (see src/services/statsService.ts): computed from the
@@ -56,7 +56,7 @@ async function allComics(): Promise<Comic[]> {
 
 function goalFor(year: number, comics: Comic[]): ReadingGoal {
   const completed = comics.filter(
-    (c) => c.status === 'completed' && mockDay(c.last_read_at).startsWith(String(year))
+    (c) => c.status === 'completed' && mockDay(lastRead(c)).startsWith(String(year))
   ).length;
   return { year, target: goals[year] ?? DEFAULT_GOAL, completed };
 }
@@ -74,8 +74,8 @@ export const get = async (period: StatsPeriod): Promise<Stats> => {
   const from = periodStart(period, today, firstDay);
   const readIn = comics.filter((c) => [...(logs.get(c.id)?.keys() ?? [])].some((k) => inRange(k, from, today)));
   const completedIn = comics
-    .filter((c) => c.status === 'completed' && inRange(mockDay(c.last_read_at), from, today))
-    .sort((a, b) => b.last_read_at.localeCompare(a.last_read_at));
+    .filter((c) => c.status === 'completed' && inRange(mockDay(lastRead(c)), from, today))
+    .sort((a, b) => lastRead(b).localeCompare(lastRead(a)));
 
   let chapters_read = 0;
   daily.forEach((n, k) => {
