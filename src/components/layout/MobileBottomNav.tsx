@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { BookOpen, Search, Plus, BarChart3, User, Sparkles } from 'lucide-react';
+import { BookOpen, Search, Plus, BarChart3, User } from 'lucide-react';
 import { lastSearchHref } from '../../features/search/searchState';
 
 interface MobileBottomNavProps {

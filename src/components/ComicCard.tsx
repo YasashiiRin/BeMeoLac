@@ -33,11 +33,6 @@ export const ComicCard: React.FC<ComicCardProps> = ({
     comic.sources[0] || { site_name: 'Chưa có nguồn' };
 
   const isCompleted = comic.status === 'completed' || comic.current_chapter >= comic.total_chapters;
-  const progressPercent =
-    comic.total_chapters > 0
-      ? Math.round((comic.current_chapter / comic.total_chapters) * 100)
-      : 0;
-
   const handleCardClick = () => {
     navigate(`/comics/${comic.id}`);
   };

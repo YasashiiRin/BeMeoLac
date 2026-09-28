@@ -2,8 +2,8 @@ import React, { useEffect, useId, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Bell, CheckCheck } from 'lucide-react';
 import { EmptyState } from '../../components/EmptyState';
-import { NotificationFilter } from '../../types';
-import { Notification } from '../../types';
+import { ErrorState } from '../../components/ErrorState';
+import { Notification, NotificationFilter } from '../../types';
 import { FilterChips } from './FilterChips';
 import { NotificationRow } from './NotificationRow';
 import { notificationTarget } from './openTarget';
@@ -26,7 +26,7 @@ export const NotificationsDropdown: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<NotificationFilter>('all');
   const count = useUnreadCount();
-  const { items, unread, markRead, markAllRead } = useNotifications(filter, open);
+  const { items, unread, error, reload, markRead, markAllRead } = useNotifications(filter, open);
   const navigate = useNavigate();
   const root = useRef<HTMLDivElement>(null);
   const bell = useRef<HTMLButtonElement>(null);
@@ -95,7 +95,7 @@ export const NotificationsDropdown: React.FC = () => {
               </h2>
               <button
                 type="button"
-                onClick={markAllRead}
+                onClick={() => markAllRead().catch(reload)}
                 disabled={count === 0}
                 className="inline-flex items-center gap-1 text-xs font-semibold text-primary-ink hover:underline underline-offset-4 decoration-dotted cursor-pointer disabled:opacity-50 disabled:no-underline disabled:cursor-default"
               >
@@ -107,7 +107,9 @@ export const NotificationsDropdown: React.FC = () => {
           </div>
 
           <div className="max-h-[390px] overflow-y-auto botanical-scrollbar px-3 pb-3">
-            {items === null ? (
+            {error && items === null ? (
+              <ErrorState title="Chưa tải được thông báo" error={error} onRetry={reload} className="p-6 md:p-6" />
+            ) : items === null ? (
               <div className="flex flex-col gap-2" aria-hidden="true">
                 {[0, 1, 2].map((i) => (
                   <div key={i} className="h-20 rounded-2xl bg-surface animate-pulse" />

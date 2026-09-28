@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCheck } from 'lucide-react';
-import { Notification } from '../types';
+import { Notification, NotificationFilter } from '../types';
 import { EmptyState } from '../components/EmptyState';
+import { ErrorState } from '../components/ErrorState';
 import { useToast } from '../context/ToastContext';
-import { NotificationFilter } from '../types';
 import { FilterChips } from '../features/notifications/FilterChips';
 import { NotificationRow } from '../features/notifications/NotificationRow';
 import { notificationTarget } from '../features/notifications/openTarget';
@@ -25,14 +25,24 @@ export const NotificationsPage: React.FC = () => {
   };
 
   const readAll = async () => {
-    await markAllRead();
-    showToast('Đã đánh dấu đọc hết thông báo 🌸', 'success');
+    try {
+      await markAllRead();
+      showToast('Đã đánh dấu đọc hết thông báo 🌸', 'success');
+    } catch {
+      showToast('Chưa đánh dấu được, nàng thử lại nhé', 'error');
+      reload();
+    }
   };
 
   const deleteRow = async (n: Notification) => {
     setSwipedId(null);
-    await remove(n.id);
-    showToast('Đã xóa thông báo 🍃', 'success');
+    try {
+      await remove(n.id);
+      showToast('Đã xóa thông báo 🍃', 'success');
+    } catch {
+      showToast('Chưa xóa được thông báo, nàng thử lại nhé', 'error');
+      reload();
+    }
   };
 
   return (
@@ -65,7 +75,7 @@ export const NotificationsPage: React.FC = () => {
       <FilterChips value={filter} onChange={setFilter} unread={unread} />
 
       {error && items === null ? (
-        <EmptyState icon="🍂" title="Chưa tải được thông báo" description="Nàng thử lại sau một chút nhé." actionText="Thử lại" onAction={reload} />
+        <ErrorState title="Chưa tải được thông báo" error={error} onRetry={reload} />
       ) : items === null ? (
         <div className="flex flex-col gap-2.5" aria-hidden="true">
           {[0, 1, 2, 3].map((i) => (

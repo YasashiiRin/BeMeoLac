@@ -70,7 +70,7 @@ const Tick = (props: { x?: number; y?: number; payload?: { value: string }; rows
   );
 };
 
-const ChartTooltip = ({ active, payload }: TooltipContentProps<number, string>) => {
+const ChartTooltip = ({ active, payload }: TooltipContentProps) => {
   if (!active || !payload?.length) return null;
   const row = payload[0].payload as Row;
   return (

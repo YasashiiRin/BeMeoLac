@@ -48,8 +48,8 @@ export async function list(params: ComicListParams = {}): Promise<Paginated<Comi
   const sort = params.sort === 'position' && !order?.length ? 'updated_at' : params.sort || 'updated_at';
   filtered.sort((a, b) => {
     if (sort === 'position') {
-      const ia = order.indexOf(a.id);
-      const ib = order.indexOf(b.id);
+      const ia = order!.indexOf(a.id);
+      const ib = order!.indexOf(b.id);
       if (ia !== -1 && ib !== -1) return ia - ib;
       return ia !== -1 ? -1 : ib !== -1 ? 1 : 0;
     }
@@ -94,10 +94,10 @@ export async function remove(id: string): Promise<void> {
   db.comics = db.comics.filter((c) => c.id !== id);
 }
 
-export async function toggleFavorite(id: string): Promise<Comic> {
+export async function setFavorite(id: string, isFavorite: boolean): Promise<Comic> {
   await simulateNetworkDelay(100);
   const i = findComic(id);
-  db.comics[i] = { ...db.comics[i], is_favorite: !db.comics[i].is_favorite, updated_at: now() };
+  db.comics[i] = { ...db.comics[i], is_favorite: isFavorite, updated_at: now() };
   return db.comics[i];
 }
 

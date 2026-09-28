@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Eye, EyeOff, KeyRound, Laptop, LogOut, Smartphone, Tablet } from 'lucide-react';
 import { Button } from '../../components/Button';
+import { ErrorState } from '../../components/ErrorState';
 import { Modal } from '../../components/Modal';
 import { useToast } from '../../context/ToastContext';
 import { userService } from '../../services/userService';
@@ -79,12 +80,15 @@ export const SecuritySection: React.FC = () => {
   const [saving, setSaving] = useState(false);
 
   const [sessions, setSessions] = useState<DeviceSession[] | null>(null);
+  const [sessionsError, setSessionsError] = useState<unknown>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
-  useEffect(() => {
-    userService.getSessions().then(setSessions).catch(() => setSessions([]));
+  const loadSessions = useCallback(() => {
+    setSessionsError(null);
+    userService.getSessions().then(setSessions).catch(setSessionsError);
   }, []);
+  useEffect(loadSessions, [loadSessions]);
 
   const strength = useMemo(() => passwordStrength(values.next), [values.next]);
   const errors: Record<Field, string | null> = {
@@ -197,7 +201,9 @@ export const SecuritySection: React.FC = () => {
           </div>
         </div>
         <Panel className="p-2 sm:p-2">
-          {sessions === null ? (
+          {sessionsError && sessions === null ? (
+            <ErrorState title="Chưa tải được danh sách thiết bị" error={sessionsError} onRetry={loadSessions} className="p-6 md:p-6 border-0" />
+          ) : sessions === null ? (
             <p className="p-3 text-sm text-text-muted animate-pulse">Đang tìm các thiết bị...</p>
           ) : (
             <ul className="divide-y divide-border/60">

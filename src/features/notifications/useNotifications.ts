@@ -28,7 +28,7 @@ export type UnreadByFilter = Record<NotificationFilter, number>;
 export function useNotifications(filter: NotificationFilter, enabled = true) {
   const [items, setItems] = useState<Notification[] | null>(null);
   const [unread, setUnread] = useState<UnreadByFilter>({ all: 0, new_chapter: 0, broken_link: 0 });
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<unknown>(null);
   const request = useRef(0);
 
   const load = useCallback(async () => {
@@ -43,9 +43,9 @@ export function useNotifications(filter: NotificationFilter, enabled = true) {
       if (id !== request.current) return;
       setItems(list.items);
       setUnread({ all, new_chapter: newChapter, broken_link: broken });
-      setError(false);
-    } catch {
-      if (id === request.current) setError(true);
+      setError(null);
+    } catch (err) {
+      if (id === request.current) setError(err);
     }
   }, [filter]);
 

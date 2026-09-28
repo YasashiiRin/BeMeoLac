@@ -6,7 +6,7 @@ import { statsService } from '../services/statsService';
 import { comicsService } from '../services/comicService';
 import { useToast } from '../context/ToastContext';
 import { ComicCard } from '../components/ComicCard';
-import { EmptyState } from '../components/EmptyState';
+import { ErrorState } from '../components/ErrorState';
 import { Modal } from '../components/Modal';
 import { BottomSheet } from '../components/BottomSheet';
 import { VineProgressBar } from '../components/VineProgressBar';
@@ -124,7 +124,7 @@ export const StatsPage: React.FC = () => {
 
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<unknown>(null);
   const [goalOpen, setGoalOpen] = useState(false);
   const [savingGoal, setSavingGoal] = useState(false);
   const request = useRef(0);
@@ -134,12 +134,12 @@ export const StatsPage: React.FC = () => {
   const load = useCallback(async (p: StatsPeriod) => {
     const id = ++request.current;
     setLoading(true);
-    setError(false);
+    setError(null);
     try {
       const data = await statsService.get(p);
       if (id === request.current) setStats(data);
-    } catch {
-      if (id === request.current) setError(true);
+    } catch (err) {
+      if (id === request.current) setError(err);
     } finally {
       if (id === request.current) setLoading(false);
     }
@@ -177,7 +177,8 @@ export const StatsPage: React.FC = () => {
 
   const toggleFavorite = async (id: string) => {
     try {
-      const updated = await comicsService.toggleFavorite(id);
+      const current = stats?.recently_completed.find((c) => c.id === id);
+      const updated = await comicsService.setFavorite(id, !current?.is_favorite);
       setStats((s) => (s ? { ...s, recently_completed: s.recently_completed.map((c) => (c.id === id ? updated : c)) } : s));
     } catch {
       showToast('Chưa đánh dấu được truyện, nàng thử lại nhé', 'error');
@@ -262,13 +263,7 @@ export const StatsPage: React.FC = () => {
       </header>
 
       {error && !stats ? (
-        <EmptyState
-          icon="🍂"
-          title="Khu vườn đang ngủ say"
-          description="Chưa tải được thống kê đọc của nàng. Nàng thử lại sau một chút nhé."
-          actionText="Thử lại"
-          onAction={() => load(period)}
-        />
+        <ErrorState title="Chưa tải được thống kê đọc" error={error} onRetry={() => load(period)} />
       ) : !stats || !derived ? (
         <Skeleton />
       ) : (

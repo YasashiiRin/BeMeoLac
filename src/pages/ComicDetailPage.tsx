@@ -13,7 +13,6 @@ import {
   Bookmark,
   BookOpen,
   Clock,
-  Sparkles,
   Share2,
   Plus,
   Edit,
@@ -24,10 +23,7 @@ import {
   Check,
   ChevronDown,
   Layers,
-  Link as LinkIcon,
   Globe,
-  HelpCircle,
-  FileText,
   AlertTriangle,
 } from 'lucide-react';
 
@@ -221,13 +217,14 @@ export const ComicDetailPage: React.FC = () => {
     const nextFav = !comic.is_favorite;
     setComic((prev) => (prev ? { ...prev, is_favorite: nextFav } : null));
     try {
-      const updated = await comicsService.update(comic.id, { is_favorite: nextFav });
+      const updated = await comicsService.setFavorite(comic.id, nextFav);
       setComic(updated);
       showToast(
         nextFav ? 'Đã ghim vào danh sách Yêu thích ✿' : 'Đã bỏ ghim yêu thích',
         'info'
       );
     } catch (err) {
+      setComic((prev) => (prev ? { ...prev, is_favorite: !nextFav } : null));
       showToast('Lỗi cập nhật yêu thích', 'error');
     }
   };
@@ -656,9 +653,11 @@ export const ComicDetailPage: React.FC = () => {
                     className={`w-4 h-4 ${comic.is_favorite ? 'fill-accent' : ''}`}
                   />
                   <span>{comic.is_favorite ? 'Đã yêu thích' : 'Yêu thích'}</span>
-                  <span className="ml-1 bg-surface-raised/70 text-accent-ink text-xs font-semibold px-2 py-0.5 rounded-full">
-                    {comic.is_favorite ? '★' : '1.8k'}
-                  </span>
+                  {comic.is_favorite && (
+                    <span className="ml-1 bg-surface-raised/70 text-accent-ink text-xs font-semibold px-2 py-0.5 rounded-full" aria-hidden="true">
+                      ★
+                    </span>
+                  )}
                 </button>
 
                 {/* Quick Metadata Pills */}

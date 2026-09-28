@@ -15,7 +15,7 @@ const TOP = 5;
 
 type Slice = { name: string; count: number };
 
-const SliceTooltip = ({ active, payload }: TooltipContentProps<number, string>) => {
+const SliceTooltip = ({ active, payload }: TooltipContentProps) => {
   if (!active || !payload?.length) return null;
   const s = payload[0].payload as Slice;
   return (

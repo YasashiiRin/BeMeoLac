@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Shelf } from '../../types';
-import { ComicSummary } from '../../types';
+import { ComicSummary, Shelf } from '../../types';
 import { comicsService } from '../../services/comicService';
-import { Plus, MoreHorizontal, Sparkles, Coffee } from 'lucide-react';
+import { Plus, Sparkles, Coffee } from 'lucide-react';
 import { VineProgressBar } from '../VineProgressBar';
 
 interface SidebarProps {
@@ -30,9 +29,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   }, [summary]);
 
-  const totalComics = dataSummary?.total || 1;
-  const completedComics = dataSummary?.by_status.completed || 0;
-  const completionPercentage = Math.round((completedComics / totalComics) * 100);
+  const totalComics = dataSummary?.total ?? 0;
+  const completedComics = dataSummary?.by_status.completed ?? 0;
+  const completionPercentage = totalComics > 0 ? Math.round((completedComics / totalComics) * 100) : 0;
+  const show = (n: number) => (dataSummary ? n : '…');
 
   return (
     <aside className="w-64 xl:w-72 shrink-0 flex flex-col gap-4">
@@ -49,13 +49,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               Tập hợp cổ tích thảo mộc
             </p>
           </div>
-          <button
-            type="button"
-            className="p-1 text-text-muted hover:text-text rounded-md hover:bg-background transition-colors cursor-pointer"
-            aria-label="Tùy chọn kệ sách"
-          >
-            <MoreHorizontal className="w-4 h-4" />
-          </button>
         </div>
 
         {/* Shelves List */}
@@ -115,12 +108,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </h4>
           </div>
           <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-accent/20 text-accent-ink border border-accent/40">
-            {completionPercentage}%
+            {dataSummary ? `${completionPercentage}%` : '…'}
           </span>
         </div>
 
         <p className="text-xs text-text-muted">
-          Đã đọc xong <strong className="text-text font-semibold">{completedComics}/{totalComics}</strong> bộ truyện
+          Đã đọc xong <strong className="text-text font-semibold">{show(completedComics)}/{show(totalComics)}</strong> bộ truyện
         </p>
 
         {/* Progress bar */}
@@ -129,7 +122,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="pt-2 border-t border-border/50 flex items-start gap-1.5">
           <Sparkles className="w-3.5 h-3.5 text-gold shrink-0 mt-0.5" />
           <p className="text-[11px] text-text-muted italic leading-tight">
-            Có <span className="font-semibold text-primary">{dataSummary?.new_chapters ?? 0} chương mới</span> đơm hoa chờ bạn khám phá!
+            Có <span className="font-semibold text-primary">{show(dataSummary?.new_chapters ?? 0)} truyện có chương mới</span> đơm hoa chờ nàng khám phá!
           </p>
         </div>
       </div>

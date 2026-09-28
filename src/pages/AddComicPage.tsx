@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Comic, ComicStatus, Shelf, Source } from '../types';
 import { comicsService } from '../services/comicService';
@@ -14,18 +14,13 @@ import {
   Bookmark,
   CheckCircle2,
   Circle,
-  Plus,
-  Minus,
   Upload,
   Image as ImageIcon,
   AlertCircle,
-  Check,
   ChevronDown,
   Cloud,
   Flower2,
   Layers,
-  ArrowLeft,
-  ExternalLink,
   Lightbulb,
 } from 'lucide-react';
 
@@ -54,7 +49,6 @@ export const AddComicPage: React.FC = () => {
   const [newTagInput, setNewTagInput] = useState('');
   const [isAddingTag, setIsAddingTag] = useState(false);
   const [siteName, setSiteName] = useState('');
-  const [description, setDescription] = useState('');
 
   // Shelves multi-select
   const [shelves, setShelves] = useState<Shelf[]>([]);
@@ -262,9 +256,7 @@ export const AddComicPage: React.FC = () => {
       const createdComic = await comicsService.create({
         title: title.trim(),
         author: author.trim() || 'Khuyết danh',
-        description:
-          description.trim() ||
-          'Một cuốn truyện tranh thần tiên vừa được xếp vào góc nhà kính.',
+        description: 'Một cuốn truyện tranh thần tiên vừa được xếp vào góc nhà kính.',
         cover_url: coverUrl.trim(),
         status: selectedStatus,
         current_chapter: Math.min(totalChapters, Math.max(0, currentChapter)),

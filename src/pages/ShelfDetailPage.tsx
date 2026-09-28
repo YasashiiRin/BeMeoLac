@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Shelf, Comic } from '../types';
 import { shelvesService } from '../services/shelfService';
-import { getComics, addComicToShelf, toggleFavorite, updateComicProgress } from '../services/comicService';
+import { getComics, addComicToShelf, setFavorite, updateComicProgress } from '../services/comicService';
 import { ComicCard } from '../components/ComicCard';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorState } from '../components/ErrorState';
@@ -316,7 +316,7 @@ export const ShelfDetailPage: React.FC = () => {
   // Toggle favorite
   const handleToggleFavorite = async (id: string) => {
     try {
-      const updated = await toggleFavorite(id);
+      const updated = await setFavorite(id, !comics.find((c) => c.id === id)?.is_favorite);
       setComics((prev) =>
         prev.map((c) => (c.id === id ? { ...c, is_favorite: updated.is_favorite } : c))
       );

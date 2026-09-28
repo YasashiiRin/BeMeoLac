@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
-import { Bell, Plus, Flower2, Sparkles, BookHeart, Compass, Tag, BookOpen } from 'lucide-react';
+import { Plus, Flower2 } from 'lucide-react';
 import { SearchBar } from '../SearchBar';
 import { lastSearchHref, rememberLastSearch } from '../../features/search/searchState';
 import { ThemeToggle } from '../ThemeToggle';

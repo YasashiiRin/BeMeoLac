@@ -81,9 +81,12 @@ export const updateComic = (id: string, data: ComicUpdate): Promise<Comic> =>
 export const deleteComic = (id: string): Promise<void> =>
   USE_MOCK ? mock.remove(id) : http.delete(`/api/comics/${encodeURIComponent(id)}`);
 
-/** POST /api/comics/{id}/favorite/toggle → Comic */
-export const toggleFavorite = (id: string): Promise<Comic> =>
-  USE_MOCK ? mock.toggleFavorite(id) : http.post<Comic>(`/api/comics/${encodeURIComponent(id)}/favorite/toggle`);
+/** PUT /api/comics/{id}/favorite → Comic (mark) · DELETE /api/comics/{id}/favorite → Comic (unmark); both idempotent */
+export const setFavorite = (id: string, isFavorite: boolean): Promise<Comic> => {
+  if (USE_MOCK) return mock.setFavorite(id, isFavorite);
+  const path = `/api/comics/${encodeURIComponent(id)}/favorite`;
+  return isFavorite ? http.put<Comic>(path) : http.delete<Comic>(path);
+};
 
 /**
  * PUT /api/comics/{id}/progress body { current_chapter } → Comic
@@ -118,7 +121,7 @@ export const comicsService = {
   create: createComic,
   update: updateComic,
   delete: deleteComic,
-  toggleFavorite,
+  setFavorite,
   updateProgress: updateComicProgress,
   addSourceToComic,
   addComicToShelf,

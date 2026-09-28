@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Comic, Shelf, ComicStatus, ComicSummary, FacetOption, SortOption, TagCount } from '../types';
-import { getComics, toggleFavorite, updateComicProgress, comicsService } from '../services/comicService';
+import { getComics, setFavorite, updateComicProgress, comicsService } from '../services/comicService';
 import { shelvesService } from '../services/shelfService';
 import { tagsService } from '../services/tagsService';
 import { userService } from '../services/userService';
@@ -12,7 +12,7 @@ import { Button } from '../components/Button';
 import { SearchBar } from '../components/SearchBar';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorState } from '../components/ErrorState';
-import { ResponsiveDrawer } from '../components/ResponsiveDrawer';
+import {} from '../components/ResponsiveDrawer';
 import { ShelfFormModal } from '../components/ShelfFormModal';
 import { Sidebar } from '../components/layout/Sidebar';
 import { VineProgressBar } from '../components/VineProgressBar';
@@ -23,13 +23,9 @@ import {
   BookOpen,
   LayoutGrid,
   List,
-  Filter,
   ChevronLeft,
   ChevronRight,
   Plus,
-  Coffee,
-  CheckCircle2,
-  SlidersHorizontal,
 } from 'lucide-react';
 
 export const BookshelfPage: React.FC = () => {
@@ -160,7 +156,7 @@ export const BookshelfPage: React.FC = () => {
   // Handlers
   const handleToggleFavorite = async (id: string) => {
     try {
-      const updated = await toggleFavorite(id);
+      const updated = await setFavorite(id, !comics.find((c) => c.id === id)?.is_favorite);
       setComics((prev) =>
         prev.map((c) => (c.id === id ? { ...c, is_favorite: updated.is_favorite } : c))
       );
@@ -776,7 +772,7 @@ export const BookshelfPage: React.FC = () => {
 
           <VineProgressBar
             current={summary?.by_status.completed ?? 0}
-            total={summary?.total || 1}
+            total={summary?.total ?? 0}
             variant="fairy"
             height="md"
           />
@@ -784,7 +780,7 @@ export const BookshelfPage: React.FC = () => {
           <div className="mt-3 pt-2.5 border-t border-border/50 flex items-center justify-between text-xs">
             <span className="text-text-muted flex items-center gap-1">
               <span>✨</span>
-              <span>Có <strong>{summary?.new_chapters ?? 0} chương mới</strong> đang chờ</span>
+              <span>Có <strong>{summary?.new_chapters ?? 0} truyện có chương mới</strong> đang chờ</span>
             </span>
             <span className="px-2 py-0.5 rounded-full bg-leaf-tint text-primary-ink font-bold border border-leaf">
               Tiên Cỏ 🌿
