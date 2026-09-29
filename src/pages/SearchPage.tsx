@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { History, SlidersHorizontal, Sparkles, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { History, SlidersHorizontal, Sparkles, X, ChevronLeft, ChevronRight, Library, Telescope } from 'lucide-react';
 import type { Comic, Paginated, SearchFacets, SearchSort } from '../types';
 import { searchComics, getSearchFacets } from '../services/comicService';
 import { ComicCard } from '../components/ComicCard';
@@ -19,6 +19,8 @@ import {
   toSearchParams,
 } from '../features/search/searchState';
 import { useRecentSearches } from '../features/search/useRecentSearches';
+import type { SearchTab } from '../features/search/searchState';
+import { DiscoverResults } from '../features/discover/DiscoverResults';
 
 const PAGE_SIZE = 12;
 const DEBOUNCE_MS = 300;
@@ -73,8 +75,13 @@ export const SearchPage: React.FC = () => {
   );
 
   const resetAll = useCallback(() => {
-    setParams(serializeSearch({ ...EMPTY_FILTERS, q: '' }), { replace: true });
+    setParams((prev) => serializeSearch({ ...EMPTY_FILTERS, q: '', tab: parseSearch(prev).tab }), { replace: true });
   }, [setParams]);
+
+  const tab: SearchTab = filters.tab;
+  const discovering = tab === 'discover';
+  // the search text goes along to the other tab; filters stay with "Trong tủ"
+  const switchTab = (next: SearchTab) => next !== tab && update({ tab: next });
 
   const resetFilters = useCallback(() => update({ ...EMPTY_FILTERS }), [update]);
 
@@ -120,6 +127,7 @@ export const SearchPage: React.FC = () => {
 
   const requestId = useRef(0);
   useEffect(() => {
+    if (discovering) return; // "Khám phá" loads its own results
     const id = ++requestId.current;
     setIsLoading(true);
     setLoadError(null);
@@ -181,13 +189,40 @@ export const SearchPage: React.FC = () => {
             <h1 className="font-serif text-xl font-semibold text-text flex items-center justify-center gap-2">
               <span aria-hidden="true" className="text-accent-ink">❦</span> Kính Lúp Hoa Cỏ Của Nàng <span aria-hidden="true" className="text-accent-ink">❦</span>
             </h1>
-            {facets && (
-              <p className="text-xs italic text-text-muted mt-1">
-                Tra cứu trong {facets.total} tập truyện theo tên, tác giả, thẻ hoa và ghi chú
-              </p>
+            {discovering ? (
+              <p className="text-xs italic text-text-muted mt-1">Tìm truyện mới trên MangaDex và AniList rồi thêm thẳng vào tủ</p>
+            ) : (
+              facets && (
+                <p className="text-xs italic text-text-muted mt-1">
+                  Tra cứu trong {facets.total} tập truyện theo tên, tác giả, thẻ hoa và ghi chú
+                </p>
+              )
             )}
           </div>
           <h1 className="sr-only md:hidden">Tìm kiếm truyện</h1>
+
+          {/* Tabs: her own comics / across the web */}
+          <div role="tablist" aria-label="Tìm ở đâu" className="w-full max-w-sm p-1 bg-surface-sunken/60 rounded-full flex items-center gap-1 border border-border/40">
+            {(
+              [
+                { value: 'library', label: 'Trong tủ', icon: <Library size={15} /> },
+                { value: 'discover', label: 'Khám phá', icon: <Telescope size={15} /> },
+              ] as const
+            ).map((t) => (
+              <button
+                key={t.value}
+                type="button"
+                role="tab"
+                aria-selected={tab === t.value}
+                onClick={() => switchTab(t.value)}
+                className={`flex-1 py-1.5 px-3 rounded-full text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                  tab === t.value ? 'bg-surface-raised text-primary-ink shadow-botanical-sm' : 'text-text-muted hover:text-text'
+                }`}
+              >
+                {t.icon} {t.label}
+              </button>
+            ))}
+          </div>
 
           <div className="w-full flex items-center gap-2">
             <SearchBar
@@ -195,8 +230,8 @@ export const SearchPage: React.FC = () => {
               onChange={setText}
               onSubmit={() => commitNow()}
               shortcut={false}
-              ariaLabel="Tìm theo tên truyện, tác giả, thẻ hoa, ghi chú"
-              placeholder="Tìm theo tên truyện, tác giả, thẻ hoa, ghi chú..."
+              ariaLabel={discovering ? 'Tìm truyện theo tên trên MangaDex và AniList' : 'Tìm theo tên truyện, tác giả, thẻ hoa, ghi chú'}
+              placeholder={discovering ? 'Tìm truyện mới theo tên (tên gốc, tiếng Anh, romaji)...' : 'Tìm theo tên truyện, tác giả, thẻ hoa, ghi chú...'}
               className="flex-1"
             />
             <button
@@ -206,19 +241,21 @@ export const SearchPage: React.FC = () => {
             >
               <Sparkles size={15} /> Tra cứu
             </button>
-            <button
-              type="button"
-              onClick={() => setSheetOpen(true)}
-              aria-label={activeCount ? `Bộ lọc, ${activeCount} đang bật` : 'Bộ lọc'}
-              className="md:hidden relative shrink-0 w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center glow-primary cursor-pointer"
-            >
-              <SlidersHorizontal size={17} />
-              {activeCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-gold text-on-gold text-[10px] font-bold flex items-center justify-center shadow-botanical-sm">
-                  {activeCount}
-                </span>
-              )}
-            </button>
+            {!discovering && (
+              <button
+                type="button"
+                onClick={() => setSheetOpen(true)}
+                aria-label={activeCount ? `Bộ lọc, ${activeCount} đang bật` : 'Bộ lọc'}
+                className="md:hidden relative shrink-0 w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center glow-primary cursor-pointer"
+              >
+                <SlidersHorizontal size={17} />
+                {activeCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-gold text-on-gold text-[10px] font-bold flex items-center justify-center shadow-botanical-sm">
+                    {activeCount}
+                  </span>
+                )}
+              </button>
+            )}
           </div>
 
           {/* Recent searches */}
@@ -246,7 +283,7 @@ export const SearchPage: React.FC = () => {
           )}
 
           {/* Quick genre tags */}
-          {facets && facets.genres.length > 0 && (
+          {!discovering && facets && facets.genres.length > 0 && (
             <div className="w-full flex items-center gap-1.5 overflow-x-auto no-scrollbar md:flex-wrap">
               <span className="shrink-0 text-[11px] font-semibold text-text-muted">🌿 Gợi ý:</span>
               {facets.genres.slice(0, QUICK_TAGS).map((g) => {
@@ -270,6 +307,16 @@ export const SearchPage: React.FC = () => {
         </div>
       </section>
 
+      {discovering ? (
+        <section aria-label="Kết quả khám phá">
+          <DiscoverResults
+            query={filters.q}
+            page={filters.page}
+            onPageChange={(page) => update({ page })}
+            emptyAction={{ text: 'Tự nhập truyện vào tủ', onClick: () => navigate('/add') }}
+          />
+        </section>
+      ) : (
       <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
         {/* ── Filters (md+) ── */}
         <aside className="hidden md:block md:col-span-5 lg:col-span-4 xl:col-span-3 bg-surface border-1.5 border-border rounded-3xl p-3.5 shadow-botanical-sm">
@@ -391,6 +438,7 @@ export const SearchPage: React.FC = () => {
           )}
         </section>
       </div>
+      )}
 
       {/* ── Filters (mobile) ── */}
       <BottomSheet

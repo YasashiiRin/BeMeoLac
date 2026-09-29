@@ -243,3 +243,65 @@ export interface TagCount {
   name: string;
   count: number;
 }
+
+/* ── Discover: search across the web (docs/api-contract.md#discover) ── */
+
+export type PublicationStatus = 'ongoing' | 'completed' | 'hiatus' | 'cancelled' | 'unknown';
+
+/** Where a result's data comes from: an attribution badge ("MangaDex") linking back. */
+export interface ProviderCredit {
+  provider: string; // "mangadex"
+  name: string; // "MangaDex"
+  url: string; // the work's page on the provider
+}
+
+export interface DiscoverLink {
+  site_name: string;
+  url: string;
+}
+
+export interface DiscoverResult {
+  provider: string; // with external_id: what POST /api/library takes
+  provider_name: string;
+  external_id: string;
+  external_ids: Record<string, string>;
+  providers: string[];
+  attribution: ProviderCredit[]; // lead provider first
+  title: string;
+  alt_titles: string[];
+  description: string;
+  cover_url: string; // the provider's image
+  authors: string[];
+  genres: string[];
+  status: PublicationStatus;
+  latest_chapter: number | null; // null = the provider doesn't say
+  links: DiscoverLink[]; // where to read, one per site
+  in_library: boolean;
+  library_item_id: string | null; // the Comic id when in_library
+}
+
+export interface DiscoverPage {
+  query: string;
+  page: number;
+  results: DiscoverResult[];
+  providers: string[];
+  provider_names: Record<string, string>;
+  providers_failed: string[]; // skipped this time (slow, down or rate-limited)
+}
+
+/** POST /api/library: exactly one of {provider, external_id} | {url} | {manual}. */
+export type LibraryAddRequest = (
+  | { provider: string; external_id: string }
+  | { url: string }
+  | { manual: ComicCreate }
+) & {
+  status?: ComicStatus;
+  current_chapter?: number;
+  shelf_ids?: string[];
+};
+
+/** The saved Comic; created = false when it was already in the library (200). */
+export interface LibraryAddResult {
+  comic: Comic;
+  created: boolean;
+}

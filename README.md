@@ -29,7 +29,7 @@ Mọi lời gọi API đều nằm trong `src/services/`. Có thể bật API th
 
 | Biến                 | Ví dụ                   | Ý nghĩa                                                                                                                    |
 | -------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `VITE_REAL_SERVICES` | `auth,users`            | Các service gọi backend thật, cách nhau bằng dấu phẩy. Để trống thì tất cả dùng dữ liệu giả. Tên service: `auth`, `users`, `comics`, `shelves`, `sources`, `tags`, `stats`, `notifications`. |
+| `VITE_REAL_SERVICES` | `auth,users`            | Các service gọi backend thật, cách nhau bằng dấu phẩy. Để trống thì tất cả dùng dữ liệu giả. Tên service: `auth`, `users`, `comics`, `shelves`, `sources`, `tags`, `stats`, `notifications`, `discover` (tìm truyện trên mạng và “Thêm vào tủ”). |
 | `VITE_USE_MOCK`      | `true` / `false`        | Tùy chọn, ghi đè cho tất cả: `true` là mọi service dùng dữ liệu giả, `false` là mọi service gọi API thật. Không đặt thì dùng `VITE_REAL_SERVICES`. |
 | `VITE_API_URL`       | để trống                | Địa chỉ gốc của backend, không có `/` ở cuối. Để trống thì ứng dụng gọi `/api/...` trên chính địa chỉ của nó, giống khi chạy thật. |
 | `API_PROXY_TARGET`   | `http://localhost:8000` | Chỉ dùng cho máy chủ phát triển: `npm run dev` chuyển mọi request `/api` tới địa chỉ này, nên không bị lỗi CORS.         |

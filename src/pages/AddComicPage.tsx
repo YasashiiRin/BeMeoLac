@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useSyncExternalStore } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Comic, ComicStatus, Shelf, Source } from '../types';
 import { comicsService } from '../services/comicService';
 import { sourcesService } from '../services/sourcesService';
 import { shelvesService } from '../services/shelfService';
 import { useToast } from '../context/ToastContext';
+import { DiscoverSearchPanel } from '../features/discover/DiscoverSearchPanel';
 import {
   X,
   Link as LinkIcon,
@@ -22,15 +23,33 @@ import {
   Flower2,
   Layers,
   Lightbulb,
+  Telescope,
 } from 'lucide-react';
+
+type AddTab = 'search' | 'link' | 'manual';
+
+// The page draws a desktop modal and a mobile page (one hidden by CSS). The web search panel is
+// mounted in the visible one only, so it searches once and opens one drawer.
+const LARGE = '(min-width: 1024px)';
+const subscribeLarge = (onChange: () => void) => {
+  const mq = window.matchMedia(LARGE);
+  mq.addEventListener('change', onChange);
+  return () => mq.removeEventListener('change', onChange);
+};
+const useIsLarge = () => useSyncExternalStore(subscribeLarge, () => window.matchMedia(LARGE).matches);
 
 
 export const AddComicPage: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
 
-  // Active Tab: 'link' | 'manual'
-  const [activeTab, setActiveTab] = useState<'link' | 'manual'>('link');
+  // Active tab: 'search' (Tìm theo tên) | 'link' (Dán liên kết) | 'manual' (Nhập thủ công); /add?tab=search opens the search
+  const [params] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<AddTab>(() => {
+    const t = params.get('tab');
+    return t === 'search' || t === 'manual' ? t : 'link';
+  });
+  const isLarge = useIsLarge();
 
   // Link Tab State
   const [sourceUrlInput, setSourceUrlInput] = useState('');
@@ -207,10 +226,14 @@ export const AddComicPage: React.FC = () => {
   const handleAddAsSecondarySource = async () => {
     if (!existingComic) return;
     try {
+      if (!sourceUrlInput.trim()) {
+        showToast('Nàng dán liên kết của nguồn đọc trước đã nhé', 'warning');
+        return;
+      }
       const newSource: Source = {
         id: `src_${Date.now()}`,
         site_name: siteName || 'Nguồn phụ',
-        url: sourceUrlInput || 'https://cuutruyen.net',
+        url: sourceUrlInput.trim(),
         favicon_url: '',
         chapter_url: sourceUrlInput || '',
         latest_chapter: totalChapters,
@@ -241,17 +264,21 @@ export const AddComicPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
+      // a source only when she gave a link (never a made-up site link: it would join unrelated comics)
+      const link = sourceUrlInput.trim();
       const newSourceId = `src_${Date.now()}`;
-      const newSource: Source = {
-        id: newSourceId,
-        site_name: siteName || 'Cuutruyen',
-        url: sourceUrlInput || 'https://cuutruyen.net',
-        favicon_url: '',
-        chapter_url: sourceUrlInput || '',
-        latest_chapter: Math.max(1, totalChapters),
-        is_alive: true,
-        last_checked_at: new Date().toISOString(),
-      };
+      const newSource: Source | null = link
+        ? {
+            id: newSourceId,
+            site_name: siteName || new URL(link, window.location.origin).hostname.replace(/^www\./, '') || 'Nguồn đọc',
+            url: link,
+            favicon_url: '',
+            chapter_url: link,
+            latest_chapter: Math.max(1, totalChapters),
+            is_alive: true,
+            last_checked_at: null,
+          }
+        : null;
 
       const createdComic = await comicsService.create({
         title: title.trim(),
@@ -265,8 +292,8 @@ export const AddComicPage: React.FC = () => {
         is_favorite: false,
         note: '',
         tags: tags.length ? tags : ['Chữa lành'],
-        sources: [newSource],
-        primary_source_id: newSourceId,
+        sources: newSource ? [newSource] : [],
+        primary_source_id: newSource ? newSourceId : '',
         shelf_ids: Array.from(new Set(['all', ...selectedShelfIds])),
         has_new_chapter: false,
         last_read_at: new Date().toISOString(),
@@ -396,11 +423,27 @@ export const AddComicPage: React.FC = () => {
                 <Edit3 className="w-4 h-4" />
                 <span>Nhập thủ công</span>
               </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('search')}
+                className={`flex-1 py-2 px-4 rounded-full text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                  activeTab === 'search'
+                    ? 'bg-gradient-to-r from-accent-tint via-surface to-primary-tint shadow-sm text-text'
+                    : 'text-text-muted hover:text-text'
+                }`}
+              >
+                <Telescope className="w-4 h-4 text-gold-ink" />
+                <span>Tìm theo tên</span>
+              </button>
             </div>
           </div>
 
           {/* Modal Body (Scrollable Parchment Content) */}
           <div className="px-6 sm:px-10 py-5 space-y-6 max-h-[66vh] overflow-y-auto overflow-x-hidden no-scrollbar">
+            {activeTab === 'search' ? (
+              isLarge && <DiscoverSearchPanel onManual={() => setActiveTab('manual')} />
+            ) : (
+            <>
             {/* TAB 1: DÁN LINK */}
             {activeTab === 'link' ? (
               <div className="space-y-6">
@@ -883,9 +926,12 @@ export const AddComicPage: React.FC = () => {
                 })}
               </div>
             </div>
+            </>
+            )}
           </div>
 
           {/* Modal Footer (Embossed Floral Wax CTAs) */}
+          {activeTab !== 'search' && (
           <div className="px-6 sm:px-10 py-4 bg-surface/90 border-t border-border flex flex-col-reverse sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-1.5 text-text-muted text-xs">
               <Cloud className="w-4 h-4 text-gold-ink" />
@@ -911,6 +957,7 @@ export const AddComicPage: React.FC = () => {
               </button>
             </div>
           </div>
+          )}
         </div>
       </div>
 
@@ -981,8 +1028,24 @@ export const AddComicPage: React.FC = () => {
               <Edit3 className="w-4 h-4" />
               <span>Nhập thủ công</span>
             </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('search')}
+              className={`flex-1 py-2 px-3 rounded-full text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                activeTab === 'search'
+                  ? 'bg-surface-raised text-accent-ink shadow-xs'
+                  : 'text-text-muted hover:text-text'
+              }`}
+            >
+              <Telescope className="w-4 h-4 text-gold-ink" />
+              <span>Tìm tên</span>
+            </button>
           </div>
 
+          {activeTab === 'search' ? (
+            !isLarge && <DiscoverSearchPanel onManual={() => setActiveTab('manual')} />
+          ) : (
+          <>
           {/* TAB 1: Dán Link */}
           {activeTab === 'link' ? (
             <div className="flex flex-col gap-4">
@@ -1498,9 +1561,12 @@ export const AddComicPage: React.FC = () => {
               />
             </div>
           </div>
+          </>
+          )}
         </main>
 
         {/* Mobile Fixed Bottom Bar */}
+        {activeTab !== 'search' && (
         <div className="fixed bottom-0 left-0 right-0 w-full z-40 bg-surface-raised/95 backdrop-blur-md shadow-lg border-t border-border-strong/20 p-3">
           <div className="max-w-md mx-auto flex items-center gap-3">
             <button
@@ -1521,6 +1587,7 @@ export const AddComicPage: React.FC = () => {
             </button>
           </div>
         </div>
+        )}
       </div>
     </>
   );

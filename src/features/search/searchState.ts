@@ -2,12 +2,15 @@ import type { ComicSearchParams, ComicStatus, SearchSort } from '../../types';
 
 /*
  * Search text + filters <-> URL query string, so refresh and sharing keep them.
- *   q, status*, genre*, source*, shelf*, rating, pmin, pmax, new=1, broken=1, sort, page
+ *   tab=discover, q, status*, genre*, source*, shelf*, rating, pmin, pmax, new=1, broken=1, sort, page
  * (* = repeatable key)
  */
 
+/** "library" = the user's own comics (Trong tủ); "discover" = across the web (Khám phá). */
+export type SearchTab = 'library' | 'discover';
+
 export type SearchFilters = Required<Pick<ComicSearchParams, 'statuses' | 'genres' | 'sources' | 'shelves'>> &
-  Omit<ComicSearchParams, 'statuses' | 'genres' | 'sources' | 'shelves' | 'page_size'> & { q: string; page: number };
+  Omit<ComicSearchParams, 'statuses' | 'genres' | 'sources' | 'shelves' | 'page_size'> & { q: string; page: number; tab: SearchTab };
 
 const STATUSES: ComicStatus[] = ['reading', 'completed', 'plan_to_read', 'on_hold', 'dropped'];
 const SORTS: SearchSort[] = ['relevance', 'updated_at', 'title', 'rating', 'progress'];
@@ -24,6 +27,7 @@ export function parseSearch(p: URLSearchParams): SearchFilters {
   let pmax = clampPct(p.get('pmax'), 100);
   if (pmin > pmax) [pmin, pmax] = [pmax, pmin];
   return {
+    tab: p.get('tab') === 'discover' ? 'discover' : 'library',
     q: p.get('q') ?? '',
     statuses: p.getAll('status').filter((s): s is ComicStatus => STATUSES.includes(s as ComicStatus)),
     genres: p.getAll('genre').filter(Boolean),
@@ -41,6 +45,7 @@ export function parseSearch(p: URLSearchParams): SearchFilters {
 
 export function serializeSearch(f: SearchFilters): URLSearchParams {
   const p = new URLSearchParams();
+  if (f.tab === 'discover') p.set('tab', 'discover');
   if (f.q.trim()) p.set('q', f.q);
   f.statuses.forEach((v) => p.append('status', v));
   f.genres.forEach((v) => p.append('genre', v));
@@ -56,7 +61,7 @@ export function serializeSearch(f: SearchFilters): URLSearchParams {
   return p;
 }
 
-export const EMPTY_FILTERS: Omit<SearchFilters, 'q' | 'sort'> = {
+export const EMPTY_FILTERS: Omit<SearchFilters, 'q' | 'sort' | 'tab'> = {
   statuses: [],
   genres: [],
   sources: [],
@@ -83,7 +88,7 @@ export function countActiveFilters(f: SearchFilters): number {
   );
 }
 
-export function toSearchParams(f: SearchFilters, pageSize: number): ComicSearchParams {
+export function toSearchParams({ tab: _tab, ...f }: SearchFilters, pageSize: number): ComicSearchParams {
   return { ...f, q: f.q.trim(), page_size: pageSize };
 }
 

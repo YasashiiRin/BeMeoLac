@@ -15,7 +15,7 @@
  * - Every error is an ApiError built from the backend body { detail, code? }.
  */
 
-export const SERVICE_NAMES = ['auth', 'users', 'comics', 'shelves', 'sources', 'tags', 'stats', 'notifications'] as const;
+export const SERVICE_NAMES = ['auth', 'users', 'comics', 'shelves', 'sources', 'tags', 'stats', 'notifications', 'discover'] as const;
 export type ServiceName = (typeof SERVICE_NAMES)[number];
 
 const GLOBAL_MOCK = import.meta.env.VITE_USE_MOCK?.trim().toLowerCase();
@@ -251,10 +251,15 @@ function absolutizeApiUrls(value: unknown): unknown {
 }
 
 export async function request<T>(method: string, path: string, opts: RequestOptions = {}): Promise<T> {
+  return (await requestWithStatus<T>(method, path, opts)).data;
+}
+
+/** Like request, with the HTTP status too (e.g. 201 created vs 200 already there). */
+export async function requestWithStatus<T>(method: string, path: string, opts: RequestOptions = {}): Promise<{ data: T; status: number }> {
   const res = await send(method, path, opts);
-  if (res.status === 204) return undefined as T;
+  if (res.status === 204) return { data: undefined as T, status: 204 };
   const text = await res.text();
-  return absolutizeApiUrls(text ? JSON.parse(text) : undefined) as T;
+  return { data: absolutizeApiUrls(text ? JSON.parse(text) : undefined) as T, status: res.status };
 }
 
 /** For downloads: the raw Response. */

@@ -13,11 +13,14 @@ Field names are snake_case on the wire, exactly as in those types.
 - [Auth](#auth)
 - [Users (`/api/users/me`)](#users)
 - [Comics](#comics)
+- [Discover (search across the web)](#discover)
+- [Library (saving)](#library)
 - [Shelves](#shelves)
 - [Sources](#sources)
 - [Tags](#tags)
 - [Stats](#stats)
 - [Notifications](#notifications)
+- [Scheduled jobs](#scheduled-jobs)
 - [Endpoint index](#endpoint-index)
 - [Open points for the backend](#open-points-for-the-backend)
 
@@ -33,13 +36,15 @@ Field names are snake_case on the wire, exactly as in those types.
 
 ### Authentication
 
-- Every endpoint except `POST /api/auth/login` and `POST /api/auth/refresh` requires
-  `Authorization: Bearer <access_token>`.
+- Every endpoint except `POST /api/auth/register`, `/login`, `/refresh`, `/forgot-password`
+  and `/reset-password` requires `Authorization: Bearer <access_token>`.
 - A missing, expired or invalid access token → **401**. The frontend then calls
   `POST /api/auth/refresh` **once** and retries the original request. If the refresh
   fails too, it clears the session and redirects to `/login`.
-- Concurrent 401s share a single refresh attempt, so the refresh endpoint can rotate
-  the refresh token safely.
+- Concurrent 401s share a single refresh attempt within one tab. Several tabs share the
+  same refresh token, so the server does **not** rotate it (rotating would sign the other
+  tabs out). Each device has one session. Revoking the session signs that device out at
+  once, because every request checks it.
 
 ### Request and response bodies
 
@@ -92,6 +97,8 @@ Common error codes, used on every endpoint where they apply:
 | ------ | ------------------ | ---------------------------------------------------------- |
 | 401    | `not_authenticated`| Missing or invalid access token (triggers the refresh flow). |
 | 401    | `token_expired`    | Access token expired (triggers the refresh flow).          |
+| 401    | `session_revoked`  | This device was signed out (logout, "sign out other devices", password change or reset). The refresh then fails too, so the client logs out. |
+| 403    | `account_locked`   | The account is locked (`is_active = false`). The client does not log out, but it can't use the API. |
 | 404    | `comic_not_found`  | Unknown comic ID (or one that belongs to another user).    |
 | 404    | `shelf_not_found`  | Unknown shelf ID.                                          |
 | 404    | `not_found`        | Any other unknown resource.                                |
@@ -141,10 +148,67 @@ Response **200** `LoginResult`:
 }
 ```
 
-Errors: **401** `invalid_credentials` (wrong username/email or password; don't reveal which one).
-This 401 does not trigger the refresh flow.
+Errors:
+
+- **401** `invalid_credentials`: wrong username/email or password (the response doesn't reveal which).
+  This 401 does not trigger the refresh flow.
+- **403** `account_locked`: the password is right but the account is locked. `detail`:
+  "Tài khoản của nàng đang tạm bị khóa. Nàng liên hệ quản trị viên để được mở lại nhé."
+  A wrong password on a locked account still gets `invalid_credentials`.
 
 Used by: `/login`.
+
+### `POST /api/auth/register`
+
+No auth header. Creates an account and signs it in.
+
+Request:
+
+```json
+{ "username": "tiennu", "email": "tiennu@example.com", "password": "••••••••", "display_name": "Tiên Nữ" }
+```
+
+- `username`: 3–32 characters from `a-z 0-9 _ .`. It is stored in lowercase.
+- `email` is stored in lowercase.
+- `password`: 8–128 characters.
+- `display_name` is optional, 40 characters max. Default: the username.
+
+Response **201** `LoginResult`, as for login.
+
+Errors: **409** `username_taken`, **409** `email_taken`, **422** `validation_error`.
+
+Used by: not used by the frontend yet (there is no sign-up page).
+
+### `POST /api/auth/forgot-password`
+
+No auth header.
+
+Request: `{ "email": "…" }`
+
+Response **202** `{ "detail": "Nếu email này có tài khoản, …" }`. The response is the same
+whether or not the email has an account, so it can't be used to find accounts.
+
+- For an active account, it creates a single-use reset token valid for
+  `PASSWORD_RESET_TTL_MINUTES` (default 30). Older unused links stop working.
+- The link is `{FRONTEND_URL}/reset-password?token=…`. **For now it is printed to the server
+  log**; email comes later.
+
+Errors: **422** `validation_error` (not an email).
+
+Used by: not used by the frontend yet (there is no reset page).
+
+### `POST /api/auth/reset-password`
+
+No auth header.
+
+Request: `{ "token": "…", "new_password": "…" }` (8–128 characters).
+
+Response **204**. Sets the new password and signs out **every** device.
+
+Errors: **400** `invalid_reset_token` (unknown, used or expired), **403** `account_locked`,
+**422** `validation_error`.
+
+Used by: not used by the frontend yet.
 
 ### `POST /api/auth/refresh`
 
@@ -152,16 +216,21 @@ No auth header.
 
 Request: `{ "refresh_token": "…" }`
 
-Response **200**: `{ "access_token": "…", "refresh_token": "…" }`. `refresh_token`
-is optional: if you leave it out, the client keeps the old one. Rotating it is recommended.
+Response **200**: `{ "access_token": "…", "token_type": "bearer" }`. The refresh token is not rotated:
+the client keeps the one it has (`SessionTokens.refresh_token` is optional). Each refresh moves
+the session's expiry to `REFRESH_TOKEN_TTL_DAYS` (default 30) from now, so the expiry slides
+while the device is in use.
 
-Errors: **401** `invalid_refresh_token` (expired, revoked or unknown). The client then logs out.
+Errors: **401** `invalid_refresh_token` (expired, revoked or unknown), **403** `account_locked`.
+The client logs out on either.
 
 Used by: the HTTP client, automatically, after any 401.
 
 ### `POST /api/auth/logout`
 
-Request: `{ "refresh_token": "…" }`. Revokes this device's session only.
+Request: `{ "refresh_token": "…" }`. Revokes this device's session only. The body is optional:
+without it, the session of the access token is revoked. A refresh token that belongs to
+another user is ignored.
 
 Response **204**.
 
@@ -201,19 +270,30 @@ Used by: app start-up (restores the saved session), `/account/data` (reloads `la
 
 ### `PATCH /api/users/me`
 
-Request: `{ "display_name"?: string, "bio"?: string }`
+Request: `{ "display_name"?: string, "bio"?: string, "avatar"?: string | null, "settings"?: Partial<UserSettings> }`
+
+- `display_name`: 1–40 characters, trimmed. `bio`: at most 160 characters.
+- `avatar`: a `data:image/…;base64,…` URL (stored like an upload), or `null` to remove the picture.
+- `settings`: merged as in `PATCH /api/users/me/settings`.
+- **Nothing else can be changed here.** The username never changes.
 
 Response **200** `User`.
 
-Errors: **422** `validation_error` (for example an empty `display_name`).
+Errors:
+
+- **400** `username_not_editable`: the body contains `username`. `detail`: "Tên đăng nhập không thể thay đổi. …"
+- **400** `field_not_editable`: any other field (`email`, `role`, `password`, …).
+- **400** `invalid_file` (bad `avatar`), **422** `validation_error` (for example an empty `display_name`).
 
 Used by: `/account/profile`.
 
 ### `PUT /api/users/me/avatar`
 
-Request: `multipart/form-data`, with the image in the `file` field. Images only, 2 MB max.
+Request: `multipart/form-data`, with the image in the `file` field. Images only, 4 MB max
+(Vercel accepts request bodies up to 4.5 MB).
 
-Response **200** `User` with the new `avatar_url`.
+Stored in the database as a 256×256 WebP (centre-cropped). Response **200** `User` with the new
+`avatar_url`, a signed URL like the cover's (see [Images](#images)).
 
 Errors: **400** `invalid_file` (not an image, or unreadable), **413** `file_too_large`.
 
@@ -234,10 +314,10 @@ Used by: `/account/appearance` and the theme toggle in the header (`theme`,
 
 Request: `{ "current_password": "…", "new_password": "…" }`
 
-Response **204**.
+Response **204**. Every **other** device is signed out; this one stays signed in.
 
 Errors: **400** `wrong_password` (the UI shows it under the "current password" field),
-**422** `validation_error` (the new password is too weak).
+**422** `validation_error` (the new password is shorter than 8 characters, or the same as the current one).
 
 Used by: `/account/security`.
 
@@ -301,6 +381,18 @@ Used by: `/account`.
 
 Service: [`src/services/comicService.ts`](../src/services/comicService.ts).
 
+**How a Comic is stored.** The database keeps each comic once, as a shared **work** (title, authors,
+genres, cover, total chapters, where to read), and one **library item** per user who saved it
+(status, progress, rating, note, favourite, shelves, own tags). A `Comic` joins the two for one
+user; `Comic.id` is the library item's id. Nothing about the web is stored until someone saves it.
+
+- A work found on the web ([Discover](#discover)) is **shared**. A work entered by hand is
+  **private** to the person who entered it. Nobody else can join it.
+- **Editing a work's info** (title, author, description, total, cover, sources) changes the work
+  itself when it is the user's private work or nobody else saved it. When others saved it too, the
+  change is kept as **that user's own version**, and everyone else keeps seeing the shared info.
+  Adding a source always adds it to the shared work, because it only adds information.
+
 ### `Comic`
 
 ```ts
@@ -311,15 +403,25 @@ Service: [`src/services/comicService.ts`](../src/services/comicService.ts).
   rating: number;            // 0–5
   is_favorite: boolean; note: string; tags: string[];
   sources: Source[]; primary_source_id: string;
-  shelf_ids: string[];
+  shelf_ids: string[];       // always starts with "all" (the virtual shelf), then real shelf ids
   has_new_chapter: boolean;
-  last_read_at: string; created_at: string; updated_at: string;
+  last_read_at: string | null;   // null = never read
+  created_at: string; updated_at: string;
 }
 Source = {
   id: string; site_name: string; url: string; favicon_url: string; chapter_url: string;
-  latest_chapter: number; is_alive: boolean; last_checked_at: string;
+  latest_chapter: number; is_alive: boolean;
+  last_checked_at: string | null;   // set only by the server's link check
 }
 ```
+
+- `cover_url` is an external `https://` URL, a signed `/api/comics/{id}/cover?v=…&sig=…` URL
+  for a stored cover (see [Images](#images)), or `""`.
+- `primary_source_id` is `""` when the comic has no source.
+- `tags`: the user's own tags in the order they entered them, then the work's genres.
+- `total_chapters` is the last chapter known (the user's own number, if they set one on a shared
+  work). **`current_chapter` may be higher**, because sites list new chapters before providers do.
+  Clients should cap progress bars at 100 %.
 
 > **Route order:** declare `/api/comics/facets`, `/api/comics/summary` and
 > `/api/comics/lookup` **before** `/api/comics/{id}` in FastAPI.
@@ -418,31 +520,65 @@ Used by: `/comics/:id`.
 Request `ComicCreate`: every `Comic` field except `id`, `created_at` and `updated_at`.
 
 - `sources[].id` and `primary_source_id` are generated by the client (`src_<timestamp>`).
-  The server may keep them, or assign new IDs and remap `primary_source_id` to match.
-- `shelf_ids` may include the virtual `"all"` shelf. Ignore it.
-- `cover_url` may be an `https://` URL or a `data:image/…;base64,…` URL from a file the user picked.
-  See [Open points](#open-points-for-the-backend).
+  The server assigns new IDs and remaps `primary_source_id` to match. Without a primary, the
+  first source becomes primary. An empty `chapter_url` defaults to `url`. `last_checked_at`
+  from the client is ignored.
+- `shelf_ids`: entries that aren't shelf IDs (the virtual `"all"`, or leftover mock IDs) are ignored.
+  A shelf ID that isn't one of the user's shelves → **404** `shelf_not_found`.
+- `cover_url`: an `http(s)://` URL, `""`, or a `data:image/…;base64,…` URL from a file the user
+  picked. A `data:` URL is stored like an uploaded cover (4 MB max).
+- `tags`: trimmed, repeated spaces collapsed, duplicates dropped regardless of case (the first
+  spelling wins); 30 tags max, 60 characters each. **Tags that are new for this user are created**,
+  and existing ones are reused regardless of case.
+- Unknown fields are rejected (422).
+- A **page link** (with a path, like `https://site/manga/abc`) that a saved work already has
+  attaches the comic to that work. A bare site (`https://cuutruyen.net`) never does.
+  Otherwise a new **private** work is created.
+- `current_chapter` may be above `total_chapters`. It is kept.
 
-Response **201** `Comic`.
+Response **201** `Comic`, or **200** with the user's existing `Comic` if they already saved that work.
+[`POST /api/library`](#post-apilibrary) `{ manual }` does the same.
 
-Errors: **422** `validation_error` (empty title, `current_chapter > total_chapters`, or `rating` outside 0–5).
+Errors: **404** `shelf_not_found`; **409** `source_url_taken` (the links belong to two different works);
+**400** `invalid_file` / **413** `file_too_large` (bad `data:` cover); **422** `validation_error`
+(empty title, `rating` outside 0–5, a source URL that isn't `http(s)://`, too many tags).
 
 Used by: `/add`.
 
 ### `PATCH /api/comics/{id}`
 
-Request `ComicUpdate`: any subset of the `ComicCreate` fields. When `sources` is
-given, it **replaces** the whole list. Sets `updated_at`.
+Request `ComicUpdate`: any subset of the `ComicCreate` fields. Only the fields sent change. Sets `updated_at`.
 
-Response **200** `Comic`.
+- `sources` **replaces** the whole list. A source whose `id` is an existing source of this comic
+  keeps that id; any other entry is a new source. `primary_source_id` may name an existing source
+  or the client id of a new one in the same request. If the primary is removed (or
+  `primary_source_id` is `""`), the first remaining source becomes primary. This is what
+  `/comics/:id` does to add, edit and remove sources.
+- `primary_source_id` without `sources`: must be one of the comic's sources (**404** `source_not_found`).
+- `tags` and `shelf_ids` replace the whole list. Tags that no comic uses any more are deleted.
+  Genres of the work can't be removed; sending them back again is harmless.
+- `current_chapter` may be above `total_chapters` (kept). Explicitly lowering `total_chapters`
+  below the current chapter pulls `current_chapter` down to it.
+- `cover_url`: a `data:` URL stores a new cover; sending back the comic's own signed cover URL keeps
+  it; any other URL (or `""`) replaces it.
+- **On a shared work** that others saved too, `title`, `author`, `description`, `total_chapters` and
+  `cover_url` become the user's own version. Setting the shared value again removes it. For
+  `sources` on a shared work: a removed source is hidden for this user only; a changed site name or
+  chapter link is kept for this user only; a changed link adds the new link to the work and hides
+  the old one for this user; a new source is added to the work.
 
-Errors: **404** `comic_not_found`, **422** `validation_error`.
+Response **200** `Comic`. Never 409 for a shared work.
+
+Errors: **404** `comic_not_found` | `source_not_found` | `shelf_not_found`, **409** `source_url_taken`
+(a link that belongs to another work), **422** `validation_error`.
 
 Used by: `/comics/:id` (status, rating, note, tags, sources, details).
 
 ### `DELETE /api/comics/{id}`
 
-Response **204**. Also removes the comic from every shelf order and deletes its notifications.
+Response **204**. Removes the comic from the user's library, with its shelf memberships, reading logs,
+notifications, and tags no other comic uses. The shared work is deleted too once nobody has it
+(its sources and cover with it).
 
 Errors: **404** `comic_not_found`.
 
@@ -464,11 +600,15 @@ Request: `{ "current_chapter": number }`
 
 The server:
 
-- clamps the value to `0..total_chapters`,
-- sets `status` to `completed` when it reaches `total_chapters`, otherwise to `reading`,
+- keeps any value ≥ 0, **including one above `total_chapters`**. When the value is above the work's
+  last known chapter, the server notes it on the work (`latest_chapter_hint`) so the daily check can refresh it,
+- sets `status` to `completed` when it reaches `total_chapters` exactly (unless the work is known to be
+  ongoing), otherwise to `reading`. Past the total means more chapters exist, so it stays `reading`,
 - sets `last_read_at` and `updated_at` to now,
-- logs the chapters read today for the stats (reading calendar, streak, monthly chart),
-- recommended (the mock doesn't do this yet): clears `has_new_chapter` when the user catches up with the latest source chapter.
+- when the new chapter is higher, adds the difference to today's `reading_logs` row for this comic
+  (one row per comic per day, in `APP_TIMEZONE`, default `Asia/Ho_Chi_Minh`). Going back logs nothing.
+  These rows feed the stats (reading calendar, streak, monthly chart).
+- clears `has_new_chapter` once the user reaches the highest `latest_chapter` among the sources.
 
 Response **200** `Comic`.
 
@@ -478,13 +618,180 @@ Used by: `/comics/:id` (chapter stepper), `/` and `/shelves/:id` ("đọc tiếp
 
 ### `POST /api/comics/{id}/sources`
 
-Request: `Source`. The client sends an `id` (`src_<timestamp>`), which the server may replace.
+Request: `Source`. The client sends an `id` (`src_<timestamp>`); the server replaces it.
 
-Response **201** `Comic` with the source appended.
+Response **201** `Comic` with the source appended. The first source of a comic becomes primary.
 
 Errors: **404** `comic_not_found`, **422** `validation_error`.
 
 Used by: `/add` (the "add as secondary source" option when the title already exists).
+
+### `PATCH /api/comics/{id}/sources/{source_id}`
+
+Request: any of `site_name`, `url`, `favicon_url`, `chapter_url`, `latest_chapter`, `is_alive`.
+
+On a shared work: `site_name`, `chapter_url` and `favicon_url` become this user's own; a new `url`
+adds that link and hides the old one for this user; a higher `latest_chapter` is noted as a hint;
+`is_alive` is left to the link check.
+
+Response **200** `Comic`.
+
+Errors: **404** `comic_not_found` | `source_not_found`, **422** `validation_error`.
+
+Used by: not used by the frontend yet (`/comics/:id` edits sources through `PATCH /api/comics/{id}`).
+
+### `DELETE /api/comics/{id}/sources/{source_id}`
+
+Response **200** `Comic`. If it was the primary source, the first remaining source becomes primary.
+On a shared work the source is only hidden for this user.
+
+Errors: **404** `comic_not_found` | `source_not_found`.
+
+Used by: not used by the frontend yet.
+
+### `PUT /api/comics/{id}/primary-source`
+
+Request: `{ "source_id": string }`
+
+Response **200** `Comic`.
+
+Errors: **404** `comic_not_found` | `source_not_found`.
+
+Used by: not used by the frontend yet (`/comics/:id` sends `PATCH { primary_source_id }`).
+
+### `PUT /api/comics/{id}/cover` · `DELETE /api/comics/{id}/cover`
+
+`PUT`: `multipart/form-data` with the image in `file` (4 MB max). The image is stored in the
+database as a WebP thumbnail that fits 480×720 (never upscaled, EXIF rotation applied, metadata
+dropped). `DELETE` removes the cover. On a shared work it is the user's own cover.
+
+Response **200** `Comic` with the new `cover_url`.
+
+Errors: **404** `comic_not_found`, **400** `invalid_file`, **413** `file_too_large`.
+
+Used by: not used by the frontend yet (`/add` sends the cover as a `data:` URL in `cover_url`).
+
+### Images
+
+`GET /api/comics/{id}/cover?v=&sig=` and `GET /api/users/{id}/avatar?v=&sig=` serve the stored
+WebP files. They need **no** `Authorization` header, because `<img>` tags can't send one. Instead,
+the URL is signed: API responses give it to the owner, and it can't be guessed or built for
+another comic.
+
+- Response **200** `image/webp`, `Cache-Control: public, max-age=31536000, immutable`, and an `ETag`.
+  **304** when `If-None-Match` matches.
+- `v` changes whenever the image changes, so each URL can be cached forever.
+- An unknown id, a wrong signature or an outdated `v` → **404** `not_found`.
+- The URL is relative (`/api/…`). It works as-is when the frontend reaches the API on its own
+  origin (the Vite proxy in development, a Vercel rewrite in production).
+
+---
+
+## Discover
+
+Search across the web for comics to save. Service: `src/services/discoverService.ts` (frontend, Part C).
+
+Providers are asked in parallel. Currently MangaDex (its official public API) and AniList (GraphQL,
+used for metadata). Providers give **metadata and links only**: no chapter content is ever
+fetched. Each provider is asked with an identifying `User-Agent`, within its rate limits, and without
+adult content. Their answers are cached for 6 hours (`search_cache`) and never become a catalog:
+a work exists in our database only once someone saves it.
+
+### `GET /api/discover/search?q=&page=`
+
+`q`: 2–100 characters. `page`: 1–10 (default 1; each provider returns up to 20 per page).
+
+Every provider gets about 4 s (`PROVIDER_TIMEOUT_SECONDS`). A slow, failing or rate-limited
+provider is **skipped and listed in `providers_failed`**. The search still answers, with the other
+providers' results.
+
+Response **200**:
+
+```ts
+DiscoverPage = {
+  query: string; page: number;
+  results: DiscoverResult[];
+  providers: string[];          // asked: ["mangadex", "anilist"]
+  provider_names: Record<string, string>; // display names: { mangadex: "MangaDex", anilist: "AniList" }
+  providers_failed: string[];   // skipped this time (show their provider_names in the note)
+}
+DiscoverResult = {
+  provider: string; external_id: string;       // what POST /api/library takes
+  provider_name: string;                       // the lead provider's display name: "MangaDex"
+  external_ids: Record<string, string>;        // every id known: { mangadex, anilist, mal }
+  providers: string[];                         // every provider that returned it
+  attribution: ProviderCredit[];               // the same providers, lead first: the attribution badges
+  title: string; alt_titles: string[]; description: string;
+  cover_url: string;                           // the provider's image
+  authors: string[]; genres: string[];
+  status: 'ongoing' | 'completed' | 'hiatus' | 'cancelled' | 'unknown';
+  latest_chapter: number | null;               // null = the provider doesn't say
+  links: { site_name: string; url: string }[]; // where to read, one per site
+  in_library: boolean;
+  library_item_id: string | null;              // the user's Comic id when in_library
+}
+ProviderCredit = {
+  provider: string;   // "mangadex"
+  name: string;       // "MangaDex"
+  url: string;        // the work's page there, e.g. https://mangadex.org/title/…
+}
+```
+
+Show a small badge per `attribution` entry ("MangaDex", "AniList") on each result, linking to its
+`url`: the data (and the cover image) comes from those providers, and MangaDex asks for credit.
+
+Duplicates across providers are merged into one result: first by a shared external ID (for example,
+MangaDex knows the AniList ID), then by the same normalised title plus a shared author (name order
+doesn't matter). A merged result is led by MangaDex when it has the work (a reading site first),
+and keeps the rank of its best member. Genres, alternative titles and links are combined.
+
+**Ranking.** Results whose title matches the query come first, whatever the providers' own order:
+
+1. **exact**: the title or any alternative title is the query (ignoring case, accents and punctuation);
+2. **near-exact**: the same up to spacing ("onepiece"), a leading article ("promised neverland" →
+   "The Promised Neverland"), a subtitle ("frieren" → "Frieren: Beyond Journey's End") or a small
+   typo (one letter from 5 letters, two from 10; a swap counts as one: "one peice");
+3. everything else.
+
+Within each group the providers' order is kept (best first from each provider, interleaved).
+Ranking applies within a page (`page` asks each provider for its next 20).
+
+Errors: **422** `validation_error` (`q` or `page` out of range).
+
+Used by: `/search` ("Khám phá" tab), `/add` ("Tìm theo tên").
+
+---
+
+## Library
+
+### `POST /api/library`
+
+Save a comic. Exactly one of:
+
+| Body | Meaning |
+| --- | --- |
+| `{ "provider": "mangadex", "external_id": "…" }` | a search result |
+| `{ "url": "https://mangadex.org/title/…" }` | a link: a work already saved with that page link, or a provider's own page (MangaDex title, AniList manga) |
+| `{ "manual": ComicCreate }` | entered by hand, like `POST /api/comics` (a private work) |
+
+Optional for the new library item: `status` (default `reading` if `current_chapter` > 0, else
+`plan_to_read`), `current_chapter`, `shelf_ids`.
+
+The server finds the work (by external ID, then by source link) or creates it. When it creates one, it
+fetches the details and cover once (the cover is stored as a WebP thumbnail; if it can't be fetched,
+the provider's link is kept), enriches the details from the other providers that know the work, and
+attaches the work's links as sources. A work others saved only gains what it lacks: IDs, genres,
+alternative titles, a higher chapter. **Idempotent**: saving a work the user already has returns
+their existing item.
+
+Response **201** `Comic`, or **200** with the user's existing `Comic`.
+
+Errors: **404** `work_not_found` (the provider doesn't know that ID) | `shelf_not_found`;
+**422** `unknown_provider` | `link_not_supported` (a link we can't read: search by name or enter it
+by hand) | `validation_error` (none or several of the three ways); **503** `provider_unavailable`
+(the provider is down; nothing was saved).
+
+Used by: `/search` ("Thêm vào tủ"), `/add`.
 
 ---
 
@@ -634,6 +941,9 @@ Service: [`src/services/tagsService.ts`](../src/services/tagsService.ts).
 Response **200** `TagCount[]`: `{ name: string; count: number }[]`, one entry for every
 tag used in the library. Sorted by `count` (highest first), then by name (Vietnamese collation).
 
+Tags are never created directly. A comic that uses a new tag name creates it (matching is
+case-insensitive), and a tag that no comic uses any more is deleted.
+
 Used by: `/` (genre filter).
 
 ---
@@ -734,6 +1044,25 @@ Used by: `/notifications` (swipe or delete button).
 
 ---
 
+## Scheduled jobs
+
+### `GET /api/cron/daily`
+
+Called by Vercel Cron once a day at 20:00 UTC (03:00 in Vietnam; see `vercel.json`) with
+`Authorization: Bearer <CRON_SECRET>`. Idempotent and quick. It:
+
+- deletes expired `search_cache` rows,
+- deletes works nobody has in their library any more (after an account is deleted).
+
+Coming next: refreshing `latest_chapter` from the providers for works where a reader got further
+(`latest_chapter_hint`), and checking source links.
+
+Response **200** `{ "search_cache_deleted": number, "orphan_works_deleted": number }`.
+
+Errors: **401** `not_authenticated` (wrong secret), **503** `cron_not_configured` (no `CRON_SECRET`).
+
+---
+
 ## Endpoint index
 
 | Method   | Path                                         | Service function                           | Used by                                   |
@@ -741,6 +1070,9 @@ Used by: `/notifications` (swipe or delete button).
 | POST     | `/api/auth/login`                            | `authService.login`                        | `/login`                                  |
 | POST     | `/api/auth/refresh`                          | `http.ts` (automatic)                      | every page, after a 401                   |
 | POST     | `/api/auth/logout`                           | `authService.logout`                       | avatar menu, `/account`                   |
+| POST     | `/api/auth/register`                         | —                                          | not used yet                              |
+| POST     | `/api/auth/forgot-password`                  | —                                          | not used yet                              |
+| POST     | `/api/auth/reset-password`                   | —                                          | not used yet                              |
 | GET      | `/api/users/me`                              | `userService.getCurrentUser`               | app start-up, `/account/data`             |
 | PATCH    | `/api/users/me`                              | `userService.updateProfile`                | `/account/profile`                        |
 | PUT      | `/api/users/me/avatar`                       | `userService.uploadAvatar`                 | `/account/profile`                        |
@@ -763,6 +1095,16 @@ Used by: `/notifications` (swipe or delete button).
 | DELETE   | `/api/comics/{id}/favorite`                  | `comicsService.setFavorite(id, false)`     | `/`, `/comics/:id`, `/shelves/:id`, `/stats` |
 | PUT      | `/api/comics/{id}/progress`                  | `comicsService.updateProgress`             | `/`, `/comics/:id`, `/shelves/:id`        |
 | POST     | `/api/comics/{id}/sources`                   | `comicsService.addSourceToComic`           | `/add`                                    |
+| PATCH    | `/api/comics/{id}/sources/{source_id}`       | —                                          | not used yet                              |
+| DELETE   | `/api/comics/{id}/sources/{source_id}`       | —                                          | not used yet                              |
+| PUT      | `/api/comics/{id}/primary-source`            | —                                          | not used yet                              |
+| PUT      | `/api/comics/{id}/cover`                     | —                                          | not used yet                              |
+| DELETE   | `/api/comics/{id}/cover`                     | —                                          | not used yet                              |
+| GET      | `/api/comics/{id}/cover?v=&sig=`             | (`<img src>` of `cover_url`)               | every page with covers                    |
+| GET      | `/api/users/{id}/avatar?v=&sig=`             | (`<img src>` of `avatar_url`)              | header, `/account`                        |
+| GET      | `/api/discover/search`                       | `discoverService.search`                   | `/search` (Khám phá), `/add`              |
+| POST     | `/api/library`                               | `discoverService.addToLibrary`             | `/search` (Khám phá), `/add`              |
+| GET      | `/api/cron/daily`                            | — (Vercel Cron)                            | —                                         |
 | GET      | `/api/shelves`                               | `shelvesService.list`                      | `/`, `/add`, `/comics/:id`, `/shelves/:id`|
 | GET      | `/api/shelves/{id}`                          | `shelvesService.getShelfById`              | `/shelves/:id`                            |
 | POST     | `/api/shelves`                               | `shelvesService.create`                    | shelf form (`/`, `/shelves/:id`)          |
@@ -788,14 +1130,13 @@ Used by: `/notifications` (swipe or delete button).
 
 These are decisions the frontend doesn't make. Settle them when you build the API.
 
-1. **Cover uploads.** `/add` currently sends a picked cover file as a `data:` URL
-   inside `cover_url`. Either accept it (store the image and return a hosted URL,
-   with a size limit and **413** `file_too_large`), or add
-   `POST /api/comics/{id}/cover` (multipart, like the avatar) and switch the page to it.
+1. **Cover uploads.** *Decided:* both. A `data:` URL in `cover_url` is stored, and
+   `PUT /api/comics/{id}/cover` accepts a multipart upload. Both are limited to 4 MB, and a
+   `data:` URL is about a third bigger than the file, so a picked photo over ~3 MB fails on Vercel.
 2. **CORS.** Allow the Vercel origin(s) and `http://localhost:3000`, with the headers
    `Authorization` and `Content-Type`, and expose `Content-Disposition`.
-3. **Token lifetimes.** The client only needs the access token to fail with 401 once
-   it expires. Suggested: 15 minutes for the access token, 30 days for the refresh token, rotated on refresh.
+3. **Token lifetimes.** *Decided:* 15 minutes for the access token, and 30 days (sliding) for the
+   refresh token, which is not rotated (see [Authentication](#authentication)).
 4. **New chapters and broken links.** Something has to set `has_new_chapter`,
    `Source.latest_chapter` and `Source.is_alive`, and create `new_chapter` and `broken_link`
    notifications. That could be a scheduled job that honours
