@@ -221,6 +221,12 @@ export interface ComicPreview {
   favicon_url: string;
 }
 
+/** GET /api/shelves/{id}: the shelf with its stats. */
+export interface ShelfDetail extends Shelf {
+  completed_count: number; // comics on it with status "completed"
+  last_updated_at: string | null; // the latest updated_at of its comics; null when empty
+}
+
 export interface ShelfInput {
   name: string;
   description?: string;

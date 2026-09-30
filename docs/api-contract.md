@@ -941,7 +941,12 @@ calls live in `comicService.ts`.
   `#FEB2C0`, `#A8C49A`, `#D9C8F0`, `#FFDF97`, `#CFE8D5` or `#FFE3D2`. It is stored as data.
   The UI renders it with themed colours, not the raw hex.
 - The virtual shelf **`all`** ("Tất cả truyện") is included in `GET /api/shelves` as the first shelf (`position` 1). User shelves follow.
-  Its `comic_count` is the size of the library. It cannot be edited, deleted or reordered.
+  Its `comic_count` is the size of the library. It cannot be edited, deleted or reordered
+  (**422** `validation_error`), but `GET /api/shelves/all` works.
+- `position` is the shelf's place in the list: `all` is 1, her shelves are 2, 3, … in their saved order.
+- `cover_urls`: the first 4 covers in the shelf's order (as `GET /api/comics?shelf={id}&sort=position`
+  lists it; for `all`, the most recently updated), skipping comics without a cover.
+- Every shelf belongs to one user: someone else's shelf is **404** `shelf_not_found`.
 
 ### `GET /api/shelves`
 
@@ -949,9 +954,27 @@ Response **200** `Shelf[]`, ordered by `position`, including `all`.
 
 Used by: `/library` (sidebar and shelf tabs), `/add` (shelf picker), `/comics/:id` (the "add to shelf" menu), `/shelves/:id`.
 
+### `PUT /api/shelves/order`
+
+Request: `{ "shelf_ids": string[] }`: every one of her shelves, in the new order (`"all"` may be
+included; it stays first).
+
+Response **200** `Shelf[]` in the new order (as `GET /api/shelves`).
+
+Errors: **422** `validation_error` (a shelf missing, repeated, or not hers).
+
+Used by: `shelvesService.reorderShelves` (no page reorders shelves yet).
+
 ### `GET /api/shelves/{id}`
 
-Response **200** `Shelf`.
+Response **200** `ShelfDetail`: the `Shelf` and its stats. `id` may be `all` (the whole library).
+
+```ts
+ShelfDetail = Shelf & {
+  completed_count: number;        // comics on it with status "completed" ("Đã đọc xong")
+  last_updated_at: string | null; // the latest updated_at of its comics; null when it is empty
+}
+```
 
 Errors: **404** `shelf_not_found`. The page then shows "Kệ sách không tồn tại".
 
@@ -960,11 +983,12 @@ Used by: `/shelves/:id`.
 ### `POST /api/shelves`
 
 Request `ShelfInput`: `{ name: string; description?: string; icon?: string; color?: string }`.
-Defaults: icon `🌸`, color `#FEB2C0`, `position` last.
+Defaults: icon `🌸`, color `#FEB2C0`, `position` last. `name` is trimmed (1–100 characters),
+`description` at most 500, `icon` at most 16, `color` one of the palette identifiers above.
 
 Response **201** `Shelf`.
 
-Errors: **422** `validation_error` (empty name).
+Errors: **422** `validation_error` (empty name, a colour outside the palette, another field).
 
 Used by: the shelf form (on `/library` and `/shelves/:id`).
 
@@ -972,9 +996,9 @@ Used by: the shelf form (on `/library` and `/shelves/:id`).
 
 Request: `Partial<ShelfInput>`.
 
-Response **200** `Shelf`.
+Response **200** `ShelfDetail`.
 
-Errors: **404** `shelf_not_found`, **422** `validation_error`.
+Errors: **404** `shelf_not_found`, **422** `validation_error` (as for `POST`, or the shelf is `all`).
 
 Used by: the shelf form (on `/shelves/:id`).
 
@@ -982,17 +1006,19 @@ Used by: the shelf form (on `/shelves/:id`).
 
 Response **204**. The comics stay in the library; only their membership is removed.
 
-Errors: **404** `shelf_not_found`.
+Errors: **404** `shelf_not_found`, **422** `validation_error` (`all`).
 
 Used by: `/shelves/:id` and the shelf form.
 
 ### `PUT /api/shelves/{id}/order`
 
-Request: `{ "comic_ids": string[] }`. This is the full order after a drag-and-drop.
+Request: `{ "comic_ids": string[] }`. This is the full order after a drag-and-drop. Comics on the
+shelf that are not listed come after the listed ones (most recently updated first).
 
 Response **204**. Read it back with `GET /api/comics?shelf={id}&sort=position`.
 
-Errors: **404** `shelf_not_found`, **422** `validation_error`.
+Errors: **404** `shelf_not_found`, **422** `validation_error` (a comic not on the shelf, a repeated id,
+or the shelf is `all`).
 
 Used by: `/shelves/:id`.
 
@@ -1008,7 +1034,8 @@ Used by: `/comics/:id`, `/shelves/:id` (the picker).
 
 ### `DELETE /api/shelves/{shelf_id}/comics/{comic_id}`
 
-Response **200** `Comic` with the updated `shelf_ids`.
+Response **200** `Comic` with the updated `shelf_ids`. Idempotent: removing a comic that isn't on the shelf is fine.
+The comic stays in the library.
 
 Errors: **404** `shelf_not_found` / `comic_not_found`.
 
@@ -1252,6 +1279,7 @@ Errors: **401** `not_authenticated` (wrong secret), **503** `cron_not_configured
 | POST     | `/api/home/dismiss`                          | `homeService.dismissFeedItem`              | `/`                                       |
 | GET      | `/api/cron/daily`                            | — (Vercel Cron)                            | —                                         |
 | GET      | `/api/shelves`                               | `shelvesService.list`                      | `/`, `/library`, `/add`, `/comics/:id`, `/shelves/:id` |
+| PUT      | `/api/shelves/order`                         | `shelvesService.reorderShelves`            | —                                         |
 | GET      | `/api/shelves/{id}`                          | `shelvesService.getShelfById`              | `/shelves/:id`                            |
 | POST     | `/api/shelves`                               | `shelvesService.create`                    | shelf form (`/library`, `/shelves/:id`)          |
 | PATCH    | `/api/shelves/{id}`                          | `shelvesService.update`                    | shelf form (`/shelves/:id`)               |

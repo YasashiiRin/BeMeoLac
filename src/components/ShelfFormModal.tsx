@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Shelf } from '../types';
-import { shelvesService } from '../services/shelfService';
+import { deleteShelfErrorMessage, shelvesService } from '../services/shelfService';
 import { useToast } from '../context/ToastContext';
 import { Modal } from './Modal';
 import { BottomSheet } from './BottomSheet';
@@ -137,6 +137,7 @@ export const ShelfFormModal: React.FC<ShelfFormModalProps> = ({
   onDelete,
 }) => {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { showToast } = useToast();
   const isMobile = useIsMobile();
 
@@ -248,7 +249,10 @@ export const ShelfFormModal: React.FC<ShelfFormModalProps> = ({
   };
 
   const handleDeleteConfirm = async () => {
-    if (!shelf) return;
+    if (!shelf) {
+      showToast('Chưa tìm thấy kệ để xóa, nàng tải lại trang rồi thử lại nhé', 'error');
+      return;
+    }
     setIsDeleting(true);
     try {
       await shelvesService.delete(shelf.id);
@@ -256,10 +260,11 @@ export const ShelfFormModal: React.FC<ShelfFormModalProps> = ({
       onDelete?.(shelf.id);
       setShowDeleteConfirm(false);
       onClose();
-      navigate('/library');
+      // she was on that shelf's page: back to the bookshelf (elsewhere she stays where she is)
+      if (pathname === `/shelves/${shelf.id}`) navigate('/library');
     } catch (err) {
       console.error('Error deleting shelf:', err);
-      showToast('Lỗi khi xóa kệ sách', 'error');
+      showToast(deleteShelfErrorMessage(err), 'error');
     } finally {
       setIsDeleting(false);
     }

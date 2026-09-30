@@ -5,7 +5,7 @@ import { getComics, setFavorite, updateComicProgress, comicsService } from '../s
 import { shelvesService } from '../services/shelfService';
 import { tagsService } from '../services/tagsService';
 import { userService } from '../services/userService';
-import { COMIC_UPDATED, SHELVES_UPDATED } from '../services/events';
+import { COMIC_UPDATED, SHELVES_UPDATED, ShelvesUpdatedDetail } from '../services/events';
 import { ComicCard } from '../components/ComicCard';
 import { ComicCardSkeleton } from '../components/ComicCardSkeleton';
 import { StatusChip } from '../components/StatusChip';
@@ -94,7 +94,13 @@ export const BookshelfPage: React.FC = () => {
 
   // Listen to shelf creation, update, or deletion across the app
   useEffect(() => {
-    const handleShelvesUpdated = () => {
+    const handleShelvesUpdated = (e: Event) => {
+      const detail = (e as CustomEvent<ShelvesUpdatedDetail>).detail;
+      if (detail?.action === 'delete') {
+        // off the sidebar and the mobile shelf row at once; the refresh below confirms it
+        setShelves((prev) => prev.filter((s) => s.id !== detail.shelfId));
+        setSelectedShelfId((current) => (current === detail.shelfId ? 'all' : current));
+      }
       fetchShelves();
       fetchSummary();
     };

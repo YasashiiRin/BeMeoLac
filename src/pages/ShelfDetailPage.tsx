@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Shelf, Comic } from '../types';
-import { shelvesService } from '../services/shelfService';
+import { deleteShelfErrorMessage, shelvesService } from '../services/shelfService';
 import { getComics, addComicToShelf, setFavorite, updateComicProgress } from '../services/comicService';
 import { ComicCard } from '../components/ComicCard';
 import { EmptyState } from '../components/EmptyState';
@@ -62,7 +62,9 @@ export const ShelfDetailPage: React.FC = () => {
 
   // "..." Menu Dropdown
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  // the "..." menu exists twice (phone header, desktop hero): a press inside either isn't "outside"
   const menuRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   // Edit Shelf Modal
   const [isEditShelfOpen, setIsEditShelfOpen] = useState(false);
@@ -131,8 +133,9 @@ export const ShelfDetailPage: React.FC = () => {
       const { action, shelf: updatedShelf, shelfId } = customEvent.detail || {};
       if (action === 'update' && updatedShelf && id === updatedShelf.id) {
         setShelf(updatedShelf);
-      } else if (action === 'delete' && shelfId && id === shelfId) {
-        navigate('/library');
+      } else if (action === 'delete' && shelfId) {
+        setAllShelves((prev) => prev.filter((s) => s.id !== shelfId)); // off the side list at once
+        if (id === shelfId) navigate('/library');
       }
       shelvesService.list().then(setAllShelves).catch(console.error);
     };
@@ -155,9 +158,9 @@ export const ShelfDetailPage: React.FC = () => {
   // Click outside listener for "..." menu
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setIsMenuOpen(false);
-      }
+      const target = e.target as Node;
+      const inside = [menuRef, mobileMenuRef].some((ref) => ref.current?.contains(target));
+      if (!inside) setIsMenuOpen(false);
     };
     if (isMenuOpen) {
       document.addEventListener('mousedown', handleClickOutside);
@@ -300,7 +303,10 @@ export const ShelfDetailPage: React.FC = () => {
 
   // Confirm delete shelf
   const handleConfirmDeleteShelf = async () => {
-    if (!shelf) return;
+    if (!shelf) {
+      showToast('Chưa tìm thấy kệ để xóa, nàng tải lại trang rồi thử lại nhé', 'error');
+      return;
+    }
     setIsDeleting(true);
     try {
       await shelvesService.delete(shelf.id);
@@ -308,7 +314,8 @@ export const ShelfDetailPage: React.FC = () => {
       setIsConfirmDeleteOpen(false);
       navigate('/library');
     } catch (err) {
-      showToast('Lỗi khi xóa kệ sách', 'error');
+      console.error('Error deleting shelf:', err);
+      showToast(deleteShelfErrorMessage(err), 'error');
       setIsDeleting(false);
     }
   };
@@ -532,7 +539,7 @@ export const ShelfDetailPage: React.FC = () => {
               {shelf.name}
             </span>
           </div>
-          <div className="relative">
+          <div className="relative" ref={mobileMenuRef}>
             <button
               type="button"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
