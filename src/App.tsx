@@ -8,6 +8,7 @@ import { ProtectedRoute, PublicOnlyRoute } from './components/ProtectedRoute';
 
 // Pages are code-split (see routes/lazyPages.ts)
 import {
+  HomePage,
   BookshelfPage,
   ComicDetailPage,
   AddComicPage,
@@ -46,6 +47,15 @@ export default function App() {
               <Route element={<ProtectedRoute />}>
                 <Route
                   path="/"
+                  element={
+                    <AppLayout title="Thế Giới" subtitle="Truyện Mới Cho Nàng">
+                      <HomePage />
+                    </AppLayout>
+                  }
+                />
+
+                <Route
+                  path="/library"
                   element={
                     <AppLayout title="Tủ Truyện Nhỏ" subtitle="Tủ Sách">
                       <BookshelfPage />

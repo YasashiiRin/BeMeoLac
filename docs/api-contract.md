@@ -15,7 +15,7 @@ Field names are snake_case on the wire, exactly as in those types.
 - [Comics](#comics)
 - [Discover (search across the web)](#discover)
 - [Library (saving)](#library)
-- [Home ("Khu vườn hôm nay")](#home)
+- [Home ("Thế giới")](#home)
 - [Shelves](#shelves)
 - [Sources](#sources)
 - [Tags](#tags)
@@ -333,7 +333,7 @@ Response **200** `User`.
 
 Errors: **422** `validation_error` (an unknown mood, more than there are, or another field).
 
-Used by: `/` (the "Nàng thích đọc gì?" picker, when `needs_starter_tastes`).
+Used by: `/` (the "Nàng thích đọc kiểu truyện nào?" picker, when `needs_starter_tastes`), `/account/taste`.
 
 ### `POST /api/users/me/password`
 
@@ -379,7 +379,7 @@ Response **200**: a file download.
 
 Errors: **422** `validation_error` (unknown format).
 
-Used by: `/account/data`, and the "Sao lưu" button on `/`.
+Used by: `/account/data`, and the "Sao lưu" button on `/library`.
 
 ### `POST /api/users/me/import`
 
@@ -470,7 +470,7 @@ The library list, and the advanced search. All parameters are optional.
 | `is_favorite`     | `true`                       | Only favourites.                                                                                   |
 | `sort`            | see below                    | Default: `relevance` when `q` is set, otherwise `updated_at`.                                     |
 | `page`            | int ≥ 1                      |                                                                                                    |
-| `page_size`       | 1–100                        | The client sends 10 (`/`), 12 (`/search`) or 100 (`/shelves/:id`).                                 |
+| `page_size`       | 1–100                        | The client sends 10 (`/library`), 12 (`/search`) or 100 (`/shelves/:id`).                                 |
 
 `sort` values:
 
@@ -487,7 +487,7 @@ Response **200** `Paginated<Comic>`.
 
 Errors: **422** `validation_error`.
 
-Used by: `/` (list with filters), `/search` (advanced search), `/shelves/:id` (the shelf's
+Used by: `/library` (list with filters), `/search` (advanced search), `/shelves/:id` (the shelf's
 comics with `sort=position`, and the "add comics" picker).
 
 ### `GET /api/comics/facets`
@@ -522,7 +522,7 @@ Response **200** `ComicSummary`:
 
 `new_chapters` is the number of **comics** where `has_new_chapter = true`. Every status key is present.
 
-Used by: `/` (the sidebar and the "Giờ Trà" widget), `/account` (profile header).
+Used by: `/library` (the sidebar and the "Giờ Trà" widget), `/account` (profile header).
 
 ### `GET /api/comics/lookup?title=`
 
@@ -617,7 +617,7 @@ Response **200** `Comic`.
 
 Errors: **404** `comic_not_found`.
 
-Used by: `/`, `/comics/:id`, `/shelves/:id`, `/stats` (the heart on comic cards).
+Used by: `/library`, `/comics/:id`, `/shelves/:id`, `/stats` (the heart on comic cards).
 
 ### `PUT /api/comics/{id}/progress`
 
@@ -639,7 +639,7 @@ Response **200** `Comic`.
 
 Errors: **404** `comic_not_found`, **422** `validation_error`.
 
-Used by: `/comics/:id` (chapter stepper), `/` and `/shelves/:id` ("đọc tiếp" +1 chapter).
+Used by: `/comics/:id` (chapter stepper), `/library` and `/shelves/:id` ("đọc tiếp" +1 chapter).
 
 ### `POST /api/comics/{id}/sources`
 
@@ -822,10 +822,10 @@ Used by: `/search` ("Thêm vào tủ"), `/add`.
 
 ## Home
 
-"Khu vườn hôm nay": the home page shows her comics to continue, then what is new each day for her
+"Thế giới": the home page is for discovery only. It shows what is new each day across the web for her
 taste (from MangaDex and AniList, safe content only: MangaDex content ratings `safe` and `suggestive`,
-never erotica or pornographic; AniList `isAdult: false`, no Hentai or Ecchi). Service: `src/services/homeService.ts`
-(frontend, not built yet).
+never erotica or pornographic; AniList `isAdult: false`, no Hentai or Ecchi), never her own library
+(that is `/library`). Service: [`src/services/homeService.ts`](../src/services/homeService.ts).
 
 ### `GET /api/home`
 
@@ -843,11 +843,9 @@ HomeOut = {
   sections: HomeSection[];          // always in this order (see below)
 }
 HomeSection = {
-  key: 'continue_reading' | 'new_chapters' | 'for_you' | 'new_releases' | 'trending';
-  title: string;                    // "Đọc tiếp nhé", "Có chương mới", "Dành cho nàng", "Mới ra mắt hợp gu", "Đang được yêu thích"
-  kind: 'library' | 'feed';
-  comics: Comic[];                  // kind "library": her own comics (up to 10)
-  items: FeedItem[];                // kind "feed": suggestions
+  key: 'for_you' | 'new_releases' | 'trending';
+  title: string;                    // "Dành cho nàng", "Mới ra mắt hợp gu", "Đang được yêu thích"
+  items: FeedItem[];                // suggestions (never a work already in her library)
 }
 FeedItem = {
   provider: string; provider_name: string; external_id: string; // save with POST /api/library { provider, external_id }
@@ -863,13 +861,14 @@ FeedItem = {
 
 Sections, in order:
 
-| key | kind | What |
-| --- | --- | --- |
-| `continue_reading` | library | "Đang đọc" comics she has started, most recently read first |
-| `new_chapters` | library | comics with an unread new chapter (not repeated in `continue_reading`) |
-| `for_you` | feed | AniList recommendations for works she loved, works by her favourite authors, works in her top genres (up to 16) |
-| `new_releases` | feed | series started in the last year, in her genres (up to 12) |
-| `trending` | feed | what readers love right now, in her genres (up to 12) |
+| key | What |
+| --- | --- |
+| `for_you` | AniList recommendations for works she loved, works by her favourite authors, works in her top genres (up to 16) |
+| `new_releases` | series started in the last year, in her genres (up to 12) |
+| `trending` | what readers love right now, in her genres (up to 12) |
+
+Her own comics (to continue, with new chapters) are not part of this response: the bookshelf
+(`GET /api/comics`, `GET /api/comics/summary`) has them.
 
 With `personalization_enabled: false`, `for_you` is left out and `new_releases` / `trending` are
 everyone's (reasons "Mới ra mắt gần đây", "Đang được nhiều người yêu thích"); `feed_status` is `"off"`.
@@ -908,7 +907,7 @@ or "Bách hợp, giống Frieren mà nàng chấm 5 tim" (`for_you`). They apply
 AniList has no genre for these, only tags: a work where one is central (rank ≥ 60) lists it in `genres`
 under MangaDex's name (`"Girls' Love"`, `"Boys' Love"`).
 
-Used by: `/` (not built yet).
+Used by: `/` (Thế giới).
 
 ### `POST /api/home/dismiss`
 
@@ -948,7 +947,7 @@ calls live in `comicService.ts`.
 
 Response **200** `Shelf[]`, ordered by `position`, including `all`.
 
-Used by: `/` (sidebar and shelf tabs), `/add` (shelf picker), `/comics/:id` (the "add to shelf" menu), `/shelves/:id`.
+Used by: `/library` (sidebar and shelf tabs), `/add` (shelf picker), `/comics/:id` (the "add to shelf" menu), `/shelves/:id`.
 
 ### `GET /api/shelves/{id}`
 
@@ -967,7 +966,7 @@ Response **201** `Shelf`.
 
 Errors: **422** `validation_error` (empty name).
 
-Used by: the shelf form (on `/` and `/shelves/:id`).
+Used by: the shelf form (on `/library` and `/shelves/:id`).
 
 ### `PATCH /api/shelves/{id}`
 
@@ -1074,7 +1073,7 @@ tag used in the library. Sorted by `count` (highest first), then by name (Vietna
 Tags are never created directly. A comic that uses a new tag name creates it (matching is
 case-insensitive), and a tag that no comic uses any more is deleted.
 
-Used by: `/` (genre filter).
+Used by: `/library` (genre filter).
 
 ---
 
@@ -1221,24 +1220,24 @@ Errors: **401** `not_authenticated` (wrong secret), **503** `cron_not_configured
 | PATCH    | `/api/users/me`                              | `userService.updateProfile`                | `/account/profile`                        |
 | PUT      | `/api/users/me/avatar`                       | `userService.uploadAvatar`                 | `/account/profile`                        |
 | PATCH    | `/api/users/me/settings`                     | `userService.updateSettings`               | `/account/appearance`, `/account/notifications`, theme toggle |
-| PUT      | `/api/users/me/starter-tastes`               | — (`homeService`, not built yet)           | `/`                                       |
+| PUT      | `/api/users/me/starter-tastes`               | `homeService.setStarterTastes`             | `/`, `/account/taste`                     |
 | POST     | `/api/users/me/password`                     | `userService.changePassword`               | `/account/security`                       |
 | GET      | `/api/users/me/sessions`                     | `userService.getSessions`                  | `/account/security`                       |
 | DELETE   | `/api/users/me/sessions`                     | `userService.logoutAll`                    | `/account/security`                       |
-| GET      | `/api/users/me/export`                       | `userService.exportData`                   | `/account/data`, `/`                      |
+| GET      | `/api/users/me/export`                       | `userService.exportData`                   | `/account/data`, `/library`                      |
 | POST     | `/api/users/me/import`                       | `userService.importData`                   | `/account/data`                           |
 | DELETE   | `/api/users/me`                              | `userService.deleteAccount`                | `/account`                                |
-| GET      | `/api/comics`                                | `comicsService.list` / `.search`           | `/`, `/search`, `/shelves/:id`            |
+| GET      | `/api/comics`                                | `comicsService.list` / `.search`           | `/library`, `/search`, `/shelves/:id`            |
 | GET      | `/api/comics/facets`                         | `comicsService.getFacets`                  | `/search`                                 |
-| GET      | `/api/comics/summary`                        | `comicsService.getSummary`                 | `/`, `/account`                           |
+| GET      | `/api/comics/summary`                        | `comicsService.getSummary`                 | `/library`, `/account`                           |
 | GET      | `/api/comics/lookup`                         | `comicsService.findExistingByTitle`        | `/add`                                    |
 | GET      | `/api/comics/{id}`                           | `comicsService.getComicById`               | `/comics/:id`                             |
 | POST     | `/api/comics`                                | `comicsService.create`                     | `/add`                                    |
 | PATCH    | `/api/comics/{id}`                           | `comicsService.update`                     | `/comics/:id`                             |
 | DELETE   | `/api/comics/{id}`                           | `comicsService.delete`                     | `/comics/:id`                             |
-| PUT      | `/api/comics/{id}/favorite`                  | `comicsService.setFavorite(id, true)`      | `/`, `/comics/:id`, `/shelves/:id`, `/stats` |
-| DELETE   | `/api/comics/{id}/favorite`                  | `comicsService.setFavorite(id, false)`     | `/`, `/comics/:id`, `/shelves/:id`, `/stats` |
-| PUT      | `/api/comics/{id}/progress`                  | `comicsService.updateProgress`             | `/`, `/comics/:id`, `/shelves/:id`        |
+| PUT      | `/api/comics/{id}/favorite`                  | `comicsService.setFavorite(id, true)`      | `/library`, `/comics/:id`, `/shelves/:id`, `/stats` |
+| DELETE   | `/api/comics/{id}/favorite`                  | `comicsService.setFavorite(id, false)`     | `/library`, `/comics/:id`, `/shelves/:id`, `/stats` |
+| PUT      | `/api/comics/{id}/progress`                  | `comicsService.updateProgress`             | `/library`, `/comics/:id`, `/shelves/:id`        |
 | POST     | `/api/comics/{id}/sources`                   | `comicsService.addSourceToComic`           | `/add`                                    |
 | PATCH    | `/api/comics/{id}/sources/{source_id}`       | —                                          | not used yet                              |
 | DELETE   | `/api/comics/{id}/sources/{source_id}`       | —                                          | not used yet                              |
@@ -1249,12 +1248,12 @@ Errors: **401** `not_authenticated` (wrong secret), **503** `cron_not_configured
 | GET      | `/api/users/{id}/avatar?v=&sig=`             | (`<img src>` of `avatar_url`)              | header, `/account`                        |
 | GET      | `/api/discover/search`                       | `discoverService.search`                   | `/search` (Khám phá), `/add`              |
 | POST     | `/api/library`                               | `discoverService.addToLibrary`             | `/search` (Khám phá), `/add`, `/`         |
-| GET      | `/api/home`                                  | — (`homeService`, not built yet)           | `/`                                       |
-| POST     | `/api/home/dismiss`                          | — (`homeService`, not built yet)           | `/`                                       |
+| GET      | `/api/home`                                  | `homeService.getHome`                      | `/`                                       |
+| POST     | `/api/home/dismiss`                          | `homeService.dismissFeedItem`              | `/`                                       |
 | GET      | `/api/cron/daily`                            | — (Vercel Cron)                            | —                                         |
-| GET      | `/api/shelves`                               | `shelvesService.list`                      | `/`, `/add`, `/comics/:id`, `/shelves/:id`|
+| GET      | `/api/shelves`                               | `shelvesService.list`                      | `/`, `/library`, `/add`, `/comics/:id`, `/shelves/:id` |
 | GET      | `/api/shelves/{id}`                          | `shelvesService.getShelfById`              | `/shelves/:id`                            |
-| POST     | `/api/shelves`                               | `shelvesService.create`                    | shelf form (`/`, `/shelves/:id`)          |
+| POST     | `/api/shelves`                               | `shelvesService.create`                    | shelf form (`/library`, `/shelves/:id`)          |
 | PATCH    | `/api/shelves/{id}`                          | `shelvesService.update`                    | shelf form (`/shelves/:id`)               |
 | DELETE   | `/api/shelves/{id}`                          | `shelvesService.delete`                    | `/shelves/:id`                            |
 | PUT      | `/api/shelves/{id}/order`                    | `shelvesService.reorder`                   | `/shelves/:id`                            |
@@ -1262,7 +1261,7 @@ Errors: **401** `not_authenticated` (wrong secret), **503** `cron_not_configured
 | DELETE   | `/api/shelves/{shelf_id}/comics/{comic_id}`  | `comicsService.removeComicFromShelf`       | `/comics/:id`                             |
 | POST     | `/api/sources/preview`                       | `sourcesService.preview`                   | `/add`                                    |
 | POST     | `/api/sources/check`                         | `sourcesService.checkAll`                  | `/account/data`                           |
-| GET      | `/api/tags`                                  | `tagsService.list`                         | `/`                                       |
+| GET      | `/api/tags`                                  | `tagsService.list`                         | `/library`                                       |
 | GET      | `/api/stats`                                 | `statsService.get`                         | `/stats`                                  |
 | PUT      | `/api/stats/goals/{year}`                    | `statsService.updateGoal`                  | `/stats`                                  |
 | GET      | `/api/notifications`                         | `notificationsService.list`                | `/notifications`, bell dropdown           |

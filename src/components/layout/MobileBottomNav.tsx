@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { BookOpen, Search, Plus, BarChart3, User } from 'lucide-react';
+import { BookOpen, Search, Plus, User } from 'lucide-react';
+import { WorldIcon } from '../icons/WorldIcon';
 import { lastSearchHref } from '../../features/search/searchState';
 
 interface MobileBottomNavProps {
@@ -21,9 +22,23 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onOpenAddModal
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t-1.5 border-border px-3 py-1.5 shadow-lg safe-area-bottom">
       <div className="flex items-center justify-around relative">
-        {/* Tủ sách */}
+        {/* Thế giới */}
         <NavLink
           to="/"
+          end
+          className={({ isActive }) =>
+            `flex flex-col items-center gap-0.5 py-1 px-2 rounded-xl transition-colors ${
+              isActive ? 'text-primary font-bold' : 'text-text-muted font-medium'
+            }`
+          }
+        >
+          <WorldIcon className="w-5 h-5" />
+          <span className="text-[10px]">Thế giới</span>
+        </NavLink>
+
+        {/* Tủ sách */}
+        <NavLink
+          to="/library"
           className={({ isActive }) =>
             `flex flex-col items-center gap-0.5 py-1 px-2 rounded-xl transition-colors ${
               isActive ? 'text-primary font-bold' : 'text-text-muted font-medium'
@@ -32,19 +47,6 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onOpenAddModal
         >
           <BookOpen className="w-5 h-5" />
           <span className="text-[10px]">Tủ sách</span>
-        </NavLink>
-
-        {/* Tìm kiếm */}
-        <NavLink
-          to={lastSearchHref()}
-          className={({ isActive }) =>
-            `flex flex-col items-center gap-0.5 py-1 px-2 rounded-xl transition-colors ${
-              isActive ? 'text-primary font-bold' : 'text-text-muted font-medium'
-            }`
-          }
-        >
-          <Search className="w-5 h-5" />
-          <span className="text-[10px]">Tìm kiếm</span>
         </NavLink>
 
         {/* Center elevated "+" button */}
@@ -59,17 +61,17 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onOpenAddModal
           </button>
         </div>
 
-        {/* Thống kê */}
+        {/* Tìm kiếm */}
         <NavLink
-          to="/stats"
+          to={lastSearchHref()}
           className={({ isActive }) =>
             `flex flex-col items-center gap-0.5 py-1 px-2 rounded-xl transition-colors ${
               isActive ? 'text-primary font-bold' : 'text-text-muted font-medium'
             }`
           }
         >
-          <BarChart3 className="w-5 h-5" />
-          <span className="text-[10px]">Thống kê</span>
+          <Search className="w-5 h-5" />
+          <span className="text-[10px]">Tìm kiếm</span>
         </NavLink>
 
         {/* Tài khoản */}

@@ -144,7 +144,7 @@ export const AddComicPage: React.FC = () => {
     if (window.history.length > 1) {
       navigate(-1);
     } else {
-      navigate('/');
+      navigate('/library');
     }
   };
 

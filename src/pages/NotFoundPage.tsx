@@ -19,7 +19,7 @@ export const NotFoundPage: React.FC = () => {
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2.5">
           <Link
-            to="/"
+            to="/library"
             className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-primary text-on-primary text-sm font-semibold border-1.5 border-primary glow-primary hover:bg-primary-deep transition-colors"
           >
             <ArrowLeft className="w-4 h-4" aria-hidden="true" />

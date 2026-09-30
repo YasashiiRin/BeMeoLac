@@ -132,7 +132,7 @@ export const ShelfDetailPage: React.FC = () => {
       if (action === 'update' && updatedShelf && id === updatedShelf.id) {
         setShelf(updatedShelf);
       } else if (action === 'delete' && shelfId && id === shelfId) {
-        navigate('/');
+        navigate('/library');
       }
       shelvesService.list().then(setAllShelves).catch(console.error);
     };
@@ -306,7 +306,7 @@ export const ShelfDetailPage: React.FC = () => {
       await shelvesService.delete(shelf.id);
       showToast(`Đã xóa kệ sách "${shelf.name}" 🌿`, 'info');
       setIsConfirmDeleteOpen(false);
-      navigate('/');
+      navigate('/library');
     } catch (err) {
       showToast('Lỗi khi xóa kệ sách', 'error');
       setIsDeleting(false);
@@ -387,7 +387,7 @@ export const ShelfDetailPage: React.FC = () => {
         <p className="text-xs sm:text-sm text-text-muted mb-6 max-w-sm">
           Có thể kệ sách đã được cất sang vương quốc khác hoặc đổi tên.
         </p>
-        <Button variant="primary" onClick={() => navigate('/')}>
+        <Button variant="primary" onClick={() => navigate('/library')}>
           Trở về Tủ Sách ✿
         </Button>
       </div>
@@ -469,7 +469,7 @@ export const ShelfDetailPage: React.FC = () => {
                   key={s.id}
                   type="button"
                   onClick={() => {
-                    if (s.id === 'all') navigate('/');
+                    if (s.id === 'all') navigate('/library');
                     else navigate(`/shelves/${s.id}`);
                   }}
                   className="flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-text-muted hover:bg-surface hover:text-text transition-all group cursor-pointer text-left"
@@ -520,7 +520,7 @@ export const ShelfDetailPage: React.FC = () => {
         <div className="flex items-center justify-between lg:hidden pt-1">
           <button
             type="button"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/library')}
             aria-label="Quay về tủ sách"
             className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-text shadow-sm active:scale-95 transition-transform cursor-pointer border border-border-strong/20"
           >
@@ -575,7 +575,7 @@ export const ShelfDetailPage: React.FC = () => {
         {/* Desktop Breadcrumbs (ke-sach-desktop.html) */}
         <div className="hidden lg:flex items-center gap-2 text-xs text-text-muted">
           <span
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/library')}
             className="hover:text-primary transition-colors cursor-pointer flex items-center gap-1"
           >
             <span>🏠</span>
@@ -1286,7 +1286,7 @@ export const ShelfDetailPage: React.FC = () => {
           );
         }}
         onDelete={() => {
-          navigate('/');
+          navigate('/library');
         }}
       />
 

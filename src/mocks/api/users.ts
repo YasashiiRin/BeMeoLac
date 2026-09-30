@@ -60,6 +60,14 @@ export async function updateSettings(patch: Partial<UserSettings>): Promise<User
   return { ...me };
 }
 
+/** PUT /api/users/me/starter-tastes (mock/api/home.ts checks the moods). */
+export function setStarterTastes(tastes: string[]): User {
+  me = { ...me, settings: { ...me.settings, starter_tastes: tastes } };
+  return { ...me };
+}
+
+export const currentSettings = (): UserSettings => ({ ...me.settings });
+
 export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
   await simulateNetworkDelay(400);
   if (currentPassword !== mockAccount.password) {

@@ -3,13 +3,19 @@ import { X, CheckCircle, AlertCircle, Sparkles } from 'lucide-react';
 
 export type ToastType = 'success' | 'info' | 'warning' | 'error';
 
+export interface ToastAction {
+  label: string;
+  onClick: () => void;
+}
+
 interface ToastProps {
   message: string;
   type?: ToastType;
+  action?: ToastAction;
   onClose: () => void;
 }
 
-export const Toast: React.FC<ToastProps> = ({ message, type = 'info', onClose }) => {
+export const Toast: React.FC<ToastProps> = ({ message, type = 'info', action, onClose }) => {
   const getIcon = () => {
     switch (type) {
       case 'success':
@@ -45,6 +51,18 @@ export const Toast: React.FC<ToastProps> = ({ message, type = 'info', onClose })
         {getIcon()}
         <p className="text-sm font-medium text-text leading-snug">{message}</p>
       </div>
+      {action && (
+        <button
+          type="button"
+          onClick={() => {
+            action.onClick();
+            onClose();
+          }}
+          className="shrink-0 px-2.5 py-1 rounded-lg text-xs font-bold text-primary-ink bg-primary-tint hover:bg-primary-soft/40 transition-colors cursor-pointer"
+        >
+          {action.label}
+        </button>
+      )}
       <button
         type="button"
         onClick={onClose}

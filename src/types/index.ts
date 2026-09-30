@@ -11,6 +11,9 @@ export interface UserSettings {
   notify_broken_link: boolean;
   daily_reminder_enabled: boolean;
   daily_reminder_time: string; // e.g. "20:00"
+  personalization_enabled: boolean; // false: the home feed isn't about her taste
+  starter_tastes: string[]; // moods picked while the library is small (PUT /api/users/me/starter-tastes)
+  priority_tastes: string[]; // moods that lead every personal home section
 }
 
 export interface User {
@@ -299,6 +302,51 @@ export type LibraryAddRequest = (
   current_chapter?: number;
   shelf_ids?: string[];
 };
+
+/* ── Home: "Thế giới", new comics for her taste (docs/api-contract.md#home) ── */
+
+/** A suggestion. Save it with POST /api/library { provider, external_id }. */
+export interface FeedItem {
+  provider: string;
+  provider_name: string;
+  external_id: string;
+  external_ids: Record<string, string>;
+  title: string;
+  cover_url: string;
+  authors: string[];
+  genres: string[];
+  latest_chapter: number | null;
+  status: PublicationStatus;
+  attribution: ProviderCredit[];
+  reason: string; // "Vì nàng thích Chữa lành"
+  score: number;
+}
+
+export type HomeSectionKey = 'for_you' | 'new_releases' | 'trending';
+
+export interface HomeSection {
+  key: HomeSectionKey;
+  title: string;
+  items: FeedItem[]; // suggestions, never a work already in her library
+}
+
+export interface StarterOption {
+  value: string; // what PUT /api/users/me/starter-tastes takes
+  label: string;
+  icon: string;
+}
+
+export interface HomeOut {
+  date: string; // "YYYY-MM-DD" (Vietnam time): the feed's day
+  personalization_enabled: boolean;
+  needs_starter_tastes: boolean;
+  starter_tastes: string[];
+  priority_tastes: string[];
+  starter_options: StarterOption[];
+  /** ready: complete; building: some providers were slow, the next request adds the rest; off: personalization off */
+  feed_status: 'ready' | 'building' | 'off';
+  sections: HomeSection[]; // always in the contract's order
+}
 
 /** The saved Comic; created = false when it was already in the library (200). */
 export interface LibraryAddResult {

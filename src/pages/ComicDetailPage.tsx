@@ -159,7 +159,7 @@ export const ComicDetailPage: React.FC = () => {
     if (window.history.length > 1) {
       navigate(-1);
     } else {
-      navigate('/');
+      navigate('/library');
     }
   };
 
@@ -383,7 +383,7 @@ export const ComicDetailPage: React.FC = () => {
       await comicsService.delete(comic.id);
       showToast(`Đã xóa truyện "${comic.title}" khỏi tủ sách 🌿`, 'info');
       setIsConfirmDeleteOpen(false);
-      navigate('/');
+      navigate('/library');
     } catch (err) {
       showToast('Lỗi xóa truyện', 'error');
       setIsDeleting(false);
@@ -491,7 +491,7 @@ export const ComicDetailPage: React.FC = () => {
           Có thể cuốn truyện đã được cất sang vương quốc khác hoặc đổi tên.
         </p>
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/library')}
           className="px-5 py-2.5 rounded-full bg-gold-tint text-gold-ink font-bold text-sm shadow-md hover:bg-gold transition-all cursor-pointer"
         >
           Trở về Tủ Sách ✿

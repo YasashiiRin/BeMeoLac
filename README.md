@@ -29,7 +29,7 @@ Mọi lời gọi API đều nằm trong `src/services/`. Có thể bật API th
 
 | Biến                 | Ví dụ                   | Ý nghĩa                                                                                                                    |
 | -------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `VITE_REAL_SERVICES` | `auth,users`            | Các service gọi backend thật, cách nhau bằng dấu phẩy. Để trống thì tất cả dùng dữ liệu giả. Tên service: `auth`, `users`, `comics`, `shelves`, `sources`, `tags`, `stats`, `notifications`, `discover` (tìm truyện trên mạng và “Thêm vào tủ”). |
+| `VITE_REAL_SERVICES` | `auth,users`            | Các service gọi backend thật, cách nhau bằng dấu phẩy. Để trống thì tất cả dùng dữ liệu giả. Tên service: `auth`, `users`, `comics`, `shelves`, `sources`, `tags`, `stats`, `notifications`, `discover` (tìm truyện trên mạng và “Thêm vào tủ”), `home` (trang chủ “Thế giới”: truyện mới trên mạng hợp gu nàng, “Không quan tâm”, gu đọc khởi đầu; nên bật cùng `users` vì gu đọc nằm trong cài đặt của nàng). |
 | `VITE_USE_MOCK`      | `true` / `false`        | Tùy chọn, ghi đè cho tất cả: `true` là mọi service dùng dữ liệu giả, `false` là mọi service gọi API thật. Không đặt thì dùng `VITE_REAL_SERVICES`. |
 | `VITE_API_URL`       | để trống                | Địa chỉ gốc của backend, không có `/` ở cuối. Để trống thì ứng dụng gọi `/api/...` trên chính địa chỉ của nó, giống khi chạy thật. |
 | `API_PROXY_TARGET`   | `http://localhost:8000` | Chỉ dùng cho máy chủ phát triển: `npm run dev` chuyển mọi request `/api` tới địa chỉ này, nên không bị lỗi CORS.         |
@@ -109,7 +109,8 @@ Mọi trang, trừ `/login`, đều cần đăng nhập. Người chưa đăng n
 | Đường dẫn                | Trang                                                                                     |
 | ------------------------ | ----------------------------------------------------------------------------------------- |
 | `/login`                 | Đăng nhập                                                                                 |
-| `/`                      | Tủ sách: danh sách truyện, lọc theo kệ, trạng thái, thể loại, nguồn                       |
+| `/`                      | Thế giới: truyện mới trên mạng hợp gu nàng (Dành cho nàng, Mới ra mắt hợp gu, Đang được yêu thích), không gồm truyện trong tủ. Mở trang này sau khi đăng nhập |
+| `/library`               | Tủ sách: danh sách truyện, lọc theo kệ, trạng thái, thể loại, nguồn                       |
 | `/comics/:id`            | Chi tiết truyện: tiến độ, đánh giá, ghi chú, nguồn, kệ                                    |
 | `/add`                   | Thêm truyện, từ liên kết hoặc nhập tay                                                    |
 | `/shelves/:id`           | Chi tiết kệ sách, kéo thả để sắp xếp                                                      |
@@ -120,6 +121,7 @@ Mọi trang, trừ `/login`, đều cần đăng nhập. Người chưa đăng n
 | `/account/profile`       | Hồ sơ: ảnh đại diện, bút danh, giới thiệu                                                 |
 | `/account/security`      | Mật khẩu, các thiết bị đang đăng nhập                                                     |
 | `/account/appearance`    | Chủ đề, cỡ chữ, hiệu ứng lấp lánh                                                         |
+| `/account/taste`         | Gu đọc: bật/tắt gợi ý theo gu, chọn các gu nàng thích                                      |
 | `/account/notifications` | Cài đặt thông báo, lời nhắc đọc                                                           |
 | `/account/data`          | Xuất và nhập dữ liệu, kiểm tra link hỏng                                                  |
 | `/account/about`         | Về ứng dụng                                                                               |

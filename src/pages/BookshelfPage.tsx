@@ -7,6 +7,7 @@ import { tagsService } from '../services/tagsService';
 import { userService } from '../services/userService';
 import { COMIC_UPDATED, SHELVES_UPDATED } from '../services/events';
 import { ComicCard } from '../components/ComicCard';
+import { ComicCardSkeleton } from '../components/ComicCardSkeleton';
 import { StatusChip } from '../components/StatusChip';
 import { Button } from '../components/Button';
 import { SearchBar } from '../components/SearchBar';
@@ -568,15 +569,7 @@ export const BookshelfPage: React.FC = () => {
         ) : isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5 sm:gap-4.5">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-              <div
-                key={n}
-                className="bg-surface/60 arch-card p-3 border border-border animate-pulse flex flex-col gap-3"
-              >
-                <div className="w-full aspect-[3/4] arch-card-sm bg-surface-sunken" />
-                <div className="h-4 bg-surface-sunken rounded-md w-3/4" />
-                <div className="h-3 bg-surface-sunken rounded-md w-1/2" />
-                <div className="h-2 bg-surface-sunken rounded-full w-full mt-auto" />
-              </div>
+              <ComicCardSkeleton key={n} />
             ))}
           </div>
         ) : comics.length === 0 ? (

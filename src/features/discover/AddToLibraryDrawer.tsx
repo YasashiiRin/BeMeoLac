@@ -15,8 +15,14 @@ const STATUSES: ComicStatus[] = ['plan_to_read', 'reading', 'completed', 'on_hol
 // Shelf ids must come from the same place the save goes to: mock shelves don't exist on the server.
 const CAN_PICK_SHELVES = isMock('shelves') === isMock('discover');
 
+/** What the form needs from a work: a search result, or a home feed suggestion (FeedItem). */
+export type AddableWork = Pick<
+  DiscoverResult,
+  'provider' | 'provider_name' | 'external_id' | 'title' | 'cover_url' | 'authors' | 'latest_chapter' | 'attribution'
+>;
+
 interface AddToLibraryDrawerProps {
-  result: DiscoverResult | null;
+  result: AddableWork | null;
   onClose: () => void;
   /** after a successful save (created, or already in the library) */
   onSaved: (comic: Comic, created: boolean) => void;

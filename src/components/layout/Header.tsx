@@ -2,13 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Plus, Flower2 } from 'lucide-react';
 import { SearchBar } from '../SearchBar';
+import { WorldIcon } from '../icons/WorldIcon';
 import { lastSearchHref, rememberLastSearch } from '../../features/search/searchState';
 import { ThemeToggle } from '../ThemeToggle';
 import { AvatarMenu } from './AvatarMenu';
 import { NotificationsDropdown } from '../../features/notifications/NotificationsDropdown';
 
-const NAV_ITEMS = [
-  { to: '/', label: 'Tủ Sách', icon: '✿' },
+const NAV_ITEMS: { to: string; label: string; icon: React.ReactNode }[] = [
+  { to: '/', label: 'Thế giới', icon: <WorldIcon className="w-3.5 h-3.5" /> },
+  { to: '/library', label: 'Tủ sách', icon: '✿' },
   { to: '/search', label: 'Tìm kiếm', icon: '🔍' },
   { to: '/stats', label: 'Thống kê', icon: '🌿' },
 ];
@@ -121,7 +123,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenAddModal }) => {
                 }`
               }
             >
-              <span aria-hidden="true">{item.icon}</span>
+              <span aria-hidden="true" className="inline-flex">{item.icon}</span>
               <span>{item.label}</span>
             </NavLink>
           ))}

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
-import { BookOpen, CalendarHeart, ChevronRight, Flower2, HeartCrack, LogOut, PenLine } from 'lucide-react';
+import { BarChart3, BookOpen, CalendarHeart, ChevronRight, Flower2, HeartCrack, LogOut, PenLine } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
@@ -15,6 +15,7 @@ import { FALLBACK_AVATAR } from '../features/account/avatar';
 import { ProfileSection } from '../features/account/ProfileSection';
 import { SecuritySection } from '../features/account/SecuritySection';
 import { AppearanceSection } from '../features/account/AppearanceSection';
+import { TasteSection } from '../features/account/TasteSection';
 import { NotificationsSection } from '../features/account/NotificationsSection';
 import { DataSection } from '../features/account/DataSection';
 import { AboutSection } from '../features/account/AboutSection';
@@ -23,6 +24,7 @@ const CONTENT: Record<SectionId, React.FC> = {
   profile: ProfileSection,
   security: SecuritySection,
   appearance: AppearanceSection,
+  taste: TasteSection,
   notifications: NotificationsSection,
   data: DataSection,
   about: AboutSection,
@@ -66,6 +68,12 @@ export const AccountPage: React.FC = () => {
   const hints: Partial<Record<SectionId, string>> = {
     appearance: `${THEMES[theme].label} · chữ ${fontSize}px`,
     notifications: user?.settings.daily_reminder_enabled ? `Nhắc đọc lúc ${user.settings.daily_reminder_time}` : undefined,
+    taste:
+      user?.settings.personalization_enabled === false
+        ? 'Đang tắt gợi ý theo gu'
+        : user?.settings.starter_tastes?.length
+          ? user.settings.starter_tastes.join(' · ')
+          : undefined,
   };
 
   const deleteAccount = async () => {
@@ -151,14 +159,19 @@ export const AccountPage: React.FC = () => {
                 ))}
               </ul>
             </div>
-            <Button
-              variant="honey"
-              className="w-full md:w-auto"
-              onClick={() => navigate('/account/profile#edit')}
-              iconLeft={<PenLine className="w-4 h-4" />}
-            >
-              Sửa hồ sơ
-            </Button>
+            <div className="w-full md:w-auto flex flex-col sm:flex-row md:flex-col gap-2 shrink-0">
+              <Button
+                variant="honey"
+                className="w-full md:w-auto"
+                onClick={() => navigate('/account/profile#edit')}
+                iconLeft={<PenLine className="w-4 h-4" />}
+              >
+                Sửa hồ sơ
+              </Button>
+              <Button variant="outline" className="w-full md:w-auto" onClick={() => navigate('/stats')} iconLeft={<BarChart3 className="w-4 h-4" />}>
+                Nhật ký đọc ✨
+              </Button>
+            </div>
           </div>
         </section>
       </div>

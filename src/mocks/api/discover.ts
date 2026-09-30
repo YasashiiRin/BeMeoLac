@@ -2,6 +2,7 @@ import { Comic, DiscoverPage, DiscoverResult, LibraryAddRequest, LibraryAddResul
 import { ApiError, simulateNetworkDelay } from '../../services/http';
 import { fold } from '../../utils/text';
 import { db } from './store';
+import { findFeedWork } from './home';
 
 /*
  * Mock web search (GET /api/discover/search) and save (POST /api/library) for mock mode.
@@ -142,10 +143,31 @@ export async function search(q: string, page = 1): Promise<DiscoverPage> {
   };
 }
 
+/** A home feed suggestion (mocks/api/home.ts) as a catalog work, so "Thêm vào tủ" works from the home page too. */
+const fromFeed = (provider: string, externalId: string): CatalogEntry | undefined => {
+  const item = findFeedWork(provider, externalId);
+  if (!item) return undefined;
+  return {
+    provider: item.provider,
+    external_id: item.external_id,
+    external_ids: item.external_ids,
+    providers: [item.provider],
+    title: item.title,
+    alt_titles: [],
+    description: '',
+    cover_url: item.cover_url,
+    authors: item.authors,
+    genres: item.genres,
+    status: item.status,
+    latest_chapter: item.latest_chapter,
+    links: item.attribution.map((a) => ({ site_name: a.name, url: a.url })),
+  };
+};
+
 export async function add(data: LibraryAddRequest): Promise<LibraryAddResult> {
   await simulateNetworkDelay(600);
   if (!('provider' in data)) throw new ApiError(422, 'Bản thử chỉ lưu được truyện từ kết quả tìm kiếm', 'link_not_supported');
-  const entry = CATALOG.find((e) => e.provider === data.provider && e.external_id === data.external_id);
+  const entry = CATALOG.find((e) => e.provider === data.provider && e.external_id === data.external_id) ?? fromFeed(data.provider, data.external_id);
   if (!entry) throw new ApiError(404, 'Không tìm thấy truyện này ở nguồn tìm kiếm', 'work_not_found');
 
   const existing = inLibrary(entry);

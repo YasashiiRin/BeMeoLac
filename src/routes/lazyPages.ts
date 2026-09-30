@@ -7,6 +7,7 @@ import { matchPath } from 'react-router-dom';
  */
 
 const loaders = {
+  home: () => import('../pages/HomePage'),
   bookshelf: () => import('../pages/BookshelfPage'),
   comic: () => import('../pages/ComicDetailPage'),
   add: () => import('../pages/AddComicPage'),
@@ -37,6 +38,7 @@ function lazyPage<P extends object>(key: keyof typeof loaders, pick: (m: any) =>
 
 const preloaders: Partial<Record<keyof typeof loaders, () => Promise<unknown>>> = {};
 
+export const HomePage = lazyPage('home', (m) => m.HomePage);
 export const BookshelfPage = lazyPage('bookshelf', (m) => m.BookshelfPage);
 export const ComicDetailPage = lazyPage('comic', (m) => m.ComicDetailPage);
 export const AddComicPage = lazyPage('add', (m) => m.AddComicPage);
@@ -47,7 +49,8 @@ export const NotificationsPage = lazyPage('notifications', (m) => m.Notification
 export const AccountPage = lazyPage('account', (m) => m.AccountPage);
 
 const ROUTES: [string, keyof typeof loaders][] = [
-  ['/', 'bookshelf'],
+  ['/', 'home'],
+  ['/library', 'bookshelf'],
   ['/comics/:id', 'comic'],
   ['/add', 'add'],
   ['/shelves/:id', 'shelf'],
@@ -61,6 +64,6 @@ const ROUTES: [string, keyof typeof loaders][] = [
 export function preloadRoute(path: string): Promise<unknown> {
   const pathname = path.split(/[?#]/)[0] || '/';
   const hit = ROUTES.find(([pattern]) => matchPath(pattern, pathname));
-  const key = hit ? hit[1] : 'bookshelf';
+  const key = hit ? hit[1] : 'home';
   return (preloaders[key] ?? loaders[key])().catch(() => undefined);
 }

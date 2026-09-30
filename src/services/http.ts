@@ -15,7 +15,7 @@
  * - Every error is an ApiError built from the backend body { detail, code? }.
  */
 
-export const SERVICE_NAMES = ['auth', 'users', 'comics', 'shelves', 'sources', 'tags', 'stats', 'notifications', 'discover'] as const;
+export const SERVICE_NAMES = ['auth', 'users', 'comics', 'shelves', 'sources', 'tags', 'stats', 'notifications', 'discover', 'home'] as const;
 export type ServiceName = (typeof SERVICE_NAMES)[number];
 
 const GLOBAL_MOCK = import.meta.env.VITE_USE_MOCK?.trim().toLowerCase();

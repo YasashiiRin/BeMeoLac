@@ -389,7 +389,7 @@ export const SearchPage: React.FC = () => {
               actionText="Đặt lại tất cả bộ lọc"
               onAction={resetAll}
               secondaryText="Trở về tủ sách"
-              onSecondary={() => navigate('/')}
+              onSecondary={() => navigate('/library')}
             />
           ) : (
             <>

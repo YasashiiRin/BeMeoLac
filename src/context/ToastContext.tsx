@@ -1,14 +1,22 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { Toast, ToastType } from '../components/Toast';
+import { Toast, ToastAction, ToastType } from '../components/Toast';
 
 interface ToastItem {
   id: string;
   message: string;
   type: ToastType;
+  action?: ToastAction;
+}
+
+export interface ToastOptions {
+  /** a button in the toast, e.g. "Hoàn tác" (the toast closes when it is pressed) */
+  action?: ToastAction;
+  /** how long it stays, in ms (default 3800) */
+  duration?: number;
 }
 
 interface ToastContextType {
-  showToast: (message: string, type?: ToastType) => void;
+  showToast: (message: string, type?: ToastType, options?: ToastOptions) => void;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
@@ -16,13 +24,13 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
-  const showToast = useCallback((message: string, type: ToastType = 'info') => {
+  const showToast = useCallback((message: string, type: ToastType = 'info', options: ToastOptions = {}) => {
     const id = `toast_${Date.now()}_${Math.random()}`;
-    setToasts((prev) => [...prev, { id, message, type }]);
+    setToasts((prev) => [...prev, { id, message, type, action: options.action }]);
 
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 3800);
+    }, options.duration ?? 3800);
   }, []);
 
   const removeToast = useCallback((id: string) => {
@@ -39,6 +47,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             <Toast
               message={toast.message}
               type={toast.type}
+              action={toast.action}
               onClose={() => removeToast(toast.id)}
             />
           </div>

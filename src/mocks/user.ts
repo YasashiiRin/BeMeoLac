@@ -18,6 +18,9 @@ export const mockCurrentUser: User = {
     notify_broken_link: true,
     daily_reminder_enabled: true,
     daily_reminder_time: '20:30',
+    personalization_enabled: true,
+    starter_tastes: [],
+    priority_tastes: [],
   },
 };
 

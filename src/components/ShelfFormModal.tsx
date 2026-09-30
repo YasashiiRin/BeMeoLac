@@ -256,7 +256,7 @@ export const ShelfFormModal: React.FC<ShelfFormModalProps> = ({
       onDelete?.(shelf.id);
       setShowDeleteConfirm(false);
       onClose();
-      navigate('/');
+      navigate('/library');
     } catch (err) {
       console.error('Error deleting shelf:', err);
       showToast('Lỗi khi xóa kệ sách', 'error');
